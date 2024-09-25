@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Lexer {
+    //词法分析只会产生一个错误
     private boolean error;
     private String errorType;
     private boolean inMultiLineComment = false;
