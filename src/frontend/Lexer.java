@@ -6,10 +6,10 @@ import java.util.List;
 public class Lexer {
     //词法分析只会产生一个错误
     private boolean error;
-    private String errorType;
+    private Character errorType;
     private boolean inMultiLineComment = false;
 
-    public List<Token> tokenize(String line) {
+    public List<Token> tokenize(String line, int lineNum) {
         List<Token> tokens = new ArrayList<>();
         int length = line.length();
         int i = 0;
@@ -50,7 +50,7 @@ public class Lexer {
                 while (i < length && Character.isDigit(line.charAt(i))) {
                     i++;
                 }
-                tokens.add(new Token(TokenType.INTCON, line.substring(start, i)));
+                tokens.add(new Token(TokenType.INTCON, line.substring(start, i), lineNum));
                 continue;
             }
 
@@ -61,119 +61,119 @@ public class Lexer {
                 }
                 String word = line.substring(start, i);
                 TokenType type = getKeywordTokenType(word);
-                tokens.add(new Token(type, word));
+                tokens.add(new Token(type, word, lineNum));
                 continue;
             }
 
             switch (currentChar) {
                 case '+':
-                    tokens.add(new Token(TokenType.PLUS, "+"));
+                    tokens.add(new Token(TokenType.PLUS, "+", lineNum));
                     break;
                 case '-':
-                    tokens.add(new Token(TokenType.MINU, "-"));
+                    tokens.add(new Token(TokenType.MINU, "-", lineNum));
                     break;
                 case '*':
-                    tokens.add(new Token(TokenType.MULT, "*"));
+                    tokens.add(new Token(TokenType.MULT, "*", lineNum));
                     break;
                 case '/':
-                    tokens.add(new Token(TokenType.DIV, "/"));
+                    tokens.add(new Token(TokenType.DIV, "/", lineNum));
                     break;
                 case '%':
-                    tokens.add(new Token(TokenType.MOD, "%"));
+                    tokens.add(new Token(TokenType.MOD, "%", lineNum));
                     break;
                 case '<':
                     if (i + 1 < length && line.charAt(i + 1) == '=') {
-                        tokens.add(new Token(TokenType.LEQ, "<="));
+                        tokens.add(new Token(TokenType.LEQ, "<=", lineNum));
                         i++;
                     } else {
-                        tokens.add(new Token(TokenType.LSS, "<"));
+                        tokens.add(new Token(TokenType.LSS, "<", lineNum));
                     }
                     break;
                 case '>':
                     if (i + 1 < length && line.charAt(i + 1) == '=') {
-                        tokens.add(new Token(TokenType.GEQ, ">="));
+                        tokens.add(new Token(TokenType.GEQ, ">=", lineNum));
                         i++;
                     } else {
-                        tokens.add(new Token(TokenType.GRE, ">"));
+                        tokens.add(new Token(TokenType.GRE, ">", lineNum));
                     }
                     break;
                 case '=':
                     if (i + 1 < length && line.charAt(i + 1) == '=') {
-                        tokens.add(new Token(TokenType.EQL, "=="));
+                        tokens.add(new Token(TokenType.EQL, "==", lineNum));
                         i++;
                     } else {
-                        tokens.add(new Token(TokenType.ASSIGN, "="));
+                        tokens.add(new Token(TokenType.ASSIGN, "=", lineNum));
                     }
                     break;
                 case '!':
                     if (i + 1 < length && line.charAt(i + 1) == '=') {
-                        tokens.add(new Token(TokenType.NEQ, "!="));
+                        tokens.add(new Token(TokenType.NEQ, "!=", lineNum));
                         i++;
                     } else {
-                        tokens.add(new Token(TokenType.NOT, "!"));
+                        tokens.add(new Token(TokenType.NOT, "!", lineNum));
                     }
                     break;
                 case '&':
+                    tokens.add(new Token(TokenType.AND, "&&", lineNum));
                     if (i + 1 < length && line.charAt(i + 1) == '&') {
-                        tokens.add(new Token(TokenType.AND, "&&"));
                         i++;
                     } else {
-                        setError("a");
+                        setError('a');
                         //继续扫描
                     }
                     break;
                 case '|':
+                    tokens.add(new Token(TokenType.OR, "||", lineNum));
                     if (i + 1 < length && line.charAt(i + 1) == '|') {
-                        tokens.add(new Token(TokenType.OR, "||"));
                         i++;
                     } else {
-                        setError("a");
+                        setError('a');
                         //继续扫描
                     }
                     break;
                 case ';':
-                    tokens.add(new Token(TokenType.SEMICN, ";"));
+                    tokens.add(new Token(TokenType.SEMICN, ";", lineNum));
                     break;
                 case ',':
-                    tokens.add(new Token(TokenType.COMMA, ","));
+                    tokens.add(new Token(TokenType.COMMA, ",", lineNum));
                     break;
                 case '(':
-                    tokens.add(new Token(TokenType.LPARENT, "("));
+                    tokens.add(new Token(TokenType.LPARENT, "(", lineNum));
                     break;
                 case ')':
-                    tokens.add(new Token(TokenType.RPARENT, ")"));
+                    tokens.add(new Token(TokenType.RPARENT, ")", lineNum));
                     break;
                 case '[':
-                    tokens.add(new Token(TokenType.LBRACK, "["));
+                    tokens.add(new Token(TokenType.LBRACK, "[", lineNum));
                     break;
                 case ']':
-                    tokens.add(new Token(TokenType.RBRACK, "]"));
+                    tokens.add(new Token(TokenType.RBRACK, "]", lineNum));
                     break;
                 case '{':
-                    tokens.add(new Token(TokenType.LBRACE, "{"));
+                    tokens.add(new Token(TokenType.LBRACE, "{", lineNum));
                     break;
                 case '}':
-                    tokens.add(new Token(TokenType.RBRACE, "}"));
+                    tokens.add(new Token(TokenType.RBRACE, "}", lineNum));
                     break;
                 case '\'':
                     if (i + 3 < length && line.charAt(i + 1) == '\\' && line.charAt(i + 3) == '\'') {
                         String charConst = line.substring(i, i + 4);
                         if (isValidCharConst(charConst)) {
-                            tokens.add(new Token(TokenType.CHRCON, charConst));
+                            tokens.add(new Token(TokenType.CHRCON, charConst, lineNum));
                             i += 3;
                         } else {
-                            setError("INVALID_CHAR_CONST");
+                            //setError("INVALID_CHAR_CONST");
                         }
                     } else if (i + 2 < length && line.charAt(i + 2) == '\'') {
                         String charConst = line.substring(i, i + 3);
                         if (isValidCharConst(charConst)) {
-                            tokens.add(new Token(TokenType.CHRCON, charConst));
+                            tokens.add(new Token(TokenType.CHRCON, charConst, lineNum));
                             i += 2;
                         } else {
-                            setError("INVALID_CHAR_CONST");
+                            //setError("INVALID_CHAR_CONST");
                         }
                     } else {
-                        setError("INVALID_CHAR_CONST");
+                        //setError("INVALID_CHAR_CONST");
                     }
                     break;
                 case '\"':
@@ -187,13 +187,13 @@ public class Lexer {
                         }
                     }
                     if (i < length) {
-                        tokens.add(new Token(TokenType.STRCON, line.substring(start, i + 1)));
+                        tokens.add(new Token(TokenType.STRCON, line.substring(start, i + 1), lineNum));
                     } else {
-                        setError("INVALID_STRING_CONST");
+                        //setError("INVALID_STRING_CONST");
                     }
                     break;
                 default:
-                    setError("UNKNOWN");
+                    //setError("UNKNOWN");
             }
             i++;
         }
@@ -234,7 +234,7 @@ public class Lexer {
         };
     }
 
-    private void setError(String errorType) {
+    private void setError(Character errorType) {
         this.error = true;
         this.errorType = errorType;
     }
@@ -243,7 +243,7 @@ public class Lexer {
         return error;
     }
 
-    public String getErrorType() {
+    public Character getErrorType() {
         return errorType;
     }
 }

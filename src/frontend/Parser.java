@@ -1,34 +1,80 @@
 package frontend;
-
 import java.util.List;
-import java.util.Iterator;
+import java.util.Objects;
 
 public class Parser {
     private final List<Token> tokens;
-    private final Iterator<Token> iterator;
+    private int index;
     private Token currentToken;
+    private final List<String> parserOutput;
+    private final ErrorList errors;
 
-    public Parser(List<Token> tokens) {
+    public Parser(List<Token> tokens, List<String> parserOutput, ErrorList errors) {
         this.tokens = tokens;
-        this.iterator = tokens.iterator();
-        this.currentToken = iterator.hasNext() ? iterator.next() : null;
+        this.index = 0;
+        this.currentToken = this.tokens.get(this.index);
+        this.parserOutput = parserOutput;
+        this.errors = errors;
+    }
+
+    private void addTokenOutput(Token token) {
+        if (token != null) {
+            this.parserOutput.add(token.type() + " " + token.value());
+        }
+    }
+
+    private void deleteTokenOutput() {
+        this.parserOutput.remove(this.parserOutput.size() - 1);
+    }
+
+    private void addSyntaxOutput(SyntaxType syntax) {
+        this.parserOutput.add('<' + syntax.toString() + '>');
+    }
+
+    private Token getLastToken() {
+        return this.tokens.get(this.index - 1);
+    }
+
+    private Token getNextToken() {
+        return index <= tokens.size() - 1 ? this.tokens.get(this.index + 1) : null;
+    }
+
+    private Token getNext2Token() {
+        return index <= tokens.size() - 2 ? this.tokens.get(this.index + 2) : null;
     }
 
     private void nextToken() {
-        currentToken = iterator.hasNext() ? iterator.next() : null;
+        addTokenOutput(this.currentToken);
+        this.index += 1;
+        this.currentToken = index <= tokens.size() - 1 ? this.tokens.get(this.index) : null;
+    }
+
+    private void prevToken() {
+        this.index -= 1;
+        this.currentToken = this.tokens.get(this.index);
+        deleteTokenOutput();
     }
 
     private boolean match(TokenType type) {
-        if (currentToken != null && currentToken.type() == type) {
+        if (this.currentToken != null && this.currentToken.type() == type) {
             nextToken();
             return true;
+        } else {
+            return false;
         }
-        return false;
     }
 
     private void expect(TokenType type) {
         if (!match(type)) {
-            throw new RuntimeException("Syntax error: expected " + type);
+            if (type == TokenType.SEMICN) {
+                errors.addError(getLastToken().line(), 'i');
+            } else if (type == TokenType.RPARENT) {
+                errors.addError(getLastToken().line(), 'j');
+            } else if (type == TokenType.RBRACK) {
+                errors.addError(getLastToken().line(), 'k');
+            } else {
+                throw new RuntimeException("Syntax error: expected " + type + " at line " + this.currentToken.line() + "token:" + this.currentToken);
+            }
         }
     }
 
@@ -37,17 +83,22 @@ public class Parser {
     }
 
     private void parseCompUnit() {
-        while (currentToken != null && (currentToken.type() == TokenType.CONSTTK || currentToken.type() == TokenType.INTTK || currentToken.type() == TokenType.CHARTK)) {
+        while ((currentToken.type() == TokenType.CONSTTK) ||
+                (Objects.requireNonNull(getNextToken()).type() == TokenType.IDENFR &&
+                        (currentToken.type() == TokenType.INTTK || currentToken.type() == TokenType.CHARTK) &&
+                        (Objects.requireNonNull(getNext2Token()).type() != TokenType.LPARENT))) {
             if (currentToken.type() == TokenType.CONSTTK) {
                 parseConstDecl();
             } else {
                 parseVarDecl();
             }
         }
-        while (currentToken != null && (currentToken.type() == TokenType.VOIDTK || currentToken.type() == TokenType.INTTK || currentToken.type() == TokenType.CHARTK)) {
+        while (currentToken.type() == TokenType.VOIDTK || currentToken.type() == TokenType.CHARTK ||
+                (currentToken.type() == TokenType.INTTK && Objects.requireNonNull(getNextToken()).type() != TokenType.MAINTK)) {
             parseFuncDef();
         }
         parseMainFuncDef();
+        addSyntaxOutput(SyntaxType.CompUnit);
     }
 
     private void parseConstDecl() {
@@ -57,6 +108,8 @@ public class Parser {
             parseConstDef();
         } while (match(TokenType.COMMA));
         expect(TokenType.SEMICN);
+
+        addSyntaxOutput(SyntaxType.ConstDecl);
     }
 
     private void parseBType() {
@@ -73,10 +126,14 @@ public class Parser {
         }
         expect(TokenType.ASSIGN);
         parseConstInitVal();
+
+        addSyntaxOutput(SyntaxType.ConstDef);
     }
 
     private void parseConstExp() {
         parseAddExp();
+
+        addSyntaxOutput(SyntaxType.ConstExp);
     }
 
     private void parseAddExp() {
@@ -85,6 +142,8 @@ public class Parser {
             nextToken();
             parseMulExp();
         }
+
+        addSyntaxOutput(SyntaxType.AddExp);
     }
 
     private void parseMulExp() {
@@ -93,13 +152,16 @@ public class Parser {
             nextToken();
             parseUnaryExp();
         }
+
+        addSyntaxOutput(SyntaxType.MulExp);
     }
 
     private void parseUnaryExp() {
         if (currentToken != null && (currentToken.type() == TokenType.PLUS || currentToken.type() == TokenType.MINU || currentToken.type() == TokenType.NOT)) {
-            nextToken();
+            parseUnaryOp();
             parseUnaryExp();
-        } else if (currentToken != null && currentToken.type() == TokenType.IDENFR) {
+        } else if (currentToken != null &&
+                currentToken.type() == TokenType.IDENFR && Objects.requireNonNull(getNextToken()).type() == TokenType.LPARENT) {
             nextToken();
             if (match(TokenType.LPARENT)) {
                 if (currentToken != null && currentToken.type() != TokenType.RPARENT) {
@@ -110,9 +172,16 @@ public class Parser {
         } else {
             parsePrimaryExp();
         }
+
+        addSyntaxOutput(SyntaxType.UnaryExp);
     }
 
     private void parseFuncRParams() {
+        do {
+            parseExp();
+        } while (match(TokenType.COMMA));
+
+        addSyntaxOutput(SyntaxType.FuncRParams);
     }
 
     private void parsePrimaryExp() {
@@ -122,16 +191,20 @@ public class Parser {
         } else if (currentToken != null && currentToken.type() == TokenType.IDENFR) {
             parseLVal();
         } else if (currentToken != null && currentToken.type() == TokenType.INTCON) {
-            nextToken();
+            parseNumber();
         } else if (currentToken != null && currentToken.type() == TokenType.CHRCON) {
-            nextToken();
+            parseCharacter();
         } else {
             throw new RuntimeException("Syntax error: expected PrimaryExp");
         }
+
+        addSyntaxOutput(SyntaxType.PrimaryExp);
     }
 
     private void parseExp() {
         parseAddExp();
+
+        addSyntaxOutput(SyntaxType.Exp);
     }
 
     private void parseLVal() {
@@ -140,6 +213,8 @@ public class Parser {
             parseExp();
             expect(TokenType.RBRACK);
         }
+
+        addSyntaxOutput(SyntaxType.LVal);
     }
 
     private void parseConstInitVal() {
@@ -151,9 +226,13 @@ public class Parser {
                 } while (match(TokenType.COMMA));
             }
             expect(TokenType.RBRACE);
+        } else if (currentToken != null && currentToken.type() == TokenType.STRCON) {
+            nextToken();
         } else {
             parseConstExp();
         }
+
+        addSyntaxOutput(SyntaxType.ConstInitVal);
     }
 
     private void parseVarDecl() {
@@ -162,6 +241,8 @@ public class Parser {
             parseVarDef();
         } while (match(TokenType.COMMA));
         expect(TokenType.SEMICN);
+
+        addSyntaxOutput(SyntaxType.VarDecl);
     }
 
     private void parseVarDef() {
@@ -173,6 +254,8 @@ public class Parser {
         if (match(TokenType.ASSIGN)) {
             parseInitVal();
         }
+
+        addSyntaxOutput(SyntaxType.VarDef);
     }
 
     private void parseInitVal() {
@@ -184,9 +267,13 @@ public class Parser {
                 } while (match(TokenType.COMMA));
             }
             expect(TokenType.RBRACE);
+        } else if (currentToken != null && currentToken.type() == TokenType.STRCON) {
+            nextToken();
         } else {
             parseExp();
         }
+
+        addSyntaxOutput(SyntaxType.InitVal);
     }
 
     private void parseFuncDef() {
@@ -198,18 +285,24 @@ public class Parser {
         }
         expect(TokenType.RPARENT);
         parseBlock();
+
+        addSyntaxOutput(SyntaxType.FuncDef);
     }
 
     private void parseFuncType() {
         if (!(match(TokenType.VOIDTK) || match(TokenType.INTTK) || match(TokenType.CHARTK))) {
             throw new RuntimeException("Syntax error: expected FuncType");
         }
+
+        addSyntaxOutput(SyntaxType.FuncType);
     }
 
     private void parseFuncFParams() {
         do {
             parseFuncFParam();
         } while (match(TokenType.COMMA));
+
+        addSyntaxOutput(SyntaxType.FuncFParams);
     }
 
     private void parseFuncFParam() {
@@ -218,14 +311,18 @@ public class Parser {
         if (match(TokenType.LBRACK)) {
             expect(TokenType.RBRACK);
         }
+
+        addSyntaxOutput(SyntaxType.FuncFParam);
     }
 
     private void parseBlock() {
         expect(TokenType.LBRACE);
-        while (currentToken != null && (currentToken.type() == TokenType.CONSTTK || currentToken.type() == TokenType.INTTK || currentToken.type() == TokenType.CHARTK || currentToken.type() == TokenType.LBRACE || currentToken.type() == TokenType.IFTK || currentToken.type() == TokenType.FORTK || currentToken.type() == TokenType.BREAKTK || currentToken.type() == TokenType.CONTINUETK || currentToken.type() == TokenType.RETURNTK || currentToken.type() == TokenType.PRINTFTK || currentToken.type() == TokenType.IDENFR || currentToken.type() == TokenType.SEMICN)) {
+        while (currentToken != null && (currentToken.typeSymbolizeDecl() || currentToken.typeSymbolizeStmt())) {
             parseBlockItem();
         }
         expect(TokenType.RBRACE);
+
+        addSyntaxOutput(SyntaxType.Block);
     }
 
     private void parseBlockItem() {
@@ -244,28 +341,12 @@ public class Parser {
         }
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     private void parseStmt() {
-        if (currentToken != null && currentToken.type() == TokenType.IDENFR) {
-            parseLVal();
-            if (match(TokenType.ASSIGN)) {
-                if (match(TokenType.GETINTTK)) {
-                    expect(TokenType.LPARENT);
-                    expect(TokenType.RPARENT);
-                    expect(TokenType.SEMICN);
-                } else if (match(TokenType.GETCHARTK)) {
-                    expect(TokenType.LPARENT);
-                    expect(TokenType.RPARENT);
-                    expect(TokenType.SEMICN);
-                } else {
-                    parseExp();
-                    expect(TokenType.SEMICN);
-                }
-            } else {
-                throw new RuntimeException("Syntax error: expected '='");
-            }
-        } else if (match(TokenType.SEMICN)) {
+        if (match(TokenType.SEMICN)) {
             // Empty statement
         } else if (match(TokenType.LBRACE)) {
+            prevToken();
             parseBlock();
         } else if (match(TokenType.IFTK)) {
             expect(TokenType.LPARENT);
@@ -277,7 +358,7 @@ public class Parser {
             }
         } else if (match(TokenType.FORTK)) {
             expect(TokenType.LPARENT);
-            if (currentToken != null && currentToken.type() == TokenType.IDENFR) {
+            if (currentToken != null && currentToken.type() != TokenType.SEMICN) {
                 parseForStmt();
             }
             expect(TokenType.SEMICN);
@@ -285,7 +366,7 @@ public class Parser {
                 parseCond();
             }
             expect(TokenType.SEMICN);
-            if (currentToken != null && currentToken.type() == TokenType.IDENFR) {
+            if (currentToken != null && currentToken.type() != TokenType.RPARENT) {
                 parseForStmt();
             }
             expect(TokenType.RPARENT);
@@ -308,25 +389,59 @@ public class Parser {
             expect(TokenType.RPARENT);
             expect(TokenType.SEMICN);
         } else {
-            parseExp();
-            expect(TokenType.SEMICN);
+            int index_temp = this.index;
+            while (currentToken != null && currentToken.type() != TokenType.SEMICN && currentToken.type() != TokenType.ASSIGN) {
+                nextToken();
+            }
+            Token signToken = currentToken;
+            while (this.index > index_temp) {
+                prevToken();
+            }
+            if (signToken.type() == TokenType.ASSIGN) {
+                parseLVal();
+                if (match(TokenType.ASSIGN)) {
+                    if (match(TokenType.GETINTTK)) {
+                        expect(TokenType.LPARENT);
+                        expect(TokenType.RPARENT);
+                        expect(TokenType.SEMICN);
+                    } else if (match(TokenType.GETCHARTK)) {
+                        expect(TokenType.LPARENT);
+                        expect(TokenType.RPARENT);
+                        expect(TokenType.SEMICN);
+                    } else {
+                        parseExp();
+                        expect(TokenType.SEMICN);
+                    }
+                }
+            } else {
+                parseExp();
+                expect(TokenType.SEMICN);
+            }
         }
+
+        addSyntaxOutput(SyntaxType.Stmt);
     }
 
     private void parseCond() {
         parseLOrExp();
+
+        addSyntaxOutput(SyntaxType.Cond);
     }
 
     private void parseLOrExp() {
         do {
             parseLAndExp();
         } while (match(TokenType.OR));
+
+        addSyntaxOutput(SyntaxType.LOrExp);
     }
 
     private void parseLAndExp() {
         do {
             parseEqExp();
         } while (match(TokenType.AND));
+
+        addSyntaxOutput(SyntaxType.LAndExp);
     }
 
     private void parseEqExp() {
@@ -335,6 +450,8 @@ public class Parser {
             nextToken();
             parseRelExp();
         }
+
+        addSyntaxOutput(SyntaxType.EqExp);
     }
 
     private void parseRelExp() {
@@ -343,12 +460,16 @@ public class Parser {
             nextToken();
             parseAddExp();
         }
+
+        addSyntaxOutput(SyntaxType.RelExp);
     }
 
     private void parseForStmt() {
         parseLVal();
         expect(TokenType.ASSIGN);
         parseExp();
+
+        addSyntaxOutput(SyntaxType.ForStmt);
     }
 
     private void parseMainFuncDef() {
@@ -357,9 +478,27 @@ public class Parser {
         expect(TokenType.LPARENT);
         expect(TokenType.RPARENT);
         parseBlock();
+
+        addSyntaxOutput(SyntaxType.MainFuncDef);
     }
 
-    public List<Token> getTokens() {
-        return tokens;
+    private void parseNumber() {
+        expect(TokenType.INTCON);
+
+        addSyntaxOutput(SyntaxType.Number);
+    }
+
+    private void parseCharacter() {
+        expect(TokenType.CHRCON);
+
+        addSyntaxOutput(SyntaxType.Character);
+    }
+
+    private void parseUnaryOp() {
+        if (!(match(TokenType.PLUS) || match(TokenType.MINU) || match(TokenType.NOT))) {
+            throw new RuntimeException("Syntax error: expected UnaryOp");
+        }
+
+        addSyntaxOutput(SyntaxType.UnaryOp);
     }
 }
