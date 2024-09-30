@@ -29,6 +29,7 @@ public record Token(TokenType type, String value, int line) {
         return type == TokenType.LPARENT
                 || type == TokenType.IDENFR
                 || type == TokenType.INTCON
+                || type == TokenType.CHRCON
                 || type == TokenType.NOT
                 || type == TokenType.PLUS
                 || type == TokenType.MINU;

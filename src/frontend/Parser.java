@@ -73,7 +73,7 @@ public class Parser {
             } else if (type == TokenType.RBRACK) {
                 errors.addError(getLastToken().line(), 'k');
             } else {
-                throw new RuntimeException("Syntax error: expected " + type + " at line " + this.currentToken.line() + "token:" + this.currentToken);
+                throw new RuntimeException("Syntax error: expected " + type + " at line " + this.currentToken.line() + " token: " + this.currentToken);
             }
         }
     }
@@ -139,6 +139,7 @@ public class Parser {
     private void parseAddExp() {
         parseMulExp();
         while (currentToken != null && (currentToken.type() == TokenType.PLUS || currentToken.type() == TokenType.MINU)) {
+            addSyntaxOutput(SyntaxType.AddExp);
             nextToken();
             parseMulExp();
         }
@@ -149,6 +150,7 @@ public class Parser {
     private void parseMulExp() {
         parseUnaryExp();
         while (currentToken != null && (currentToken.type() == TokenType.MULT || currentToken.type() == TokenType.DIV || currentToken.type() == TokenType.MOD)) {
+            addSyntaxOutput(SyntaxType.MulExp);
             nextToken();
             parseUnaryExp();
         }
@@ -429,17 +431,23 @@ public class Parser {
     }
 
     private void parseLOrExp() {
-        do {
+        parseLAndExp();
+        while (currentToken != null && currentToken.type() == TokenType.OR) {
+            addSyntaxOutput(SyntaxType.LOrExp);
+            nextToken();
             parseLAndExp();
-        } while (match(TokenType.OR));
+        }
 
         addSyntaxOutput(SyntaxType.LOrExp);
     }
 
     private void parseLAndExp() {
-        do {
+        parseEqExp();
+        while (currentToken != null && currentToken.type() == TokenType.AND) {
+            addSyntaxOutput(SyntaxType.LAndExp);
+            nextToken();
             parseEqExp();
-        } while (match(TokenType.AND));
+        }
 
         addSyntaxOutput(SyntaxType.LAndExp);
     }
@@ -447,6 +455,7 @@ public class Parser {
     private void parseEqExp() {
         parseRelExp();
         while (currentToken != null && (currentToken.type() == TokenType.EQL || currentToken.type() == TokenType.NEQ)) {
+            addSyntaxOutput(SyntaxType.EqExp);
             nextToken();
             parseRelExp();
         }
@@ -457,6 +466,7 @@ public class Parser {
     private void parseRelExp() {
         parseAddExp();
         while (currentToken != null && (currentToken.type() == TokenType.LSS || currentToken.type() == TokenType.GRE || currentToken.type() == TokenType.LEQ || currentToken.type() == TokenType.GEQ)) {
+            addSyntaxOutput(SyntaxType.RelExp);
             nextToken();
             parseAddExp();
         }
