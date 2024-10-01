@@ -4,8 +4,12 @@ import frontend.Parser;
 import frontend.Token;
 import java.io.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Compiler {
+    private static final Logger logger = Logger.getLogger(Compiler.class.getName());
+
     public static void main(String[] args) {
         String inputFileName = "testfile.txt";
         //String lexerOutputFileName = "lexer.txt";
@@ -28,11 +32,11 @@ public class Compiler {
             tokens.addAll(tokensTemp);
             if (lexer.hasError()) {
                 errors.addError(i + 1, lexer.getErrorType());
-            } else {
-                for (Token token : tokensTemp) {
+            } //else {
+                //for (Token token : tokensTemp) {
                     //lexerOutput.add(token.type() + " " + token.value());
-                }
-            }
+                //}
+            //}
         }
 
         Parser parser = new Parser(tokens,parserOutput,errors);
@@ -58,7 +62,7 @@ public class Compiler {
                 lines.add(line);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Error reading file: " + fileName, e);
         }
         return lines;
     }
@@ -72,7 +76,7 @@ public class Compiler {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Error writing file: " + fileName, e);
         }
     }
 }

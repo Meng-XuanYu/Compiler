@@ -400,6 +400,7 @@ public class Parser {
                 prevToken();
             }
             if (signToken.type() == TokenType.ASSIGN) {
+                List<String> parserOutputTemp = List.copyOf(this.parserOutput);
                 parseLVal();
                 if (match(TokenType.ASSIGN)) {
                     if (match(TokenType.GETINTTK)) {
@@ -414,6 +415,13 @@ public class Parser {
                         parseExp();
                         expect(TokenType.SEMICN);
                     }
+                } else {
+                    this.parserOutput.clear();
+                    this.parserOutput.addAll(parserOutputTemp);
+                    this.index = index_temp;
+                    this.currentToken = this.tokens.get(this.index);
+                    parseExp();
+                    expect(TokenType.SEMICN);
                 }
             } else {
                 parseExp();
