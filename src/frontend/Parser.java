@@ -1,4 +1,5 @@
 package frontend;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -8,15 +9,18 @@ public class Parser {
     private Token currentToken;
     private final List<String> parserOutput;
     private final ErrorList errors;
+    private final SymbolTable symbolTable;
 
-    public Parser(List<Token> tokens, List<String> parserOutput, ErrorList errors) {
+    public Parser(List<Token> tokens, List<String> parserOutput, ErrorList errors, SymbolTable symbolTable) {
         this.tokens = tokens;
         this.index = 0;
         this.currentToken = this.tokens.get(this.index);
         this.parserOutput = parserOutput;
         this.errors = errors;
+        this.symbolTable = symbolTable;
     }
 
+    // 语法分析输出函数群
     private void addTokenOutput(Token token) {
         if (token != null) {
             this.parserOutput.add(token.type() + " " + token.value());
@@ -31,6 +35,7 @@ public class Parser {
         this.parserOutput.add('<' + syntax.toString() + '>');
     }
 
+    // 获取后续token函数群
     private Token getLastToken() {
         return this.tokens.get(this.index - 1);
     }
@@ -43,6 +48,7 @@ public class Parser {
         return index <= tokens.size() - 2 ? this.tokens.get(this.index + 2) : null;
     }
 
+    // 前进后退函数群
     private void nextToken() {
         addTokenOutput(this.currentToken);
         this.index += 1;
@@ -55,6 +61,7 @@ public class Parser {
         deleteTokenOutput();
     }
 
+    // 判断函数群，直接用match的都是课题组保证不会出错的地方
     private boolean match(TokenType type) {
         if (this.currentToken != null && this.currentToken.type() == type) {
             nextToken();
@@ -78,6 +85,7 @@ public class Parser {
         }
     }
 
+    // 语法分析函数群
     public void parse() {
         parseCompUnit();
     }
@@ -103,30 +111,42 @@ public class Parser {
 
     private void parseConstDecl() {
         expect(TokenType.CONSTTK);
-        parseBType();
+        boolean isChar = parseBType();
         do {
-            parseConstDef();
+            parseConstDef(isChar);
         } while (match(TokenType.COMMA));
         expect(TokenType.SEMICN);
 
         addSyntaxOutput(SyntaxType.ConstDecl);
     }
 
-    private void parseBType() {
-        if (!(match(TokenType.INTTK) || match(TokenType.CHARTK))) {
+    private boolean parseBType() {
+        if (match(TokenType.INTTK)) {
+            return false;
+        } else if (match(TokenType.CHARTK)) {
+            return true;
+        } else {
             throw new RuntimeException("Syntax error: expected BType");
         }
     }
 
-    private void parseConstDef() {
+    private void parseConstDef(boolean isChar) {
+        String name = currentToken.value();
         expect(TokenType.IDENFR);
+        boolean isArr = false;
         if (match(TokenType.LBRACK)) {
+            isArr = true;
             parseConstExp();
             expect(TokenType.RBRACK);
         }
         expect(TokenType.ASSIGN);
         parseConstInitVal();
 
+        if (symbolTable.containsSymbolInCurrentScope(name)) {
+            errors.addError(currentToken.line(), 'b');
+        } else {
+            this.symbolTable.addSymbol(name, isArr && isChar ? SymbolType.ConstCharArray : isChar ? SymbolType.ConstChar : isArr ? SymbolType.ConstIntArray : SymbolType.ConstInt);
+        }
         addSyntaxOutput(SyntaxType.ConstDef);
     }
 
@@ -136,8 +156,8 @@ public class Parser {
         addSyntaxOutput(SyntaxType.ConstExp);
     }
 
-    private void parseAddExp() {
-        parseMulExp();
+    private SymbolType parseAddExp() {
+        SymbolType type = parseMulExp();
         while (currentToken != null && (currentToken.type() == TokenType.PLUS || currentToken.type() == TokenType.MINU)) {
             addSyntaxOutput(SyntaxType.AddExp);
             nextToken();
@@ -145,10 +165,11 @@ public class Parser {
         }
 
         addSyntaxOutput(SyntaxType.AddExp);
+        return type;
     }
 
-    private void parseMulExp() {
-        parseUnaryExp();
+    private SymbolType parseMulExp() {
+        SymbolType type = parseUnaryExp();
         while (currentToken != null && (currentToken.type() == TokenType.MULT || currentToken.type() == TokenType.DIV || currentToken.type() == TokenType.MOD)) {
             addSyntaxOutput(SyntaxType.MulExp);
             nextToken();
@@ -156,60 +177,92 @@ public class Parser {
         }
 
         addSyntaxOutput(SyntaxType.MulExp);
+        return type;
     }
 
-    private void parseUnaryExp() {
+    private SymbolType parseUnaryExp() {
+        SymbolType type;
         if (currentToken != null && (currentToken.type() == TokenType.PLUS || currentToken.type() == TokenType.MINU || currentToken.type() == TokenType.NOT)) {
             parseUnaryOp();
-            parseUnaryExp();
+            type = parseUnaryExp();
         } else if (currentToken != null &&
                 currentToken.type() == TokenType.IDENFR && Objects.requireNonNull(getNextToken()).type() == TokenType.LPARENT) {
+            String functionName = currentToken.value();
+            if (symbolTable.notContainsSymbol(functionName)) {
+                this.errors.addError(currentToken.line(), 'c');
+            }
+            SymbolFunc functionSymbol = (SymbolFunc)symbolTable.getSymbol(functionName);
+            type = functionSymbol.type();
             nextToken();
             if (match(TokenType.LPARENT)) {
+                int paramCount = 0;
+                ArrayList<SymbolType> paramTypes = new ArrayList<>();
                 if (currentToken != null && currentToken.type() != TokenType.RPARENT) {
-                    parseFuncRParams();
+                    paramTypes = parseFuncRParams();
+                    paramCount = paramTypes.size();
                 }
                 expect(TokenType.RPARENT);
+
+                // 检查参数个数和类型是否匹配
+                if (functionSymbol.getParamCount() != paramCount) {
+                    errors.addError(getLastToken().line(), 'd');
+                } else {
+                    if (!functionSymbol.paramCorrect(paramTypes)) {
+                        errors.addError(getLastToken().line(), 'e');
+                    }
+                }
             }
         } else {
-            parsePrimaryExp();
+            type = parsePrimaryExp();
         }
 
         addSyntaxOutput(SyntaxType.UnaryExp);
+        return type;
     }
 
-    private void parseFuncRParams() {
+    private ArrayList<SymbolType> parseFuncRParams() {
+        ArrayList<SymbolType> paramTypes = new ArrayList<>();
         do {
-            parseExp();
+            paramTypes.add(parseExp());
         } while (match(TokenType.COMMA));
 
         addSyntaxOutput(SyntaxType.FuncRParams);
+        return paramTypes;
     }
 
-    private void parsePrimaryExp() {
+    private SymbolType parsePrimaryExp() {
+        SymbolType type;
         if (match(TokenType.LPARENT)) {
-            parseExp();
+            type = parseExp();
             expect(TokenType.RPARENT);
         } else if (currentToken != null && currentToken.type() == TokenType.IDENFR) {
-            parseLVal();
+            type = parseLVal();
         } else if (currentToken != null && currentToken.type() == TokenType.INTCON) {
             parseNumber();
+            type = SymbolType.Int;
         } else if (currentToken != null && currentToken.type() == TokenType.CHRCON) {
             parseCharacter();
+            type = SymbolType.Char;
         } else {
             throw new RuntimeException("Syntax error: expected PrimaryExp");
         }
 
         addSyntaxOutput(SyntaxType.PrimaryExp);
+        return type;
     }
 
-    private void parseExp() {
-        parseAddExp();
+    private SymbolType parseExp() {
+        SymbolType type = parseAddExp();
 
         addSyntaxOutput(SyntaxType.Exp);
+        return type;
     }
 
-    private void parseLVal() {
+    private SymbolType parseLVal() {
+        String name = currentToken.value();
+        if (symbolTable.notContainsSymbol(name)) {
+            this.errors.addError(currentToken.line(), 'c');
+        }
         expect(TokenType.IDENFR);
         if (match(TokenType.LBRACK)) {
             parseExp();
@@ -217,6 +270,7 @@ public class Parser {
         }
 
         addSyntaxOutput(SyntaxType.LVal);
+        return symbolTable.getSymbol(name).type();
     }
 
     private void parseConstInitVal() {
@@ -238,18 +292,21 @@ public class Parser {
     }
 
     private void parseVarDecl() {
-        parseBType();
+        boolean isChar = parseBType();
         do {
-            parseVarDef();
+            parseVarDef(isChar);
         } while (match(TokenType.COMMA));
         expect(TokenType.SEMICN);
 
         addSyntaxOutput(SyntaxType.VarDecl);
     }
 
-    private void parseVarDef() {
+    private void parseVarDef(boolean isChar) {
+        String name = currentToken.value();
         expect(TokenType.IDENFR);
+        boolean isArr = false;
         if (match(TokenType.LBRACK)) {
+            isArr = true;
             parseConstExp();
             expect(TokenType.RBRACK);
         }
@@ -257,6 +314,11 @@ public class Parser {
             parseInitVal();
         }
 
+        if (symbolTable.containsSymbolInCurrentScope(name)) {
+            errors.addError(currentToken.line(), 'b');
+        } else {
+            this.symbolTable.addSymbol(name, isArr && isChar ? SymbolType.CharArray : isChar ? SymbolType.Char : isArr ? SymbolType.IntArray : SymbolType.Int);
+        }
         addSyntaxOutput(SyntaxType.VarDef);
     }
 
@@ -279,11 +341,19 @@ public class Parser {
     }
 
     private void parseFuncDef() {
-        parseFuncType();
+        TokenType tokenType = parseFuncType();
+        String name = currentToken.value();
+        if (symbolTable.containsSymbolInCurrentScope(name)) {
+            errors.addError(currentToken.line(), 'b');
+        } else {
+            this.symbolTable.addSymbol(name, tokenType == TokenType.CHARTK ? SymbolType.CharFunc : tokenType == TokenType.INTTK ? SymbolType.IntFunc : SymbolType.VoidFunc);
+        }
         expect(TokenType.IDENFR);
         expect(TokenType.LPARENT);
         if (currentToken != null && currentToken.type() != TokenType.RPARENT) {
-            parseFuncFParams();
+            ArrayList<Symbol> params = parseFuncFParams();
+            SymbolFunc symbolFunc = (SymbolFunc)this.symbolTable.getSymbol(name);
+            symbolFunc.setParams(params);
         }
         expect(TokenType.RPARENT);
         parseBlock();
@@ -291,37 +361,55 @@ public class Parser {
         addSyntaxOutput(SyntaxType.FuncDef);
     }
 
-    private void parseFuncType() {
-        if (!(match(TokenType.VOIDTK) || match(TokenType.INTTK) || match(TokenType.CHARTK))) {
+    private TokenType parseFuncType() {
+        addSyntaxOutput(SyntaxType.FuncType);
+        if(match(TokenType.VOIDTK)) {
+            return TokenType.VOIDTK;
+        } else if (match(TokenType.INTTK)) {
+            return TokenType.INTTK;
+        } else if (match(TokenType.CHARTK)) {
+            return TokenType.CHARTK;
+        } else {
             throw new RuntimeException("Syntax error: expected FuncType");
         }
-
-        addSyntaxOutput(SyntaxType.FuncType);
     }
 
-    private void parseFuncFParams() {
+    private ArrayList<Symbol> parseFuncFParams() {
+        ArrayList<Symbol> params = new ArrayList<>();
         do {
-            parseFuncFParam();
+            params.add(parseFuncFParam());
         } while (match(TokenType.COMMA));
 
         addSyntaxOutput(SyntaxType.FuncFParams);
+        return params;
     }
 
-    private void parseFuncFParam() {
-        parseBType();
+    private Symbol parseFuncFParam() {
+        boolean isChar = parseBType();
+        String name = currentToken.value();
         expect(TokenType.IDENFR);
+        boolean isArr = false;
         if (match(TokenType.LBRACK)) {
+            isArr = true;
             expect(TokenType.RBRACK);
         }
 
+        if (symbolTable.containsSymbolInCurrentScope(name)) {
+            errors.addError(currentToken.line(), 'b');
+        } else {
+            this.symbolTable.addSymbolFuncPara(name, isArr && isChar ? SymbolType.CharArray : isChar ? SymbolType.Char : isArr ? SymbolType.IntArray : SymbolType.Int);
+        }
         addSyntaxOutput(SyntaxType.FuncFParam);
+        return this.symbolTable.getSymbol(name);
     }
 
     private void parseBlock() {
         expect(TokenType.LBRACE);
+        this.symbolTable.enterScope();
         while (currentToken != null && (currentToken.typeSymbolizeDecl() || currentToken.typeSymbolizeStmt())) {
             parseBlockItem();
         }
+        this.symbolTable.exitScope();
         expect(TokenType.RBRACE);
 
         addSyntaxOutput(SyntaxType.Block);

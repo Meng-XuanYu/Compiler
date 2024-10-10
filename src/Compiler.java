@@ -1,7 +1,5 @@
-import frontend.ErrorList;
-import frontend.Lexer;
-import frontend.Parser;
-import frontend.Token;
+import frontend.*;
+
 import java.io.*;
 import java.util.*;
 import java.util.logging.Level;
@@ -11,21 +9,28 @@ public class Compiler {
     private static final Logger logger = Logger.getLogger(Compiler.class.getName());
 
     public static void main(String[] args) {
+        // 文件名称声明
         String inputFileName = "testfile.txt";
         //String lexerOutputFileName = "lexer.txt";
         String errorOutputFileName = "error.txt";
         String parserOutputFileName = "parser.txt";
+        String symbolOutputFileName = "symbol.txt";
 
+        // 读取文件
         List<String> lines = readFile(inputFileName);
+
+        // 输出
         //List<String> lexerOutput = new ArrayList<>();
         List<String> errorOutput = new ArrayList<>();
         List<String> parserOutput = new ArrayList<>();
+        List<String> symbolOutput = new ArrayList<>();
 
+        // 错误列表
         ErrorList errors = new ErrorList();
 
+        // 词法分析
         Lexer lexer = new Lexer();
         List<Token> tokens = new ArrayList<>();
-
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
             List<Token> tokensTemp = lexer.tokenize(line, i + 1);
@@ -39,7 +44,11 @@ public class Compiler {
             //}
         }
 
-        Parser parser = new Parser(tokens,parserOutput,errors);
+        // 符号表
+        SymbolTable symbolTable = new SymbolTable();
+
+        // 语法分析
+        Parser parser = new Parser(tokens,parserOutput,errors,symbolTable);
         parser.parse();
 
         if (!errors.isEmpty()) {
@@ -50,7 +59,9 @@ public class Compiler {
             writeFile(errorOutputFileName, errorOutput);
         } else {
             //writeFile(lexerOutputFileName, lexerOutput);
-            writeFile(parserOutputFileName, parserOutput);
+            //writeFile(parserOutputFileName, parserOutput);
+            symbolOutput = symbolTable.printSymbolTable();
+            writeFile(symbolOutputFileName, symbolOutput);
         }
     }
 
