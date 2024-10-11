@@ -11,7 +11,7 @@ public class Compiler {
     public static void main(String[] args) {
         // 文件名称声明
         String inputFileName = "testfile.txt";
-        //String lexerOutputFileName = "lexer.txt";
+        String lexerOutputFileName = "lexer.txt";
         String errorOutputFileName = "error.txt";
         String parserOutputFileName = "parser.txt";
         String symbolOutputFileName = "symbol.txt";
@@ -20,7 +20,7 @@ public class Compiler {
         List<String> lines = readFile(inputFileName);
 
         // 输出
-        //List<String> lexerOutput = new ArrayList<>();
+        List<String> lexerOutput = new ArrayList<>();
         List<String> errorOutput = new ArrayList<>();
         List<String> parserOutput = new ArrayList<>();
         List<String> symbolOutput = new ArrayList<>();
@@ -37,19 +37,21 @@ public class Compiler {
             tokens.addAll(tokensTemp);
             if (lexer.hasError()) {
                 errors.addError(i + 1, lexer.getErrorType());
-            } //else {
-                //for (Token token : tokensTemp) {
-                    //lexerOutput.add(token.type() + " " + token.value());
-                //}
-            //}
+            } else {
+                for (Token token : tokensTemp) {
+                    lexerOutput.add(token.type() + " " + token.value());
+                }
+            }
         }
 
         // 符号表
         SymbolTable symbolTable = new SymbolTable();
 
         // 语法分析
-        Parser parser = new Parser(tokens,parserOutput,errors,symbolTable);
+        Parser parser = new Parser(tokens,errors,symbolTable);
         parser.parse();
+        ParserTreeNode root = parser.getRoot();
+        parserOutput = root.printTree();
 
         if (!errors.isEmpty()) {
             errors.sort();

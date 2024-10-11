@@ -34,5 +34,6 @@ public enum SyntaxType {
     EqExp, // 相等性表达式
     LAndExp, // 逻辑与表达式
     LOrExp, // 逻辑或表达式
-    ConstExp // 常量表达式
+    ConstExp, // 常量表达式
+    Token // 给语法树用的
 }

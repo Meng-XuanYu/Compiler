@@ -44,15 +44,15 @@ public class SymbolTable {
     }
 
     private void addSymbolToTable(String name, Symbol symbol) {
-        if (!this.table.containsKey(this.currentScope)) {
-            this.table.put(this.currentScope, new HashMap<>());
+        if (!this.table.containsKey(symbol.scope())) {
+            this.table.put(symbol.scope(), new HashMap<>());
         }
-        this.table.get(this.currentScope).put(name, symbol);
+        this.table.get(symbol.scope()).put(name, symbol);
 
-        if (!this.tableForPrint.containsKey(this.currentScope)) {
-            this.tableForPrint.put(this.currentScope, new ArrayList<>());
+        if (!this.tableForPrint.containsKey(symbol.scope())) {
+            this.tableForPrint.put(symbol.scope(), new ArrayList<>());
         }
-        this.tableForPrint.get(this.currentScope).add(symbol);
+        this.tableForPrint.get(symbol.scope()).add(symbol);
     }
 
     public Symbol getSymbol(String name) {

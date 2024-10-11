@@ -26,4 +26,8 @@ public class Symbol {
     public SymbolType type() {
         return type;
     }
+
+    public int scope() {
+        return scope;
+    }
 }

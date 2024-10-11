@@ -8,11 +8,7 @@ public class SymbolFunc extends Symbol {
 
     public SymbolFunc(String name, SymbolType type, int scope) {
         super(name, type, scope);
-        if (type == SymbolType.VoidFunc) {
-            this.isReturn = true;
-        } else {
-            this.isReturn = false;
-        }
+        this.isReturn = type == SymbolType.VoidFunc;
         this.params = null;
     }
 
