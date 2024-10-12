@@ -1,4 +1,7 @@
 import frontend.*;
+import frontend.Parser.Parser;
+import frontend.Parser.ParserTreeNode;
+import frontend.Symbol.SymbolTable;
 
 import java.io.*;
 import java.util.*;
@@ -61,10 +64,12 @@ public class Compiler {
             for (int[] error : errors.getErrors()) {
                 errorOutput.add(error[0] + " " + (char) error[1]);
             }
+            deleteFile(symbolOutputFileName);
             writeFile(errorOutputFileName, errorOutput);
         } else {
             //writeFile(lexerOutputFileName, lexerOutput);
             //writeFile(parserOutputFileName, parserOutput);
+            deleteFile(errorOutputFileName);
             writeFile(symbolOutputFileName, symbolOutput);
         }
     }
@@ -92,6 +97,13 @@ public class Compiler {
             }
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Error writing file: " + fileName, e);
+        }
+    }
+
+    private static void deleteFile(String fileName) {
+        File file = new File(fileName);
+        if (file.exists() && file.isFile()) {
+            file.delete();
         }
     }
 }

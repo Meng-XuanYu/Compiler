@@ -1,9 +1,11 @@
-package frontend;
+package frontend.Symbol;
+
+import frontend.SymbolType;
 
 import java.util.*;
 
 public class SymbolTable {
-    private final HashMap<Integer, HashMap<String,Symbol>> table;
+    private final HashMap<Integer, HashMap<String, Symbol>> table;
     private final HashMap<Integer, ArrayList<Symbol>> tableForPrint;
     private final HashMap<Integer, Integer> scopeTree;
     private int currentScope;
@@ -38,9 +40,10 @@ public class SymbolTable {
         addSymbolToTable(name, symbol);
     }
 
-    public void addSymbolFuncPara(String name, SymbolType type) {
+    public Symbol addSymbolFuncPara(String name, SymbolType type) {
         Symbol symbol = new Symbol(name, type, this.topScope + 1);
         addSymbolToTable(name, symbol);
+        return symbol;
     }
 
     private void addSymbolToTable(String name, Symbol symbol) {
@@ -78,10 +81,13 @@ public class SymbolTable {
             if (this.tableForPrint.containsKey(i)) {
                 for (int j = 0; j < this.tableForPrint.get(i).size(); j++) {
                     Symbol symbol = this.tableForPrint.get(i).get(j);
-                    result.add(i + " " + symbol.name() + " " + symbol.type());
+                    if (!Objects.equals(symbol.name(), "main")) {
+                        result.add(i + " " + symbol.name() + " " + symbol.type());
+                    }
                 }
             }
         }
         return result;
     }
+
 }
