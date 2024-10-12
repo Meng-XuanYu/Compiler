@@ -33,7 +33,7 @@ public class SymbolTable {
         if (type == SymbolType.VoidFunc || type == SymbolType.CharFunc || type == SymbolType.IntFunc) {
             symbol = new SymbolFunc(name, type, this.currentScope);
         } else {
-            symbol = new Symbol(name, SymbolType.VoidFunc, this.currentScope);
+            symbol = new Symbol(name, type, this.currentScope);
         }
         addSymbolToTable(name, symbol);
     }

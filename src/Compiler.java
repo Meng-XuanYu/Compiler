@@ -53,6 +53,9 @@ public class Compiler {
         ParserTreeNode root = parser.getRoot();
         parserOutput = root.printTree();
 
+        // 符号表输出
+        symbolOutput = symbolTable.printSymbolTable();
+
         if (!errors.isEmpty()) {
             errors.sort();
             for (int[] error : errors.getErrors()) {
@@ -62,7 +65,6 @@ public class Compiler {
         } else {
             //writeFile(lexerOutputFileName, lexerOutput);
             //writeFile(parserOutputFileName, parserOutput);
-            symbolOutput = symbolTable.printSymbolTable();
             writeFile(symbolOutputFileName, symbolOutput);
         }
     }

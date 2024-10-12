@@ -43,7 +43,7 @@ public class Parser {
         return this.currentToken != null && this.currentToken.type() == type;
     }
 
-    private boolean expect(TokenType type) {
+    private void expect(TokenType type) {
         if (!match(type)) {
             if (type == TokenType.SEMICN) {
                 errors.addError(getLastToken().line(), 'i');
@@ -54,10 +54,8 @@ public class Parser {
             } else {
                 throw new RuntimeException("Syntax error: expected " + type + " at line " + this.currentToken.line() + " token: " + this.currentToken);
             }
-            return false;
         } else {
             nextToken();
-            return true;
         }
     }
 
@@ -98,7 +96,11 @@ public class Parser {
             expect(TokenType.COMMA);
             node.addChild(parseConstDef(isChar));
         }
-        node.addTokenChild(currentToken);
+        if (match(TokenType.SEMICN)) {
+            node.addTokenChild(currentToken);
+        } else {
+            node.addSemicnChild(getLastToken().line());
+        }
         expect(TokenType.SEMICN);
 
         return node;
@@ -123,7 +125,11 @@ public class Parser {
             expect(TokenType.LBRACK);
             isArr = true;
             node.addChild(parseConstExp());
-            node.addTokenChild(currentToken);
+            if (match(TokenType.RBRACK)) {
+                node.addTokenChild(currentToken);
+            } else {
+                node.addRbrackChild(getLastToken().line());
+            }
             expect(TokenType.RBRACK);
         }
         node.addTokenChild(currentToken);
@@ -199,7 +205,11 @@ public class Parser {
                 if (currentToken != null && currentToken.type() != TokenType.RPARENT) {
                     node.addChild(parseFuncRParams());
                 }
-                node.addTokenChild(currentToken);
+                if (match(TokenType.RPARENT)) {
+                    node.addTokenChild(currentToken);
+                } else {
+                    node.addRparentChild(getLastToken().line());
+                }
                 expect(TokenType.RPARENT);
 
                 // 检查参数个数和类型是否匹配
@@ -239,7 +249,11 @@ public class Parser {
 
             node.addChild(parseExp());
 
-            node.addTokenChild(currentToken);
+            if (match(TokenType.RPARENT)) {
+                node.addTokenChild(currentToken);
+            } else {
+                node.addRparentChild(getLastToken().line());
+            }
             expect(TokenType.RPARENT);
         } else if (currentToken != null && currentToken.type() == TokenType.IDENFR) {
             node.addChild(parseLVal());
@@ -275,7 +289,11 @@ public class Parser {
 
             node.addChild(parseExp());
 
-            node.addTokenChild(currentToken);
+            if (match(TokenType.RBRACK)) {
+                node.addTokenChild(currentToken);
+            } else {
+                node.addRbrackChild(getLastToken().line());
+            }
             expect(TokenType.RBRACK);
         }
 
@@ -317,7 +335,11 @@ public class Parser {
             expect(TokenType.COMMA);
             node.addChild(parseVarDef(isChar));
         }
-        node.addTokenChild(currentToken);
+        if (match(TokenType.SEMICN)) {
+            node.addTokenChild(currentToken);
+        } else {
+            node.addSemicnChild(getLastToken().line());
+        }
         expect(TokenType.SEMICN);
 
         return node;
@@ -335,7 +357,11 @@ public class Parser {
             expect(TokenType.LBRACK);
             isArr = true;
             node.addChild(parseConstExp());
-            node.addTokenChild(currentToken);
+            if (match(TokenType.RBRACK)) {
+                node.addTokenChild(currentToken);
+            } else {
+                node.addRbrackChild(getLastToken().line());
+            }
             expect(TokenType.RBRACK);
         }
         if (match(TokenType.ASSIGN)) {
@@ -396,7 +422,11 @@ public class Parser {
 //            SymbolFunc symbolFunc = (SymbolFunc)this.symbolTable.getSymbol(name);
 //            symbolFunc.setParams(params);
         }
-        node.addTokenChild(currentToken);
+        if (match(TokenType.RPARENT)) {
+            node.addTokenChild(currentToken);
+        } else {
+            node.addRparentChild(getLastToken().line());
+        }
         expect(TokenType.RPARENT);
         node.addChild(parseBlock());
 
@@ -436,7 +466,11 @@ public class Parser {
             node.addTokenChild(currentToken);
             expect(TokenType.LBRACK);
             isArr = true;
-            node.addTokenChild(currentToken);
+            if (match(TokenType.RBRACK)) {
+                node.addTokenChild(currentToken);
+            } else {
+                node.addRbrackChild(getLastToken().line());
+            }
             expect(TokenType.RBRACK);
         }
 
@@ -494,7 +528,11 @@ public class Parser {
             node.addTokenChild(currentToken);
             expect(TokenType.LPARENT);
             node.addChild(parseCond());
-            node.addTokenChild(currentToken);
+            if (match(TokenType.RPARENT)) {
+                node.addTokenChild(currentToken);
+            } else {
+                node.addRparentChild(getLastToken().line());
+            }
             expect(TokenType.RPARENT);
             node.addChild(parseStmt());
             if (match(TokenType.ELSETK)) {
@@ -510,28 +548,48 @@ public class Parser {
             if (currentToken != null && currentToken.type() != TokenType.SEMICN) {
                 node.addChild(parseForStmt());
             }
-            node.addTokenChild(currentToken);
+            if (match(TokenType.SEMICN)) {
+                node.addTokenChild(currentToken);
+            } else {
+                node.addSemicnChild(getLastToken().line());
+            }
             expect(TokenType.SEMICN);
             if (currentToken != null && currentToken.type() != TokenType.SEMICN) {
                 node.addChild(parseCond());
             }
-            node.addTokenChild(currentToken);
+            if (match(TokenType.SEMICN)) {
+                node.addTokenChild(currentToken);
+            } else {
+                node.addSemicnChild(getLastToken().line());
+            }
             expect(TokenType.SEMICN);
             if (currentToken != null && currentToken.type() != TokenType.RPARENT) {
                 node.addChild(parseForStmt());
             }
-            node.addTokenChild(currentToken);
+            if (match(TokenType.RPARENT)) {
+                node.addTokenChild(currentToken);
+            } else {
+                node.addRparentChild(getLastToken().line());
+            }
             expect(TokenType.RPARENT);
             node.addChild(parseStmt());
         } else if (match(TokenType.BREAKTK)) {
             node.addTokenChild(currentToken);
             expect(TokenType.BREAKTK);
-            node.addTokenChild(currentToken);
+            if (match(TokenType.SEMICN)) {
+                node.addTokenChild(currentToken);
+            } else {
+                node.addSemicnChild(getLastToken().line());
+            }
             expect(TokenType.SEMICN);
         } else if (match(TokenType.CONTINUETK)) {
             node.addTokenChild(currentToken);
             expect(TokenType.CONTINUETK);
-            node.addTokenChild(currentToken);
+            if (match(TokenType.SEMICN)) {
+                node.addTokenChild(currentToken);
+            } else {
+                node.addSemicnChild(getLastToken().line());
+            }
             expect(TokenType.SEMICN);
         } else if (match(TokenType.RETURNTK)) {
             node.addTokenChild(currentToken);
@@ -557,7 +615,11 @@ public class Parser {
                     this.currentToken = this.tokens.get(this.index);
                 }
             }
-            node.addTokenChild(currentToken);
+            if (match(TokenType.SEMICN)) {
+                node.addTokenChild(currentToken);
+            } else {
+                node.addSemicnChild(getLastToken().line());
+            }
             expect(TokenType.SEMICN);
         } else if (match(TokenType.PRINTFTK)) {
             node.addTokenChild(currentToken);
@@ -571,9 +633,17 @@ public class Parser {
                 expect(TokenType.COMMA);
                 node.addChild(parseExp());
             }
-            node.addTokenChild(currentToken);
+            if (match(TokenType.RPARENT)) {
+                node.addTokenChild(currentToken);
+            } else {
+                node.addRparentChild(getLastToken().line());
+            }
             expect(TokenType.RPARENT);
-            node.addTokenChild(currentToken);
+            if (match(TokenType.SEMICN)) {
+                node.addTokenChild(currentToken);
+            } else {
+                node.addSemicnChild(getLastToken().line());
+            }
             expect(TokenType.SEMICN);
         } else {
             int index_temp = this.index;
@@ -596,34 +666,62 @@ public class Parser {
                         expect(TokenType.GETINTTK);
                         node.addTokenChild(currentToken);
                         expect(TokenType.LPARENT);
-                        node.addTokenChild(currentToken);
+                        if (match(TokenType.RPARENT)) {
+                            node.addTokenChild(currentToken);
+                        } else {
+                            node.addRparentChild(getLastToken().line());
+                        }
                         expect(TokenType.RPARENT);
-                        node.addTokenChild(currentToken);
+                        if (match(TokenType.SEMICN)) {
+                            node.addTokenChild(currentToken);
+                        } else {
+                            node.addSemicnChild(getLastToken().line());
+                        }
                         expect(TokenType.SEMICN);
                     } else if (match(TokenType.GETCHARTK)) {
                         node.addTokenChild(currentToken);
                         expect(TokenType.GETCHARTK);
                         node.addTokenChild(currentToken);
                         expect(TokenType.LPARENT);
-                        node.addTokenChild(currentToken);
+                        if (match(TokenType.RPARENT)) {
+                            node.addTokenChild(currentToken);
+                        } else {
+                            node.addRparentChild(getLastToken().line());
+                        }
                         expect(TokenType.RPARENT);
-                        node.addTokenChild(currentToken);
+                        if (match(TokenType.SEMICN)) {
+                            node.addTokenChild(currentToken);
+                        } else {
+                            node.addSemicnChild(getLastToken().line());
+                        }
                         expect(TokenType.SEMICN);
                     } else {
                         node.addChild(parseExp());
-                        node.addTokenChild(currentToken);
+                        if (match(TokenType.SEMICN)) {
+                            node.addTokenChild(currentToken);
+                        } else {
+                            node.addSemicnChild(getLastToken().line());
+                        }
                         expect(TokenType.SEMICN);
                     }
                 } else {
                     this.index = index_temp;
                     this.currentToken = this.tokens.get(this.index);
                     node.addChild(parseExp());
-                    node.addTokenChild(currentToken);
+                    if (match(TokenType.SEMICN)) {
+                        node.addTokenChild(currentToken);
+                    } else {
+                        node.addSemicnChild(getLastToken().line());
+                    }
                     expect(TokenType.SEMICN);
                 }
             } else {
                 node.addChild(parseExp());
-                node.addTokenChild(currentToken);
+                if (match(TokenType.SEMICN)) {
+                    node.addTokenChild(currentToken);
+                } else {
+                    node.addSemicnChild(getLastToken().line());
+                }
                 expect(TokenType.SEMICN);
             }
         }
@@ -804,7 +902,11 @@ public class Parser {
         expect(TokenType.MAINTK);
         node.addTokenChild(currentToken);
         expect(TokenType.LPARENT);
-        node.addTokenChild(currentToken);
+        if (match(TokenType.RPARENT)) {
+            node.addTokenChild(currentToken);
+        } else {
+            node.addRparentChild(getLastToken().line());
+        }
         expect(TokenType.RPARENT);
         node.addChild(parseBlock());
 

@@ -41,6 +41,14 @@ public class ParserTreeNode {
         children.add(new ParserTreeNode(new Token(TokenType.SEMICN, ";",line)));
     }
 
+    public void addRbrackChild(int line) {
+        children.add(new ParserTreeNode(new Token(TokenType.RBRACK, "]",line)));
+    }
+
+    public void addRparentChild(int line) {
+        children.add(new ParserTreeNode(new Token(TokenType.RPARENT, ")",line)));
+    }
+
     public ArrayList<String> printTree() {
         ArrayList<String> result = new ArrayList<>();
         postOrderTraversal(this, result);
