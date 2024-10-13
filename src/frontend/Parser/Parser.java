@@ -1084,6 +1084,10 @@ public class Parser {
         ParserTreeNode node = new ParserTreeNode(SyntaxType.ForStmt);
         node.setParent(parent);
         node.addChild(parseLVal(node));
+        Symbol symbol = symbolTable.getSymbol(node.getChildren().get(0).getChildren().get(0).getToken().value());
+        if (symbol != null && symbol.isConst()) {
+            errors.addError(getLastToken().line(), 'h');
+        }
         node.addTokenChild(currentToken);
         expect(TokenType.ASSIGN);
         node.addChild(parseExp(node));
