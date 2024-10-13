@@ -12,8 +12,8 @@ public class Parser {
     private final List<Token> tokens;
     private int index;
     private Token currentToken;
-    private final ErrorList errors;
-    private final SymbolTable symbolTable;
+    private ErrorList errors;
+    private SymbolTable symbolTable;
     private ParserTreeNode root;
 
     public Parser(List<Token> tokens, ErrorList errors, SymbolTable symbolTable) {
@@ -125,7 +125,7 @@ public class Parser {
     private ParserTreeNode parseConstDef(ParserTreeNode parent, boolean isChar) {
         ParserTreeNode node = new ParserTreeNode(SyntaxType.ConstDef);
         node.setParent(parent);
-        String name = currentToken.value();
+        String constName = currentToken.value();
         node.addTokenChild(currentToken);
         expect(TokenType.IDENFR);
         boolean isArr = false;
@@ -145,10 +145,10 @@ public class Parser {
         expect(TokenType.ASSIGN);
         node.addChild(parseConstInitVal(node));
 
-        if (symbolTable.containsSymbolInCurrentScope(name)) {
+        if (symbolTable.containsSymbolInCurrentScope(constName)) {
             errors.addError(currentToken.line(), 'b');
         } else {
-            this.symbolTable.addSymbol(name, isArr && isChar ? SymbolType.ConstCharArray : isChar ? SymbolType.ConstChar : isArr ? SymbolType.ConstIntArray : SymbolType.ConstInt);
+            this.symbolTable.addSymbol(constName, isArr && isChar ? SymbolType.ConstCharArray : isChar ? SymbolType.ConstChar : isArr ? SymbolType.ConstIntArray : SymbolType.ConstInt);
         }
         return node;
     }
@@ -214,9 +214,20 @@ public class Parser {
 
                 ArrayList<SymbolType> paramTypes = new ArrayList<>();
                 if (currentToken != null && currentToken.type() != TokenType.RPARENT) {
-                    ParserTreeNode funcRParamsNode = parseFuncRParams(node);
-                    node.addChild(funcRParamsNode);
-                    paramTypes = getRParams(funcRParamsNode);
+                    int tempIndex = this.index;
+                    Token tempToken = this.currentToken;
+                    ErrorList tempErrors = this.errors;
+                    SymbolTable tempSymbolTable = this.symbolTable;
+                    try {
+                        ParserTreeNode funcRParamsNode = parseFuncRParams(node);
+                        node.addChild(funcRParamsNode);
+                        paramTypes = getRParams(funcRParamsNode);
+                    } catch (Exception e) {
+                        this.index = tempIndex;
+                        this.currentToken = tempToken;
+                        this.errors = tempErrors;
+                        this.symbolTable = tempSymbolTable;
+                    }
                 }
                 if (match(TokenType.RPARENT)) {
                     node.addTokenChild(currentToken);
@@ -227,11 +238,13 @@ public class Parser {
 
                 // 检查参数个数和类型是否匹配
                 int paramCount = paramTypes.size();
-                if (functionSymbol.getParamCount() != paramCount) {
-                    errors.addError(getLastToken().line(), 'd');
-                } else {
-                    if (!functionSymbol.paramCorrect(paramTypes)) {
-                        errors.addError(getLastToken().line(), 'e');
+                if (functionSymbol != null) {
+                    if (functionSymbol.getParamCount() != paramCount) {
+                        errors.addError(getLastToken().line(), 'd');
+                    } else {
+                        if (!functionSymbol.paramCorrect(paramTypes)) {
+                            errors.addError(getLastToken().line(), 'e');
+                        }
                     }
                 }
             } else {
@@ -256,8 +269,20 @@ public class Parser {
         if (node.getType() == SyntaxType.Exp) {
             return getSymbType(node.getChildren().get(0));
         } else if (node.getType() == SyntaxType.AddExp) {
+            for (int i = 0; i < node.getChildren().size(); i+=2) {
+                SymbolType type = getSymbType(node.getChildren().get(i));
+                if (type == SymbolType.IntArray || type == SymbolType.CharArray) {
+                    return type;
+                }
+            }
             return getSymbType(node.getChildren().get(0));
         } else if (node.getType() == SyntaxType.MulExp) {
+            for (int i = 0; i < node.getChildren().size(); i+=2) {
+                SymbolType type = getSymbType(node.getChildren().get(i));
+                if (type == SymbolType.IntArray || type == SymbolType.CharArray) {
+                    return type;
+                }
+            }
             return getSymbType(node.getChildren().get(0));
         } else if (node.getType() == SyntaxType.UnaryExp) {
             if (node.getChildren().get(0).getType() == SyntaxType.UnaryOp) {
@@ -330,7 +355,7 @@ public class Parser {
         } else if (currentToken != null && currentToken.type() == TokenType.CHRCON) {
             node.addChild(parseCharacter(node));
         } else {
-            throw new RuntimeException("Syntax error: expected PrimaryExp");
+            throw new RuntimeException("Syntax error: expected PrimaryExp " + currentToken);
         }
         return node;
     }
@@ -420,7 +445,6 @@ public class Parser {
     private ParserTreeNode parseVarDef(ParserTreeNode parent, boolean isChar) {
         ParserTreeNode node = new ParserTreeNode(SyntaxType.VarDef);
         node.setParent(parent);
-
         String name = currentToken.value();
         node.addTokenChild(currentToken);
         expect(TokenType.IDENFR);
@@ -492,7 +516,7 @@ public class Parser {
         expect(TokenType.IDENFR);
         node.addTokenChild(currentToken);
         expect(TokenType.LPARENT);
-        if (currentToken != null && currentToken.type() != TokenType.RPARENT) {
+        if (currentToken != null && currentToken.type() != TokenType.RPARENT && currentToken.type() != TokenType.LBRACE) {
             node.addChild(parseFuncFParams(node,name));
         }
         if (match(TokenType.RPARENT)) {
@@ -503,7 +527,17 @@ public class Parser {
         expect(TokenType.RPARENT);
         node.addChild(parseBlock(node));
 
-        if (tokenType == TokenType.VOIDTK) {
+        if (tokenType != TokenType.VOIDTK) {
+            ParserTreeNode blockNode = node.getLastChild();
+            if (blockNode.getChildren().size() > 2) {
+                ParserTreeNode lastBlockItem = blockNode.getChildren().get(blockNode.getChildren().size() - 2);
+                if (lastBlockItem.getChildren().get(0).getType() == SyntaxType.Stmt &&
+                lastBlockItem.getChildren().get(0).getChildren().get(0).getToken() != null &&
+                lastBlockItem.getChildren().get(0).getChildren().get(0).getToken().type() == TokenType.RETURNTK) {
+                    SymbolFunc funcSymbol = (SymbolFunc) this.symbolTable.getSymbol(name);
+                    funcSymbol.setReturn();
+                }
+            }
             SymbolFunc funcSymbol = (SymbolFunc) this.symbolTable.getSymbol(name);
             if (!funcSymbol.isReturn()) {
                 errors.addError(getLastToken().line(), 'g');
@@ -557,9 +591,13 @@ public class Parser {
             expect(TokenType.RBRACK);
         }
 
-        Symbol paramSymbol = this.symbolTable.addSymbolFuncPara(name, isArr && isChar ? SymbolType.CharArray : isChar ? SymbolType.Char : isArr ? SymbolType.IntArray : SymbolType.Int);
-        Symbol funcFParam = this.symbolTable.getSymbol(funcName);
-        ((SymbolFunc)funcFParam).addParam(paramSymbol);
+        if (symbolTable.containsSymbolFuncPara(name)) {
+            errors.addError(currentToken.line(), 'b');
+        } else {
+            Symbol paramSymbol = this.symbolTable.addSymbolFuncPara(name, isArr && isChar ? SymbolType.CharArray : isChar ? SymbolType.Char : isArr ? SymbolType.IntArray : SymbolType.Int);
+            Symbol funcFParam = this.symbolTable.getSymbol(funcName);
+            ((SymbolFunc)funcFParam).addParam(paramSymbol);
+        }
         return node;
     }
 
@@ -634,7 +672,7 @@ public class Parser {
             expect(TokenType.FORTK);
             node.addTokenChild(currentToken);
             expect(TokenType.LPARENT);
-            if (currentToken != null && currentToken.type() != TokenType.SEMICN) {
+            if (currentToken != null && currentToken.type() == TokenType.IDENFR) {
                 node.addChild(parseForStmt(node));
             }
             if (match(TokenType.SEMICN)) {
@@ -643,7 +681,7 @@ public class Parser {
                 node.addSemicnChild(getLastToken().line());
             }
             expect(TokenType.SEMICN);
-            if (currentToken != null && currentToken.type() != TokenType.SEMICN) {
+            if (currentToken != null && currentToken.typeSymbolizeBeginOfExp()) {
                 node.addChild(parseCond(node));
             }
             if (match(TokenType.SEMICN)) {
@@ -652,7 +690,7 @@ public class Parser {
                 node.addSemicnChild(getLastToken().line());
             }
             expect(TokenType.SEMICN);
-            if (currentToken != null && currentToken.type() != TokenType.RPARENT) {
+            if (currentToken != null && currentToken.type() == TokenType.IDENFR) {
                 node.addChild(parseForStmt(node));
             }
             if (match(TokenType.RPARENT)) {
@@ -666,7 +704,7 @@ public class Parser {
             node.addTokenChild(currentToken);
             int line = currentToken.line();
             // 检查是否在循环内
-            if (!inLoop(node)) {
+            if (notInLoop(node)) {
                 errors.addError(line, 'm');
             }
 
@@ -681,7 +719,7 @@ public class Parser {
             node.addTokenChild(currentToken);
             int line = currentToken.line();
             // 检查是否在循环内
-            if (!inLoop(node)) {
+            if (notInLoop(node)) {
                 errors.addError(line, 'm');
             }
 
@@ -696,8 +734,6 @@ public class Parser {
             int line = currentToken.line();
             node.addTokenChild(currentToken);
             expect(TokenType.RETURNTK);
-            SymbolFunc funcSymbol = (SymbolFunc) this.symbolTable.getSymbol(node.getCurrentFuncName());
-            funcSymbol.setReturn();
             if (currentToken != null && currentToken.type() != TokenType.SEMICN) {
                 int index_temp = this.index;
                 try {
@@ -767,7 +803,7 @@ public class Parser {
                 node.addSemicnChild(getLastToken().line());
             }
             expect(TokenType.SEMICN);
-        } else {
+        } else if (match(TokenType.IDENFR)) {
             int index_temp = this.index;
             while (currentToken != null && currentToken.type() != TokenType.SEMICN && currentToken.type() != TokenType.ASSIGN) {
                 nextToken();
@@ -782,7 +818,7 @@ public class Parser {
                     this.currentToken = this.tokens.get(this.index);
                     node.addChild(parseLVal(node));
                     Symbol symbol = symbolTable.getSymbol(node.getChildren().get(0).getChildren().get(0).getToken().value());
-                    if (symbol.isConst()) {
+                    if (symbol != null && symbol.isConst()) {
                         errors.addError(getLastToken().line(), 'h');
                     }
                     node.addTokenChild(currentToken);
@@ -850,41 +886,50 @@ public class Parser {
                 }
                 expect(TokenType.SEMICN);
             }
+        } else {
+            node.addChild(parseExp(node));
+            if (match(TokenType.SEMICN)) {
+                node.addTokenChild(currentToken);
+            } else {
+                node.addSemicnChild(getLastToken().line());
+            }
+            expect(TokenType.SEMICN);
         }
 
         return node;
     }
 
-    private boolean inLoop(ParserTreeNode node) {
+    private boolean notInLoop(ParserTreeNode node) {
         while (node != null) {
             if (!node.getChildren().isEmpty() && node.getChildren().get(0).getToken() != null && node.getChildren().get(0).getToken().type() == TokenType.FORTK) {
-                return true;
+                return false;
             }
             node = node.getParent();
         }
-        return false;
+        return true;
     }
 
     private int countFormatSpecifiers(String formatString) {
         int count = 0;
         for (int i = 0; i < formatString.length() - 1; i++) {
-            if (formatString.charAt(i) == '%' && formatString.charAt(i + 1) != '%') {
+            if ((formatString.charAt(i) == '%' && formatString.charAt(i + 1) != 'd') ||
+                (formatString.charAt(i) == '%' && formatString.charAt(i + 1) != 'c')) {
                 count++;
             }
         }
         return count;
     }
 
-    private void tryToken(TokenType type) {
-        if (currentToken != null && currentToken.type() == type) {
+    private void tryIdenfrToken() {
+        if (currentToken != null && currentToken.type() == TokenType.IDENFR) {
             nextToken();
         } else {
-            throw new RuntimeException("Syntax error: expected " + type + " at line " + this.currentToken.line() + " token: " + this.currentToken);
+            throw new RuntimeException("Syntax error: expected " + TokenType.IDENFR + " at line " + Objects.requireNonNull(this.currentToken).line() + " token: " + this.currentToken);
         }
     }
 
     private void tryParseLVal() {
-        tryToken(TokenType.IDENFR);
+        tryIdenfrToken();
         if (match(TokenType.LBRACK)) {
             nextToken();
             tryParseExp();
@@ -919,7 +964,7 @@ public class Parser {
             nextToken();
             tryParseUnaryExp();
         } else if (currentToken != null && currentToken.type() == TokenType.IDENFR && Objects.requireNonNull(getNextToken()).type() == TokenType.LPARENT) {
-            tryToken(TokenType.IDENFR);
+            tryIdenfrToken();
             if (match(TokenType.LPARENT)) {
                 nextToken();
                 if (currentToken != null && currentToken.type() != TokenType.RPARENT) {
@@ -1068,8 +1113,18 @@ public class Parser {
         expect(TokenType.RPARENT);
         node.addChild(parseBlock(node));
 
-        SymbolFunc mainFunc = (SymbolFunc) this.symbolTable.getSymbol("main");
-        if (!mainFunc.isReturn()) {
+        ParserTreeNode blockNode = node.getLastChild();
+        if (blockNode.getChildren().size() > 2) {
+            ParserTreeNode lastBlockItem = blockNode.getChildren().get(blockNode.getChildren().size() - 2);
+            if (lastBlockItem.getChildren().get(0).getType() == SyntaxType.Stmt &&
+                    lastBlockItem.getChildren().get(0).getChildren().get(0).getToken() != null &&
+                    lastBlockItem.getChildren().get(0).getChildren().get(0).getToken().type() == TokenType.RETURNTK) {
+                SymbolFunc funcSymbol = (SymbolFunc) this.symbolTable.getSymbol("main");
+                funcSymbol.setReturn();
+            }
+        }
+        SymbolFunc funcSymbol = (SymbolFunc) this.symbolTable.getSymbol("main");
+        if (!funcSymbol.isReturn()) {
             errors.addError(getLastToken().line(), 'g');
         }
 

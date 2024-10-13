@@ -1,11 +1,11 @@
 package frontend.Parser;
 
-import frontend.SymbolType;
 import frontend.SyntaxType;
 import frontend.Token;
 import frontend.TokenType;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class ParserTreeNode {
     private ParserTreeNode parent;
@@ -49,6 +49,10 @@ public class ParserTreeNode {
         return children;
     }
 
+    public ParserTreeNode getLastChild() {
+        return children.get(children.size() - 1);
+    }
+
     public void addTokenChild(Token token) {
         children.add(new ParserTreeNode(token));
     }
@@ -79,7 +83,7 @@ public class ParserTreeNode {
             postOrderTraversal(child, result);
         }
         if (node.type == SyntaxType.Token) {
-            result.add(node.token.type() + " " + node.token.value());
+            result.add(Objects.requireNonNull(node.token).type() + " " + node.token.value());
         } else {
             if (node.type != SyntaxType.BType && node.type != SyntaxType.BlockItem && node.type != SyntaxType.Decl) {
                 result.add('<' + node.toString() + '>');
@@ -107,19 +111,6 @@ public class ParserTreeNode {
                 return node.getChildren().get(0).getChildren().get(0).getToken().value();
             } else if (node.type == SyntaxType.MainFuncDef) {
                 return "int";
-            }
-            node = node.getParent();
-        }
-        return null;
-    }
-
-    public String getCurrentFuncName() {
-        ParserTreeNode node = this;
-        while (node != null) {
-            if (node.type == SyntaxType.FuncDef ) {
-                return node.getChildren().get(1).getToken().value();
-            } else if (node.type == SyntaxType.MainFuncDef) {
-                return "main";
             }
             node = node.getParent();
         }

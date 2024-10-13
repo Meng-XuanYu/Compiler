@@ -46,6 +46,10 @@ public class SymbolTable {
         return symbol;
     }
 
+    public boolean containsSymbolFuncPara(String name) {
+        return this.table.containsKey(this.topScope + 1) && this.table.get(this.topScope + 1).containsKey(name);
+    }
+
     private void addSymbolToTable(String name, Symbol symbol) {
         if (!this.table.containsKey(symbol.scope())) {
             this.table.put(symbol.scope(), new HashMap<>());
