@@ -9,15 +9,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Compiler {
+    static String inputFileName = "testfile.txt";
+    static String lexerOutputFileName = "lexer.txt";
+    static String errorOutputFileName = "error.txt";
+    static String parserOutputFileName = "parser.txt";
+    static String symbolOutputFileName = "symbol.txt";
+
     private static final Logger logger = Logger.getLogger(Compiler.class.getName());
 
     public static void main(String[] args) {
         // 文件名称声明
-        String inputFileName = "testfile.txt";
-        String lexerOutputFileName = "lexer.txt";
-        String errorOutputFileName = "error.txt";
-        String parserOutputFileName = "parser.txt";
-        String symbolOutputFileName = "symbol.txt";
+
 
         // 读取文件
         List<String> lines = readFile(inputFileName);
@@ -64,12 +66,12 @@ public class Compiler {
             for (int[] error : errors.getErrors()) {
                 errorOutput.add(error[0] + " " + (char) error[1]);
             }
-            deleteFile(symbolOutputFileName);
+            deleteOtherFile(errorOutputFileName);
             writeFile(errorOutputFileName, errorOutput);
         } else {
             //writeFile(lexerOutputFileName, lexerOutput);
             //writeFile(parserOutputFileName, parserOutput);
-            deleteFile(errorOutputFileName);
+            deleteOtherFile(symbolOutputFileName);
             writeFile(symbolOutputFileName, symbolOutput);
         }
     }
@@ -104,6 +106,26 @@ public class Compiler {
         File file = new File(fileName);
         if (file.exists() && file.isFile()) {
             file.delete();
+        }
+    }
+
+    private static void deleteOtherFile(String fileName) {
+        if (fileName.equals(lexerOutputFileName)) {
+            deleteFile(parserOutputFileName);
+            deleteFile(symbolOutputFileName);
+            deleteFile(errorOutputFileName);
+        } else if (fileName.equals(parserOutputFileName)) {
+            deleteFile(lexerOutputFileName);
+            deleteFile(symbolOutputFileName);
+            deleteFile(errorOutputFileName);
+        } else if (fileName.equals(symbolOutputFileName)) {
+            deleteFile(lexerOutputFileName);
+            deleteFile(parserOutputFileName);
+            deleteFile(errorOutputFileName);
+        } else if (fileName.equals(errorOutputFileName)) {
+            deleteFile(lexerOutputFileName);
+            deleteFile(parserOutputFileName);
+            deleteFile(symbolOutputFileName);
         }
     }
 }

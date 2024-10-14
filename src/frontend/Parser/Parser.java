@@ -788,6 +788,7 @@ public class Parser {
                 expCount++;
             }
             if (formatCount != expCount) {
+                System.out.println("formatCount: " + formatCount + " expCount: " + expCount);
                 errors.addError(line, 'l');
             }
 
@@ -912,8 +913,8 @@ public class Parser {
     private int countFormatSpecifiers(String formatString) {
         int count = 0;
         for (int i = 0; i < formatString.length() - 1; i++) {
-            if ((formatString.charAt(i) == '%' && formatString.charAt(i + 1) != 'd') ||
-                (formatString.charAt(i) == '%' && formatString.charAt(i + 1) != 'c')) {
+            if ((formatString.charAt(i) == '%' && formatString.charAt(i + 1) == 'd') ||
+                (formatString.charAt(i) == '%' && formatString.charAt(i + 1) == 'c')) {
                 count++;
             }
         }

@@ -1,16 +1,4 @@
-void my_print(int param) {
-    if (1 == 0) {
-        int a = 1;
-        if (2 == 1) {
-            return 1;
-        }
-        return (1+ 10 ) *10;
-    }
-    else
-        return 20;
-
-    return (param + 12) * 10;
-}
 int main() {
+    printf("%f%lld%c%d",'a',2024);
     return 0;
 }
