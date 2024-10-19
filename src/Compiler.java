@@ -9,6 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Compiler {
+    // 文件名称声明
     static String inputFileName = "testfile.txt";
     static String lexerOutputFileName = "lexer.txt";
     static String errorOutputFileName = "error.txt";
@@ -18,9 +19,6 @@ public class Compiler {
     private static final Logger logger = Logger.getLogger(Compiler.class.getName());
 
     public static void main(String[] args) {
-        // 文件名称声明
-
-
         // 读取文件
         List<String> lines = readFile(inputFileName);
 
@@ -70,9 +68,9 @@ public class Compiler {
             writeFile(errorOutputFileName, errorOutput);
         } else {
             //writeFile(lexerOutputFileName, lexerOutput);
-            //writeFile(parserOutputFileName, parserOutput);
-            deleteOtherFile(symbolOutputFileName);
-            writeFile(symbolOutputFileName, symbolOutput);
+            writeFile(parserOutputFileName, parserOutput);
+            deleteOtherFile(parserOutputFileName);
+            //writeFile(symbolOutputFileName, symbolOutput);
         }
     }
 
