@@ -67,9 +67,9 @@ public class Compiler {
             deleteOtherFile(errorOutputFileName);
             writeFile(errorOutputFileName, errorOutput);
         } else {
-            //writeFile(lexerOutputFileName, lexerOutput);
-            writeFile(parserOutputFileName, parserOutput);
-            deleteOtherFile(parserOutputFileName);
+            deleteOtherFile(lexerOutputFileName);
+            writeFile(lexerOutputFileName, lexerOutput);
+            //writeFile(parserOutputFileName, parserOutput);
             //writeFile(symbolOutputFileName, symbolOutput);
         }
     }

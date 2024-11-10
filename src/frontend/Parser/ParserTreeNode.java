@@ -1,5 +1,7 @@
 package frontend.Parser;
 
+import frontend.Symbol.SymbolTable;
+import frontend.SymbolType;
 import frontend.SyntaxType;
 import frontend.Token;
 import frontend.TokenType;
@@ -115,5 +117,60 @@ public class ParserTreeNode {
             node = node.getParent();
         }
         return null;
+    }
+
+    public SymbolType getSymbType(SymbolTable symbolTable) {
+        if (this.getType() == SyntaxType.Exp) {
+            return this.getChildren().get(0).getSymbType(symbolTable);
+        } else if (this.getType() == SyntaxType.AddExp) {
+            for (int i = 0; i < this.getChildren().size(); i+=2) {
+                SymbolType type = getChildren().get(i).getSymbType(symbolTable);
+                if (type == SymbolType.IntArray || type == SymbolType.CharArray) {
+                    return type;
+                }
+            }
+            return getChildren().get(0).getSymbType(symbolTable);
+        } else if (this.getType() == SyntaxType.MulExp) {
+            for (int i = 0; i < this.getChildren().size(); i+=2) {
+                SymbolType type = getChildren().get(i).getSymbType(symbolTable);
+                if (type == SymbolType.IntArray || type == SymbolType.CharArray) {
+                    return type;
+                }
+            }
+            return getChildren().get(0).getSymbType(symbolTable);
+        } else if (this.getType() == SyntaxType.UnaryExp) {
+            if (this.getChildren().get(0).getType() == SyntaxType.UnaryOp) {
+                return getChildren().get(1).getSymbType(symbolTable);
+            } else if (this.getChildren().get(0).getType() == SyntaxType.PrimaryExp) {
+                return getChildren().get(0).getSymbType(symbolTable);
+            } else {
+                Token token = this.getChildren().get(0).getToken();
+                return symbolTable.getSymbol(token.value()).type();
+            }
+        } else if (this.getType() == SyntaxType.PrimaryExp) {
+            if (this.getChildren().get(0).getType() == SyntaxType.LVal) {
+                if (symbolTable.getSymbol(this.getChildren().get(0).getChildren().get(0).getToken().value()).type() == SymbolType.CharArray ||
+                        symbolTable.getSymbol(this.getChildren().get(0).getChildren().get(0).getToken().value()).type() == SymbolType.ConstCharArray) {
+                    if (this.getChildren().get(0).getChildren().size() > 1 && this.getChildren().get(0).getChildren().get(1).getToken().type() == TokenType.LBRACK) {
+                        return SymbolType.Char;
+                    }
+                }
+                if (symbolTable.getSymbol(this.getChildren().get(0).getChildren().get(0).getToken().value()).type() == SymbolType.IntArray ||
+                        symbolTable.getSymbol(this.getChildren().get(0).getChildren().get(0).getToken().value()).type() == SymbolType.ConstIntArray) {
+                    if (this.getChildren().get(0).getChildren().size() > 1 && this.getChildren().get(0).getChildren().get(1).getToken().type() == TokenType.LBRACK) {
+                        return SymbolType.Int;
+                    }
+                }
+                return symbolTable.getSymbol(this.getChildren().get(0).getChildren().get(0).getToken().value()).type();
+            } else if (this.getChildren().get(0).getType() == SyntaxType.Number) {
+                return SymbolType.Int;
+            } else if (this.getChildren().get(0).getType() == SyntaxType.Character) {
+                return SymbolType.Char;
+            } else {
+                return getChildren().get(1).getSymbType(symbolTable);
+            }
+        } else {
+            return symbolTable.getSymbol(this.getChildren().get(0).getToken().value()).type();
+        }
     }
 }

@@ -89,64 +89,9 @@ public class Parser {
         ArrayList<SymbolType> params = new ArrayList<>();
         ArrayList<ParserTreeNode> children = funcRParamsNode.getChildren();
         for (int i = 0; i < children.size(); i+=2) {
-            params.add(getSymbType(children.get(i)));
+            params.add(children.get(i).getSymbType(symbolTable));
         }
         return params;
-    }
-
-    private SymbolType getSymbType(ParserTreeNode node) {
-        if (node.getType() == SyntaxType.Exp) {
-            return getSymbType(node.getChildren().get(0));
-        } else if (node.getType() == SyntaxType.AddExp) {
-            for (int i = 0; i < node.getChildren().size(); i+=2) {
-                SymbolType type = getSymbType(node.getChildren().get(i));
-                if (type == SymbolType.IntArray || type == SymbolType.CharArray) {
-                    return type;
-                }
-            }
-            return getSymbType(node.getChildren().get(0));
-        } else if (node.getType() == SyntaxType.MulExp) {
-            for (int i = 0; i < node.getChildren().size(); i+=2) {
-                SymbolType type = getSymbType(node.getChildren().get(i));
-                if (type == SymbolType.IntArray || type == SymbolType.CharArray) {
-                    return type;
-                }
-            }
-            return getSymbType(node.getChildren().get(0));
-        } else if (node.getType() == SyntaxType.UnaryExp) {
-            if (node.getChildren().get(0).getType() == SyntaxType.UnaryOp) {
-                return getSymbType(node.getChildren().get(1));
-            } else if (node.getChildren().get(0).getType() == SyntaxType.PrimaryExp) {
-                return getSymbType(node.getChildren().get(0));
-            } else {
-                Token token = node.getChildren().get(0).getToken();
-                return symbolTable.getSymbol(token.value()).type();
-            }
-        } else if (node.getType() == SyntaxType.PrimaryExp) {
-            if (node.getChildren().get(0).getType() == SyntaxType.LVal) {
-                if (symbolTable.getSymbol(node.getChildren().get(0).getChildren().get(0).getToken().value()).type() == SymbolType.CharArray ||
-                        symbolTable.getSymbol(node.getChildren().get(0).getChildren().get(0).getToken().value()).type() == SymbolType.ConstCharArray) {
-                    if (node.getChildren().get(0).getChildren().size() > 1 && node.getChildren().get(0).getChildren().get(1).getToken().type() == TokenType.LBRACK) {
-                        return SymbolType.Char;
-                    }
-                }
-                if (symbolTable.getSymbol(node.getChildren().get(0).getChildren().get(0).getToken().value()).type() == SymbolType.IntArray ||
-                        symbolTable.getSymbol(node.getChildren().get(0).getChildren().get(0).getToken().value()).type() == SymbolType.ConstIntArray) {
-                    if (node.getChildren().get(0).getChildren().size() > 1 && node.getChildren().get(0).getChildren().get(1).getToken().type() == TokenType.LBRACK) {
-                        return SymbolType.Int;
-                    }
-                }
-                return symbolTable.getSymbol(node.getChildren().get(0).getChildren().get(0).getToken().value()).type();
-            } else if (node.getChildren().get(0).getType() == SyntaxType.Number) {
-                return SymbolType.Int;
-            } else if (node.getChildren().get(0).getType() == SyntaxType.Character) {
-                return SymbolType.Char;
-            } else {
-                return getSymbType(node.getChildren().get(1));
-            }
-        } else {
-            return symbolTable.getSymbol(node.getChildren().get(0).getToken().value()).type();
-        }
     }
 
     // 语法分析函数群
