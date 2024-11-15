@@ -1,8 +1,6 @@
 import frontend.*;
 import frontend.Parser.Parser;
-import frontend.Parser.ParserTreeNode;
-import frontend.Symbol.SymbolTable;
-
+import middleend.Symbol.SymbolTable;
 import java.io.*;
 import java.util.*;
 import java.util.logging.Level;
@@ -23,10 +21,7 @@ public class Compiler {
         List<String> lines = readFile(inputFileName);
 
         // 输出
-        List<String> lexerOutput = new ArrayList<>();
         List<String> errorOutput = new ArrayList<>();
-        List<String> parserOutput = new ArrayList<>();
-        List<String> symbolOutput = new ArrayList<>();
 
         // 错误列表
         ErrorList errors = new ErrorList();
@@ -40,10 +35,6 @@ public class Compiler {
             tokens.addAll(tokensTemp);
             if (lexer.hasError()) {
                 errors.addError(i + 1, lexer.getErrorType());
-            } else {
-                for (Token token : tokensTemp) {
-                    lexerOutput.add(token.type() + " " + token.value());
-                }
             }
         }
 
@@ -53,11 +44,6 @@ public class Compiler {
         // 语法分析
         Parser parser = new Parser(tokens,errors,symbolTable);
         parser.parse();
-        ParserTreeNode root = parser.getRoot();
-        parserOutput = root.printTree();
-
-        // 符号表输出
-        symbolOutput = symbolTable.printSymbolTable();
 
         if (!errors.isEmpty()) {
             errors.sort();
@@ -67,10 +53,7 @@ public class Compiler {
             deleteOtherFile(errorOutputFileName);
             writeFile(errorOutputFileName, errorOutput);
         } else {
-            deleteOtherFile(lexerOutputFileName);
-            writeFile(lexerOutputFileName, lexerOutput);
-            //writeFile(parserOutputFileName, parserOutput);
-            //writeFile(symbolOutputFileName, symbolOutput);
+
         }
     }
 

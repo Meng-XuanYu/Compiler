@@ -1,12 +1,10 @@
-package frontend.Symbol;
-
-import frontend.SymbolType;
+package middleend.Symbol;
 
 import java.util.ArrayList;
 
 public class SymbolFunc extends Symbol {
     private boolean isReturn;
-    private ArrayList<Symbol> params;
+    private final ArrayList<Symbol> params;
 
     public SymbolFunc(String name, SymbolType type, int scope) {
         super(name, type, scope);
@@ -50,10 +48,7 @@ public class SymbolFunc extends Symbol {
         if ((type1Int == 0 || type1Int == 1)&& (type2Int == 3 || type2Int == 2)) {
             return false;
         }
-        if ((type2Int == 0 || type2Int == 1) && (type1Int == 3 || type1Int == 2)) {
-            return false;
-        }
-        return true;
+        return (type2Int != 0 && type2Int != 1) || (type1Int != 3 && type1Int != 2);
     }
 
     private int getTypeInt(SymbolType type) {

@@ -1,7 +1,4 @@
-package frontend.Symbol;
-
-import frontend.SymbolType;
-
+package middleend.Symbol;
 import java.util.*;
 
 public class SymbolTable {
@@ -79,6 +76,7 @@ public class SymbolTable {
         return this.table.containsKey(this.currentScope) && this.table.get(this.currentScope).containsKey(name);
     }
 
+    @Deprecated
     public ArrayList<String> printSymbolTable() {
         ArrayList<String> result = new ArrayList<>();
         for (int i = 1; i <= this.topScope; i++) {

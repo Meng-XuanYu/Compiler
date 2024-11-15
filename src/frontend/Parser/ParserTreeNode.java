@@ -1,11 +1,9 @@
 package frontend.Parser;
-
-import frontend.Symbol.SymbolTable;
-import frontend.SymbolType;
+import middleend.Symbol.SymbolTable;
+import middleend.Symbol.SymbolType;
 import frontend.SyntaxType;
 import frontend.Token;
 import frontend.TokenType;
-
 import java.util.ArrayList;
 import java.util.Objects;
 

@@ -1,6 +1,4 @@
-package frontend.Symbol;
-
-import frontend.SymbolType;
+package middleend.Symbol;
 
 public class Symbol {
     private final String name;
