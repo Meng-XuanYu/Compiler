@@ -7,6 +7,7 @@ public abstract class IRValue implements IRNode {
     private String name;
     private IRValueType type;
     private ArrayList<IRUse> uses;
+    private int size;// 如果是数组，size表示数组大小；否则size为0
 
     public IRValue(IRValueType IRValueType) {
         this.name = "";
@@ -43,6 +44,14 @@ public abstract class IRValue implements IRNode {
                 return;
             }
         }
+    }
+
+    public void setSize(int size) {
+        this.size = size;
+    }
+
+    public int getSize() {
+        return size;
     }
 
     @Override
