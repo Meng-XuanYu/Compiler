@@ -1,0 +1,60 @@
+package middleend.LlvmIr.Value.GlobalVar;
+import middleend.LlvmIr.IRUser;
+import middleend.LlvmIr.Types.IRValueType;
+import middleend.LlvmIr.Value.Constant.IRConstant;
+import middleend.LlvmIr.Value.Constant.IRConstantCharArray;
+import middleend.LlvmIr.Value.Constant.IRConstantIntArray;
+import middleend.LlvmIr.Value.IRNode;
+import java.util.ArrayList;
+
+public class IRGlobalVar extends IRUser implements IRNode {
+    private IRValueType type;
+    private IRConstant initialValue;
+    private boolean isConstant;
+
+    // 名称和类型
+    public IRGlobalVar(IRValueType type, String name) {
+        super(type);
+        this.type = type;
+        this.setName(name);
+    }
+
+    // 名称、类型和初始值以及是否为常量
+    public IRGlobalVar(IRValueType type, String name, IRConstant initialValue, boolean isConstant) {
+        this(type, name);
+        this.initialValue = initialValue;
+        this.isConstant = isConstant;
+    }
+
+    // 获取i32类型的初始值
+    public int getIntInit() {
+        return Integer.parseInt(this.initialValue.printIR().get(0));
+    }
+
+    // 获取i32数组类型的初始值
+    public ArrayList<Integer> getIntInitArray() {
+        IRConstantIntArray constantIntArray = (IRConstantIntArray) this.initialValue;
+        int size = constantIntArray.getSize();
+        ArrayList<Integer> ans = new ArrayList<>();
+        for (int i = 0; i < size && i < constantIntArray.getConstantInts().size(); i++) {
+            ans.add(Integer.parseInt(constantIntArray.getConstantInts().get(i).printIR().get(0)));
+        }
+        return ans;
+    }
+
+    public Character getCharInit() {
+        return this.initialValue.printIR().get(0).charAt(1);
+    }
+
+    // 获取字符数组类型的初始值 todo
+
+    public int getSize() {
+        if (this.initialValue instanceof IRConstantIntArray) {
+            return ((IRConstantIntArray) this.initialValue).getSize();
+        } else if (this.initialValue instanceof IRConstantCharArray) {
+            return ((IRConstantCharArray) this.initialValue).getSize();
+        } else {
+            return 0; // 代表不是数组
+        }
+    }
+}
