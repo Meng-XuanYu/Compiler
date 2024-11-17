@@ -1,4 +1,4 @@
-package middleend.Symbol;
+package frontend.SymbolParser;
 
 public enum SymbolType {
     ConstChar,

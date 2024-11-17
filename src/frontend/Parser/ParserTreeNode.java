@@ -1,6 +1,6 @@
 package frontend.Parser;
-import middleend.Symbol.SymbolTable;
-import middleend.Symbol.SymbolType;
+import frontend.SymbolParser.SymbolTableParser;
+import frontend.SymbolParser.SymbolType;
 import frontend.SyntaxType;
 import frontend.Token;
 import frontend.TokenType;
@@ -69,6 +69,8 @@ public class ParserTreeNode {
         children.add(new ParserTreeNode(new Token(TokenType.RPARENT, ")",line)));
     }
 
+    // 用于输出语法树,语法分析部分
+    @Deprecated
     public ArrayList<String> printTree() {
         ArrayList<String> result = new ArrayList<>();
         postOrderTraversal(this, result);
@@ -104,6 +106,8 @@ public class ParserTreeNode {
         return this.token;
     }
 
+    // 语法分析功能函数部分
+
     public String getCurrentFuncType() {
         ParserTreeNode node = this;
         while (node != null) {
@@ -117,58 +121,81 @@ public class ParserTreeNode {
         return null;
     }
 
-    public SymbolType getSymbType(SymbolTable symbolTable) {
+    public SymbolType getSymbType(SymbolTableParser symbolTableParser) {
         if (this.getType() == SyntaxType.Exp) {
-            return this.getChildren().get(0).getSymbType(symbolTable);
+            return this.getChildren().get(0).getSymbType(symbolTableParser);
         } else if (this.getType() == SyntaxType.AddExp) {
             for (int i = 0; i < this.getChildren().size(); i+=2) {
-                SymbolType type = getChildren().get(i).getSymbType(symbolTable);
+                SymbolType type = getChildren().get(i).getSymbType(symbolTableParser);
                 if (type == SymbolType.IntArray || type == SymbolType.CharArray) {
                     return type;
                 }
             }
-            return getChildren().get(0).getSymbType(symbolTable);
+            return getChildren().get(0).getSymbType(symbolTableParser);
         } else if (this.getType() == SyntaxType.MulExp) {
             for (int i = 0; i < this.getChildren().size(); i+=2) {
-                SymbolType type = getChildren().get(i).getSymbType(symbolTable);
+                SymbolType type = getChildren().get(i).getSymbType(symbolTableParser);
                 if (type == SymbolType.IntArray || type == SymbolType.CharArray) {
                     return type;
                 }
             }
-            return getChildren().get(0).getSymbType(symbolTable);
+            return getChildren().get(0).getSymbType(symbolTableParser);
         } else if (this.getType() == SyntaxType.UnaryExp) {
             if (this.getChildren().get(0).getType() == SyntaxType.UnaryOp) {
-                return getChildren().get(1).getSymbType(symbolTable);
+                return getChildren().get(1).getSymbType(symbolTableParser);
             } else if (this.getChildren().get(0).getType() == SyntaxType.PrimaryExp) {
-                return getChildren().get(0).getSymbType(symbolTable);
+                return getChildren().get(0).getSymbType(symbolTableParser);
             } else {
                 Token token = this.getChildren().get(0).getToken();
-                return symbolTable.getSymbol(token.value()).type();
+                return symbolTableParser.getSymbol(token.value()).type();
             }
         } else if (this.getType() == SyntaxType.PrimaryExp) {
             if (this.getChildren().get(0).getType() == SyntaxType.LVal) {
-                if (symbolTable.getSymbol(this.getChildren().get(0).getChildren().get(0).getToken().value()).type() == SymbolType.CharArray ||
-                        symbolTable.getSymbol(this.getChildren().get(0).getChildren().get(0).getToken().value()).type() == SymbolType.ConstCharArray) {
+                if (symbolTableParser.getSymbol(this.getChildren().get(0).getChildren().get(0).getToken().value()).type() == SymbolType.CharArray ||
+                        symbolTableParser.getSymbol(this.getChildren().get(0).getChildren().get(0).getToken().value()).type() == SymbolType.ConstCharArray) {
                     if (this.getChildren().get(0).getChildren().size() > 1 && this.getChildren().get(0).getChildren().get(1).getToken().type() == TokenType.LBRACK) {
                         return SymbolType.Char;
                     }
                 }
-                if (symbolTable.getSymbol(this.getChildren().get(0).getChildren().get(0).getToken().value()).type() == SymbolType.IntArray ||
-                        symbolTable.getSymbol(this.getChildren().get(0).getChildren().get(0).getToken().value()).type() == SymbolType.ConstIntArray) {
+                if (symbolTableParser.getSymbol(this.getChildren().get(0).getChildren().get(0).getToken().value()).type() == SymbolType.IntArray ||
+                        symbolTableParser.getSymbol(this.getChildren().get(0).getChildren().get(0).getToken().value()).type() == SymbolType.ConstIntArray) {
                     if (this.getChildren().get(0).getChildren().size() > 1 && this.getChildren().get(0).getChildren().get(1).getToken().type() == TokenType.LBRACK) {
                         return SymbolType.Int;
                     }
                 }
-                return symbolTable.getSymbol(this.getChildren().get(0).getChildren().get(0).getToken().value()).type();
+                return symbolTableParser.getSymbol(this.getChildren().get(0).getChildren().get(0).getToken().value()).type();
             } else if (this.getChildren().get(0).getType() == SyntaxType.Number) {
                 return SymbolType.Int;
             } else if (this.getChildren().get(0).getType() == SyntaxType.Character) {
                 return SymbolType.Char;
             } else {
-                return getChildren().get(1).getSymbType(symbolTable);
+                return getChildren().get(1).getSymbType(symbolTableParser);
             }
         } else {
-            return symbolTable.getSymbol(this.getChildren().get(0).getToken().value()).type();
+            return symbolTableParser.getSymbol(this.getChildren().get(0).getToken().value()).type();
         }
+    }
+
+    // 中间代码生成功能函数部分
+
+    // compUnit 得到包含的 decls
+    public ArrayList<ParserTreeNode> getDecls() {
+        ArrayList<ParserTreeNode> decls = new ArrayList<>();
+        for (ParserTreeNode child : this.getChildren()) {
+            if (child.getType() == SyntaxType.Decl) {
+                decls.add(child);
+            }
+        }
+        return decls;
+    }
+
+    // 子节点是否有左括号
+    public boolean hasLbrack() {
+        for (ParserTreeNode child : this.getChildren()) {
+            if (child.getToken() != null && child.getToken().type() == TokenType.LBRACK) {
+                return true;
+            }
+        }
+        return false;
     }
 }

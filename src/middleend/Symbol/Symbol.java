@@ -1,33 +1,37 @@
 package middleend.Symbol;
 
+import frontend.SymbolParser.SymbolType;
+import middleend.LlvmIr.IRValue;
+
 public class Symbol {
     private final String name;
-    private final SymbolType type;
-    private final int scope;
+    private final SymbolType symbolType;
+    private IRValue value;
 
-    public Symbol(String name, SymbolType type, int scope) {
+    public Symbol(String name, SymbolType symbolType) {
         this.name = name;
-        this.type = type;
-        this.scope = scope;
+        this.symbolType = symbolType;
     }
 
-    public String toString() {
-        return name + " " + type + " " + scope;
+    public Symbol(String name, SymbolType symbolType, IRValue value) {
+        this.name = name;
+        this.symbolType = symbolType;
+        this.value = value;
     }
 
-    public boolean isConst() {
-        return type == SymbolType.ConstChar || type == SymbolType.ConstInt || type == SymbolType.ConstCharArray || type == SymbolType.ConstIntArray;
+    public void setValue(IRValue value) {
+        this.value = value;
     }
 
-    public String name() {
+    public IRValue getValue() {
+        return value;
+    }
+
+    public String getName() {
         return name;
     }
 
-    public SymbolType type() {
-        return type;
-    }
-
-    public int scope() {
-        return scope;
+    public SymbolType getSymbolType() {
+        return symbolType;
     }
 }

@@ -1,9 +1,9 @@
 package frontend.Parser;
 import frontend.*;
-import middleend.Symbol.Symbol;
-import middleend.Symbol.SymbolFunc;
-import middleend.Symbol.SymbolTable;
-import middleend.Symbol.SymbolType;
+import frontend.SymbolParser.SymbolParser;
+import frontend.SymbolParser.SymbolParserFunc;
+import frontend.SymbolParser.SymbolTableParser;
+import frontend.SymbolParser.SymbolType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -13,16 +13,16 @@ public class Parser {
     private int index;
     private Token currentToken;
     private ErrorList errors;
-    private SymbolTable symbolTable;
+    private SymbolTableParser symbolTableParser;
     private ParserTreeNode root;
 
-    public Parser(List<Token> tokens, ErrorList errors, SymbolTable symbolTable) {
+    public Parser(List<Token> tokens, ErrorList errors, SymbolTableParser symbolTableParser) {
         this.tokens = tokens;
         this.index = 0;
         this.currentToken = this.tokens.get(this.index);
         this.root = null;
         this.errors = errors;
-        this.symbolTable = symbolTable;
+        this.symbolTableParser = symbolTableParser;
     }
 
     private Token getLastToken() {
@@ -90,7 +90,7 @@ public class Parser {
         ArrayList<SymbolType> params = new ArrayList<>();
         ArrayList<ParserTreeNode> children = funcRParamsNode.getChildren();
         for (int i = 0; i < children.size(); i+=2) {
-            params.add(children.get(i).getSymbType(symbolTable));
+            params.add(children.get(i).getSymbType(symbolTableParser));
         }
         return params;
     }
@@ -158,10 +158,10 @@ public class Parser {
         addCurrentTokenAndNext(node);//expect(TokenType.ASSIGN);
         node.addChild(parseConstInitVal(node));
 
-        if (symbolTable.containsSymbolInCurrentScope(constName)) {
+        if (symbolTableParser.containsSymbolInCurrentScope(constName)) {
             errors.addError(currentToken.line(), 'b');
         } else {
-            this.symbolTable.addSymbol(constName, isArr && isChar ? SymbolType.ConstCharArray : isChar ? SymbolType.ConstChar : isArr ? SymbolType.ConstIntArray : SymbolType.ConstInt);
+            this.symbolTableParser.addSymbol(constName, isArr && isChar ? SymbolType.ConstCharArray : isChar ? SymbolType.ConstChar : isArr ? SymbolType.ConstIntArray : SymbolType.ConstInt);
         }
         return node;
     }
@@ -212,10 +212,10 @@ public class Parser {
         } else if (currentToken != null &&
                 currentToken.type() == TokenType.IDENFR && Objects.requireNonNull(getNextToken()).type() == TokenType.LPARENT) {
             String functionName = currentToken.value();
-            if (symbolTable.notContainsSymbol(functionName)) {
+            if (symbolTableParser.notContainsSymbol(functionName)) {
                 this.errors.addError(currentToken.line(), 'c');
             }
-            SymbolFunc functionSymbol = (SymbolFunc)symbolTable.getSymbol(functionName);
+            SymbolParserFunc functionSymbol = (SymbolParserFunc) symbolTableParser.getSymbol(functionName);
             addCurrentTokenAndNext(node);//expect(TokenType.IDENFR);
             if (match(TokenType.LPARENT)) {
                 addCurrentTokenAndNext(node);//expect(TokenType.LPARENT);
@@ -224,7 +224,7 @@ public class Parser {
                     int tempIndex = this.index;
                     Token tempToken = this.currentToken;
                     ErrorList tempErrors = this.errors;
-                    SymbolTable tempSymbolTable = this.symbolTable;
+                    SymbolTableParser tempSymbolTableParser = this.symbolTableParser;
                     try {
                         ParserTreeNode funcRParamsNode = parseFuncRParams(node);
                         node.addChild(funcRParamsNode);
@@ -233,7 +233,7 @@ public class Parser {
                         this.index = tempIndex;
                         this.currentToken = tempToken;
                         this.errors = tempErrors;
-                        this.symbolTable = tempSymbolTable;
+                        this.symbolTableParser = tempSymbolTableParser;
                     }
                 }
                 addCorrectTokenAndNext(node, TokenType.RPARENT);
@@ -301,7 +301,7 @@ public class Parser {
         node.setParent(parent);
 
         String name = currentToken.value();
-        if (symbolTable.notContainsSymbol(name)) {
+        if (symbolTableParser.notContainsSymbol(name)) {
             this.errors.addError(currentToken.line(), 'c');
         }
         addCurrentTokenAndNext(node);//expect(TokenType.IDENFR);
@@ -366,10 +366,10 @@ public class Parser {
             addCurrentTokenAndNext(node);//expect(TokenType.ASSIGN);
             node.addChild(parseInitVal(node));
         }
-        if (symbolTable.containsSymbolInCurrentScope(name)) {
+        if (symbolTableParser.containsSymbolInCurrentScope(name)) {
             errors.addError(currentToken.line(), 'b');
         } else {
-            this.symbolTable.addSymbol(name, isArr && isChar ? SymbolType.CharArray : isChar ? SymbolType.Char : isArr ? SymbolType.IntArray : SymbolType.Int);
+            this.symbolTableParser.addSymbol(name, isArr && isChar ? SymbolType.CharArray : isChar ? SymbolType.Char : isArr ? SymbolType.IntArray : SymbolType.Int);
         }
         return node;
     }
@@ -402,10 +402,10 @@ public class Parser {
         TokenType tokenType = currentToken.type();
         node.addChild(parseFuncType(node));
         String name = currentToken.value();
-        if (symbolTable.containsSymbolInCurrentScope(name)) {
+        if (symbolTableParser.containsSymbolInCurrentScope(name)) {
             errors.addError(currentToken.line(), 'b');
         } else {
-            this.symbolTable.addSymbol(name, tokenType == TokenType.CHARTK ? SymbolType.CharFunc : tokenType == TokenType.INTTK ? SymbolType.IntFunc : SymbolType.VoidFunc);
+            this.symbolTableParser.addSymbol(name, tokenType == TokenType.CHARTK ? SymbolType.CharFunc : tokenType == TokenType.INTTK ? SymbolType.IntFunc : SymbolType.VoidFunc);
         }
         addCurrentTokenAndNext(node);//expect(TokenType.IDENFR);
         addCurrentTokenAndNext(node);//expect(TokenType.LPARENT);
@@ -421,11 +421,11 @@ public class Parser {
                 if (lastBlockItem.getChildren().get(0).getType() == SyntaxType.Stmt &&
                 lastBlockItem.getChildren().get(0).getChildren().get(0).getToken() != null &&
                 lastBlockItem.getChildren().get(0).getChildren().get(0).getToken().type() == TokenType.RETURNTK) {
-                    SymbolFunc funcSymbol = (SymbolFunc) this.symbolTable.getSymbol(name);
+                    SymbolParserFunc funcSymbol = (SymbolParserFunc) this.symbolTableParser.getSymbol(name);
                     funcSymbol.setReturn();
                 }
             }
-            SymbolFunc funcSymbol = (SymbolFunc) this.symbolTable.getSymbol(name);
+            SymbolParserFunc funcSymbol = (SymbolParserFunc) this.symbolTableParser.getSymbol(name);
             if (!funcSymbol.isReturn()) {
                 errors.addError(getLastToken().line(), 'g');
             }
@@ -468,12 +468,12 @@ public class Parser {
             addCorrectTokenAndNext(node, TokenType.RBRACK);
         }
 
-        if (symbolTable.containsSymbolFuncPara(name)) {
+        if (symbolTableParser.containsSymbolFuncPara(name)) {
             errors.addError(currentToken.line(), 'b');
         } else {
-            Symbol paramSymbol = this.symbolTable.addSymbolFuncPara(name, isArr && isChar ? SymbolType.CharArray : isChar ? SymbolType.Char : isArr ? SymbolType.IntArray : SymbolType.Int);
-            Symbol funcFParam = this.symbolTable.getSymbol(funcName);
-            ((SymbolFunc)funcFParam).addParam(paramSymbol);
+            SymbolParser paramSymbol = this.symbolTableParser.addSymbolFuncPara(name, isArr && isChar ? SymbolType.CharArray : isChar ? SymbolType.Char : isArr ? SymbolType.IntArray : SymbolType.Int);
+            SymbolParser funcFParam = this.symbolTableParser.getSymbol(funcName);
+            ((SymbolParserFunc)funcFParam).addParam(paramSymbol);
         }
         return node;
     }
@@ -482,11 +482,11 @@ public class Parser {
         ParserTreeNode node = new ParserTreeNode(SyntaxType.Block);
         node.setParent(parent);
         addCurrentTokenAndNext(node);//expect(TokenType.LBRACE);
-        this.symbolTable.enterScope();
+        this.symbolTableParser.enterScope();
         while (currentToken != null && (currentToken.typeSymbolizeDecl() || currentToken.typeSymbolizeStmt())) {
             node.addChild(parseBlockItem(node));
         }
-        this.symbolTable.exitScope();
+        this.symbolTableParser.exitScope();
         addCurrentTokenAndNext(node);//expect(TokenType.RBRACE);
         return node;
     }
@@ -513,6 +513,7 @@ public class Parser {
         return node;
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     private ParserTreeNode parseStmt(ParserTreeNode parent) {
         ParserTreeNode node = new ParserTreeNode(SyntaxType.Stmt);
         node.setParent(parent);
@@ -620,7 +621,7 @@ public class Parser {
                 tryParser.tryParseLVal();
                 if (tryParser.match(TokenType.ASSIGN)) {
                     node.addChild(parseLVal(node));
-                    Symbol symbol = symbolTable.getSymbol(node.getChildren().get(0).getChildren().get(0).getToken().value());
+                    SymbolParser symbol = symbolTableParser.getSymbol(node.getChildren().get(0).getChildren().get(0).getToken().value());
                     if (symbol != null && symbol.isConst()) {
                         errors.addError(getLastToken().line(), 'h');
                     }
@@ -743,7 +744,7 @@ public class Parser {
         ParserTreeNode node = new ParserTreeNode(SyntaxType.ForStmt);
         node.setParent(parent);
         node.addChild(parseLVal(node));
-        Symbol symbol = symbolTable.getSymbol(node.getChildren().get(0).getChildren().get(0).getToken().value());
+        SymbolParser symbol = symbolTableParser.getSymbol(node.getChildren().get(0).getChildren().get(0).getToken().value());
         if (symbol != null && symbol.isConst()) {
             errors.addError(getLastToken().line(), 'h');
         }
@@ -758,10 +759,10 @@ public class Parser {
         addCurrentTokenAndNext(node);//expect(TokenType.INTTK);
         addCurrentTokenAndNext(node);//expect(TokenType.MAINTK);
         addCurrentTokenAndNext(node);//expect(TokenType.LPARENT);
-        if (symbolTable.containsSymbolInCurrentScope("main")) {
+        if (symbolTableParser.containsSymbolInCurrentScope("main")) {
             errors.addError(currentToken.line(), 'b');
         } else {
-            this.symbolTable.addSymbol("main",SymbolType.IntFunc);
+            this.symbolTableParser.addSymbol("main",SymbolType.IntFunc);
         }
         addCorrectTokenAndNext(node, TokenType.RPARENT);
         node.addChild(parseBlock(node));
@@ -771,11 +772,11 @@ public class Parser {
             if (lastBlockItem.getChildren().get(0).getType() == SyntaxType.Stmt &&
                     lastBlockItem.getChildren().get(0).getChildren().get(0).getToken() != null &&
                     lastBlockItem.getChildren().get(0).getChildren().get(0).getToken().type() == TokenType.RETURNTK) {
-                SymbolFunc funcSymbol = (SymbolFunc) this.symbolTable.getSymbol("main");
+                SymbolParserFunc funcSymbol = (SymbolParserFunc) this.symbolTableParser.getSymbol("main");
                 funcSymbol.setReturn();
             }
         }
-        SymbolFunc funcSymbol = (SymbolFunc) this.symbolTable.getSymbol("main");
+        SymbolParserFunc funcSymbol = (SymbolParserFunc) this.symbolTableParser.getSymbol("main");
         if (!funcSymbol.isReturn()) {
             errors.addError(getLastToken().line(), 'g');
         }

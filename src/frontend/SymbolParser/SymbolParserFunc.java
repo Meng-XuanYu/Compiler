@@ -1,12 +1,12 @@
-package middleend.Symbol;
+package frontend.SymbolParser;
 
 import java.util.ArrayList;
 
-public class SymbolFunc extends Symbol {
+public class SymbolParserFunc extends SymbolParser {
     private boolean isReturn;
-    private final ArrayList<Symbol> params;
+    private final ArrayList<SymbolParser> params;
 
-    public SymbolFunc(String name, SymbolType type, int scope) {
+    public SymbolParserFunc(String name, SymbolType type, int scope) {
         super(name, type, scope);
         this.isReturn = type == SymbolType.VoidFunc;
         this.params = new ArrayList<>();
@@ -67,7 +67,7 @@ public class SymbolFunc extends Symbol {
         return typeInt;
     }
 
-    public void addParam(Symbol param) {
+    public void addParam(SymbolParser param) {
         params.add(param);
     }
 

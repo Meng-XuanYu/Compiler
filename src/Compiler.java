@@ -1,6 +1,9 @@
 import frontend.*;
 import frontend.Parser.Parser;
-import middleend.Symbol.SymbolTable;
+import frontend.Parser.ParserTreeNode;
+import middleend.LlvmIr.IRBuilder;
+import middleend.LlvmIr.IRModule;
+import frontend.SymbolParser.SymbolTableParser;
 import java.io.*;
 import java.util.*;
 import java.util.logging.Level;
@@ -13,6 +16,7 @@ public class Compiler {
     static String errorOutputFileName = "error.txt";
     static String parserOutputFileName = "parser.txt";
     static String symbolOutputFileName = "symbol.txt";
+    static String llvmIrOutputFileName = "llvm_ir.txt";
 
     private static final Logger logger = Logger.getLogger(Compiler.class.getName());
 
@@ -38,11 +42,12 @@ public class Compiler {
             }
         }
 
-        // 符号表
-        SymbolTable symbolTable = new SymbolTable();
+        // 语法分析符号表(Deprecated)
+        // 仅仅用于语法分析检验错误
+        SymbolTableParser symbolTableParser = new SymbolTableParser();
 
         // 语法分析
-        Parser parser = new Parser(tokens,errors,symbolTable);
+        Parser parser = new Parser(tokens,errors, symbolTableParser);
         parser.parse();
 
         if (!errors.isEmpty()) {
@@ -53,6 +58,10 @@ public class Compiler {
             deleteOtherFile(errorOutputFileName);
             writeFile(errorOutputFileName, errorOutput);
         } else {
+            // 生成中间代码
+            ParserTreeNode root = parser.getRoot();
+            IRBuilder irBuilder = new IRBuilder(root);
+            IRModule irModule = irBuilder.getModule();
 
         }
     }
