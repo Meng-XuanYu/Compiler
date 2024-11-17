@@ -1,4 +1,4 @@
-package middleend.LlvmIr.Value.Fuction;
+package middleend.LlvmIr.Value.Function;
 import middleend.LlvmIr.IRModule;
 import middleend.LlvmIr.IRValue;
 import middleend.LlvmIr.Types.IRFunctionType;

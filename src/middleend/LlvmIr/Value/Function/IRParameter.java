@@ -1,4 +1,4 @@
-package middleend.LlvmIr.Value.Fuction;
+package middleend.LlvmIr.Value.Function;
 import middleend.LlvmIr.IRValue;
 import middleend.LlvmIr.Types.*;
 import middleend.LlvmIr.Value.IRNode;

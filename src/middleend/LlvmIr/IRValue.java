@@ -1,13 +1,21 @@
 package middleend.LlvmIr;
+import middleend.LlvmIr.Types.IRIntegerType;
 import middleend.LlvmIr.Types.IRValueType;
 import middleend.LlvmIr.Value.IRNode;
 import java.util.ArrayList;
 
-public abstract class IRValue implements IRNode {
+public class IRValue implements IRNode {
     private String name;
     private IRValueType type;
     private ArrayList<IRUse> uses;
     private int size;// 如果是数组，size表示数组大小；否则size为0
+
+    // 函数调用时的维数，-1表示常数，0表示一维，1表示二维
+    // 此处架构设计借鉴
+    private int dimensionValue = -1;
+    private IRValue dimension1Value = null;
+    // **dimension**表示数组的维度（例如标量、1维数组、2维数组）。
+    // **dimensionValue**则决定了实际参数的维度，并根据维度的不同，生成不同的LLVM IR语法。
 
     public IRValue(IRValueType IRValueType) {
         this.name = "";
@@ -57,5 +65,25 @@ public abstract class IRValue implements IRNode {
     @Override
     public ArrayList<String> printIR() {
         return new ArrayList<>();
+    }
+
+    public void setValueType(IRIntegerType irIntegerType) {
+        this.type = irIntegerType;
+    }
+
+    public void setDimensionValue(int dimensionValue) {
+        this.dimensionValue = dimensionValue;
+    }
+
+    public int getDimensionValue() {
+        return dimensionValue;
+    }
+
+    public void setDimension1Value(IRValue dimension1Value) {
+        this.dimension1Value = dimension1Value;
+    }
+
+    public IRValue getDimension1Value() {
+        return dimension1Value;
     }
 }

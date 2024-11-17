@@ -1,4 +1,4 @@
-package middleend.LlvmIr.Value.Fuction;
+package middleend.LlvmIr.Value.Function;
 
 public class FunctionCnt {
     // debug:不用 static，因為每個 FunctionCnt 都是獨立的
