@@ -58,6 +58,10 @@ public class ParserTreeNode {
         return children.get(children.size() - 1);
     }
 
+    public ParserTreeNode getFirstChild() {
+        return children.get(0);
+    }
+
     public void addTokenChild(Token token) {
         children.add(new ParserTreeNode(token));
     }
@@ -192,6 +196,37 @@ public class ParserTreeNode {
             }
         }
         return decls;
+    }
+
+    // compUnit 得到包含的 funcDef
+    public ArrayList<ParserTreeNode> getFuncDefs() {
+        ArrayList<ParserTreeNode> funcDefs = new ArrayList<>();
+        for (ParserTreeNode child : this.getChildren()) {
+            if (child.getType() == SyntaxType.FuncDef) {
+                funcDefs.add(child);
+            }
+        }
+        return funcDefs;
+    }
+
+    // funcDef 得到函数参数
+    public ParserTreeNode getFuncFParams() {
+        if (this.getChildren().get(3).getType() != SyntaxType.Token) {
+            return this.getChildren().get(3);
+        } else {
+            return null; // 右括号
+        }
+    }
+
+    // block 得到包含的 blockItems
+    public ArrayList<ParserTreeNode> getBlockItems() {
+        ArrayList<ParserTreeNode> blockItems = new ArrayList<>();
+        for (ParserTreeNode child : this.getChildren()) {
+            if (child.getType() == SyntaxType.BlockItem) {
+                blockItems.add(child);
+            }
+        }
+        return blockItems;
     }
 
     // 子节点是否有左括号

@@ -1,6 +1,7 @@
 package middleend.Symbol;
 
 import frontend.SymbolParser.SymbolType;
+import middleend.LlvmIr.IRValue;
 
 import java.util.ArrayList;
 
@@ -13,12 +14,17 @@ public class SymbolVar extends Symbol {
         super(name, symbolType);
     }
 
+    public SymbolVar(String name, SymbolType symbolType, IRValue irValue) {
+        super(name, symbolType);
+        this.setValue(irValue);
+    }
+
     public void setInitVal(int initVal) {
         this.initVal = initVal;
     }
 
-    public void setAll0(boolean all0) {
-        this.all0 = all0;
+    public void setAll0() {
+        this.all0 = true;
     }
 
     public boolean getAll0() {

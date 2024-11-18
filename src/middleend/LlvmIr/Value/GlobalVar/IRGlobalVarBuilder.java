@@ -29,15 +29,15 @@ public class IRGlobalVarBuilder {
 
         ParserTreeNode declElement = decl.getChildren().get(0);
         if (declElement.getType() == SyntaxType.ConstDecl) {
-            ParserTreeNode constDecl = declElement;
-            boolean ischar = constDecl.getChildren().get(1).getChildren().get(0).getToken().type() == TokenType.CHARTK;
-            for (int i = 2; i < constDecl.getChildren().size(); i+=2) {
-                globalVars.add(generateConstGlobalVar(constDecl.getChildren().get(i), ischar));
+            boolean ischar = declElement.getChildren().get(1).getChildren().get(0).getToken().type() == TokenType.CHARTK;
+            for (int i = 2; i < declElement.getChildren().size(); i+=2) {
+                globalVars.add(generateConstGlobalVar(declElement.getChildren().get(i), ischar));
             }
         } else if (declElement.getType() == SyntaxType.VarDecl) {
-            ParserTreeNode varDecl = declElement;
-
-            globalVars.add(globalVar);
+            boolean ischar = declElement.getChildren().get(1).getChildren().get(0).getToken().type() == TokenType.CHARTK;
+            for (int i = 2; i < declElement.getChildren().size(); i+=2) {
+                globalVars.add(generateVarGlobalVar(declElement.getChildren().get(i), ischar));
+            }
         } else {
             System.err.println("Error in IRGlobalVarBuilder: unexpected decl element type");
         }
@@ -63,7 +63,7 @@ public class IRGlobalVarBuilder {
         this.symbolTable.addSymbol(symbolConst);
 
         IRGlobalVar globalVar = null;
-        String name = "GlobalConst_" + IRGlobalVarNameCnt.getCount();
+        String name = "@GlobalConst_" + IRGlobalVarNameCnt.getCount();
         if (isChar && constDef.hasLbrack()) {
             ArrayList<Integer> initVal = symbolConst.getValueIntArray();
             ArrayList<IRConstantInt> constantInts = new ArrayList<>();
@@ -134,6 +134,38 @@ public class IRGlobalVarBuilder {
             setVarInit(symbolVar, null, isChar);
         }
         this.symbolTable.addSymbol(symbolVar);
+
+        IRGlobalVar globalVar = null;
+        String name = "@GlobalVar_" + IRGlobalVarNameCnt.getCount();
+
+        if (isChar && varDef.hasLbrack()) {
+            ArrayList<Integer> initVal = symbolVar.getInitValArray();
+            ArrayList<IRConstantInt> constantInts = new ArrayList<>();
+            for (int i = 0; i < initVal.size(); i++) {
+                constantInts.add(new IRConstantInt(initVal.get(i), IRIntegerType.get8()));
+            }
+            IRConstantIntArray constantIntArray = new IRConstantIntArray(constantInts, constantInts.size(), IRIntegerType.get8());
+            globalVar = new IRGlobalVar(IRIntegerType.get8(), name, constantIntArray, false);
+            symbolVar.setValue(globalVar);
+        } else if (isChar) {
+            IRConstantInt constantInt = new IRConstantInt(symbolVar.getInitVal(), IRIntegerType.get8());
+            globalVar = new IRGlobalVar(IRIntegerType.get8(), name, constantInt, false);
+            symbolVar.setValue(globalVar);
+        } else if (varDef.hasLbrack()) {
+            ArrayList<Integer> initVal = symbolVar.getInitValArray();
+            ArrayList<IRConstantInt> constantInts = new ArrayList<>();
+            for (int i = 0; i < initVal.size(); i++) {
+                constantInts.add(new IRConstantInt(initVal.get(i), IRIntegerType.get32()));
+            }
+            IRConstantIntArray constantIntArray = new IRConstantIntArray(constantInts, constantInts.size(), IRIntegerType.get32());
+            globalVar = new IRGlobalVar(IRIntegerType.get32(), name, constantIntArray, false);
+            symbolVar.setValue(globalVar);
+        } else {
+            IRConstantInt constantInt = new IRConstantInt(symbolVar.getInitVal(), IRIntegerType.get32());
+            globalVar = new IRGlobalVar(IRIntegerType.get32(), name, constantInt, false);
+            symbolVar.setValue(globalVar);
+        }
+        return globalVar;
     }
 
     // var的情况
@@ -154,13 +186,12 @@ public class IRGlobalVarBuilder {
             // 没有初始化,全部初始化为0
             if (symbolVar.isArray()) {
                 ArrayList<Integer> initVals = new ArrayList<>();
-                for (int i = 0; i < symbolVar.getDimension(); i++) {
-                    initVals.add(0);
-                }
+                // todo 这里建议使用zeroinitializer 所以不做任何操作？
                 symbolVar.setInitValArray(initVals);
             } else {
                 symbolVar.setInitVal(0);
             }
+            symbolVar.setAll0();
         }
     }
 }

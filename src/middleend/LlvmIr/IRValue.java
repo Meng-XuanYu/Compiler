@@ -17,6 +17,8 @@ public class IRValue implements IRNode {
     // **dimension**表示数组的维度（例如标量、1维数组、2维数组）。
     // **dimensionValue**则决定了实际参数的维度，并根据维度的不同，生成不同的LLVM IR语法。
 
+    private boolean isParam = false;
+
     public IRValue(IRValueType IRValueType) {
         this.name = "";
         this.type = IRValueType;
@@ -27,6 +29,14 @@ public class IRValue implements IRNode {
         this.name = name;
         this.type = IRValueType;
         this.uses = new ArrayList<>();
+    }
+
+    // 构造函数专用
+    public IRValue(String name, IRValueType IRValueType, boolean isParam) {
+        this.name = name;
+        this.type = IRValueType;
+        this.uses = new ArrayList<>();
+        this.isParam = isParam;
     }
 
     public String getName() {

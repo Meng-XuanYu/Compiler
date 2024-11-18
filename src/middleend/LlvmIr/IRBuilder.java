@@ -1,7 +1,7 @@
 package middleend.LlvmIr;
 
 import frontend.Parser.ParserTreeNode;
-import frontend.SymbolParser.SymbolTableParser;
+import middleend.LlvmIr.Value.GlobalVar.IRGlobalVar;
 import middleend.LlvmIr.Value.GlobalVar.IRGlobalVarBuilder;
 import middleend.Symbol.SymbolTable;
 
@@ -24,10 +24,17 @@ public class IRBuilder {
         // 全局变量部分
         ArrayList<ParserTreeNode> decls = root.getDecls();
         for (ParserTreeNode decl : decls) {
-            IRGlobalVarBuilder
+            IRGlobalVarBuilder globalVarBuilder = new IRGlobalVarBuilder(symbolTable, decl);
+            ArrayList<IRGlobalVar> globalVars = globalVarBuilder.genIrGlobalVar();
+            for (IRGlobalVar globalVar : globalVars) {
+                if (this.module != null) {
+                    this.module.addGlobalVar(globalVar);
+                }
+            }
         }
-
-        // 函数部分
+        for (ParserTreeNode funcDef : root.getFuncDefs()) {
+            // 函数部分
+        }
 
         return module;
     }
