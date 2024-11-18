@@ -1,7 +1,6 @@
 package middleend.LlvmIr.Value.Instruction.TerminatorInstructions;
 
 import middleend.LlvmIr.IRValue;
-import middleend.LlvmIr.Types.IRCharType;
 import middleend.LlvmIr.Types.IRFunctionType;
 import middleend.LlvmIr.Types.IRIntegerType;
 import middleend.LlvmIr.Types.IRVoidType;
@@ -25,9 +24,11 @@ public class IRCall extends IRInstruction {
         if (this.getType() instanceof IRVoidType) {
             this.functionType = 0;
         } else if (this.getType() instanceof IRIntegerType) {
-            this.functionType = 1;
-        } else if (this.getType() instanceof IRCharType) {
-            this.functionType = 2;
+            if (((IRIntegerType) this.getType()).getBitWidth() == 8) {
+                this.functionType = 2;
+            } else {
+                this.functionType = 1;
+            }
         }
 
         this.setOperand(function, 0); // 函数名称作为第一个操作数
@@ -75,27 +76,15 @@ public class IRCall extends IRInstruction {
             IRValue arg = this.getOperand(i);
 
             if (arg.getDimensionValue() == -1) {
-                if (arg.getType() instanceof IRIntegerType) {
-                    sb.append("i32 ");
-                } else if (arg.getType() instanceof IRCharType) {
-                    sb.append("i8 ");
-                }
+                sb.append(arg.getType().printIR().get(0)).append(" ");
                 sb.append(arg.getName());
             } else if (arg.getDimensionValue() == 0) {
-                if (arg.getType() instanceof IRIntegerType) {
-                    sb.append("i32 ");
-                } else if (arg.getType() instanceof IRCharType) {
-                    sb.append("i8 ");
-                }
+                sb.append(arg.getType().printIR().get(0)).append(" ");
                 sb.append(arg.getName());
                 // arg符号本身的维数不可能是0，因为是0不会走到setDimensionValue
                 sb.append("[").append(arg.getDimension1Value().getName()).append("]");
             } else if (arg.getDimensionValue() == 1) {
-                if (arg.getType() instanceof IRIntegerType) {
-                    sb.append("i32 ");
-                } else if (arg.getType() instanceof IRCharType) {
-                    sb.append("i8 ");
-                }
+                sb.append(arg.getType().printIR()).append(" ");
                 sb.append(arg.getName());
                 // 要传入一个1维参数, 就不需要再append什么内容
             } else {
@@ -120,7 +109,7 @@ public class IRCall extends IRInstruction {
 
     // getChar()函数
     public IRCall(String functionName, boolean isChar) {
-        super(IRInstructionType.Call, new IRCharType(), 0);
+        super(IRInstructionType.Call, IRIntegerType.get8(), 0);
         this.functionName = functionName;
         this.functionType = 2;
     }

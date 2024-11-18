@@ -34,4 +34,8 @@ public class Symbol {
     public SymbolType getSymbolType() {
         return symbolType;
     }
+
+    public boolean isArray() {
+        return symbolType == SymbolType.CharArray || symbolType == SymbolType.ConstCharArray || symbolType == SymbolType.IntArray || symbolType == SymbolType.ConstIntArray;
+    }
 }

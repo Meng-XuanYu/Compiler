@@ -2,17 +2,19 @@ package middleend.LlvmIr;
 
 import frontend.Parser.ParserTreeNode;
 import frontend.SymbolParser.SymbolTableParser;
+import middleend.LlvmIr.Value.GlobalVar.IRGlobalVarBuilder;
+import middleend.Symbol.SymbolTable;
 
 import java.util.ArrayList;
 
 public class IRBuilder {
     private ParserTreeNode root;
-    private SymbolTableParser symbolTableParser;
+    private SymbolTable symbolTable;
     private final IRModule module;
 
     public IRBuilder(ParserTreeNode root) {
         this.root = root;
-        this.symbolTableParser = new SymbolTableParser();
+        this.symbolTable = new SymbolTable();
         this.module = generateIRModule();
     }
 

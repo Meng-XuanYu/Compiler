@@ -30,9 +30,11 @@ public class IRFunctionType extends IRValueType {
     public ArrayList<String> printIR() {
         ArrayList<String> ans = new ArrayList<>();
         if (this.returnType instanceof IRIntegerType) {
-            ans.add("i32");
-        } else if (this.returnType instanceof IRCharType) {
-            ans.add("i8");
+            if (((IRIntegerType) this.returnType).getBitWidth() == 8) {
+                ans.add("i8");
+            } else if (((IRIntegerType) this.returnType).getBitWidth() == 32) {
+                ans.add("i32");
+            }
         } else if (this.returnType instanceof IRVoidType) {
             ans.add("void");
         }

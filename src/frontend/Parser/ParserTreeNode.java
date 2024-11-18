@@ -4,6 +4,11 @@ import frontend.SymbolParser.SymbolType;
 import frontend.SyntaxType;
 import frontend.Token;
 import frontend.TokenType;
+import middleend.Symbol.Symbol;
+import middleend.Symbol.SymbolConst;
+import middleend.Symbol.SymbolTable;
+import middleend.Symbol.SymbolVar;
+
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -197,5 +202,105 @@ public class ParserTreeNode {
             }
         }
         return false;
+    }
+
+    // 初始化的时候的计算
+    // 这个是在定义全局const变量单int的情况
+    public int calIntInitVal(SymbolTable symbolTable) {
+        if (this.getType() == SyntaxType.ConstInitVal) {
+            return this.getChildren().get(0).calIntInitVal(symbolTable);
+        } else if (this.getType() == SyntaxType.ConstExp) {
+            return this.getChildren().get(0).calIntInitVal(symbolTable);
+        } else if (this.getType() == SyntaxType.AddExp) {
+            int left = this.getChildren().get(0).calIntInitVal(symbolTable);
+            if (this.getChildren().size() > 1) {
+                int right = this.getChildren().get(2).calIntInitVal(symbolTable);
+                if (this.getChildren().get(1).getToken().type() == TokenType.PLUS) {
+                    return left + right;
+                } else {
+                    return left - right;
+                }
+            }
+            return left;
+        } else if (this.getType() == SyntaxType.MulExp) {
+            int left = this.getChildren().get(0).calIntInitVal(symbolTable);
+            if (this.getChildren().size() > 1) {
+                int right = this.getChildren().get(2).calIntInitVal(symbolTable);
+                if (this.getChildren().get(1).getToken().type() == TokenType.MULT) {
+                    return left * right;
+                } else if (this.getChildren().get(1).getToken().type() == TokenType.DIV) {
+                    return left / right;
+                } else {
+                    return left % right;
+                }
+            }
+            return left;
+        } else if (this.getType() == SyntaxType.UnaryExp) {
+            if (this.getChildren().get(0).getType() == SyntaxType.UnaryOp &&
+                    (this.getChildren().get(0).getToken().type() == TokenType.MINU ||
+                            this.getChildren().get(0).getToken().type() == TokenType.NOT)) {
+                return -this.getChildren().get(1).calIntInitVal(symbolTable);
+            } else if (this.getChildren().get(0).getType() == SyntaxType.PrimaryExp) {
+                return this.getChildren().get(0).calIntInitVal(symbolTable);
+            } else {
+                // 函数调用，因为是全局变量，所以不会有函数调用
+                System.err.println("Error in calIntInitVal: unexpected UnaryExp type : FuncCall");
+                return 0;
+            }
+        } else if (this.getType() == SyntaxType.PrimaryExp) {
+            if (this.getChildren().get(0).getType() == SyntaxType.LVal) {
+                return this.getChildren().get(0).calIntInitVal(symbolTable);
+            } else if (this.getChildren().get(0).getType() == SyntaxType.Number) {
+                return Integer.parseInt(this.getChildren().get(0).getToken().value());
+            } else if (this.getChildren().get(0).getType() == SyntaxType.Character) {
+                // charactor 转化为 int
+                return this.getChildren().get(0).getToken().value().charAt(0);
+            } else {
+                // ( Exp )
+                return this.getChildren().get(1).calIntInitVal(symbolTable);
+            }
+        } else if (this.getType() == SyntaxType.LVal) {
+            Symbol symbol = symbolTable.getSymbol(this.getChildren().get(0).getToken().value());
+            if (symbol instanceof SymbolConst) {
+                return ((SymbolConst) symbol).getValueInt();
+            } else {
+                return ((SymbolVar) symbol).getInitVal();
+            }
+        } else if (this.getType() == SyntaxType.Exp) {
+            return this.getChildren().get(0).calIntInitVal(symbolTable);
+        } else if (this.getType() == SyntaxType.Token) {
+            // StringConst 传进来的全是Token的node
+            return this.getToken().value().charAt(1);
+        } else {
+            System.err.println("Error in calIntInitVal: unexpected type");
+            return 0;
+        }
+    }
+
+    // 数组初始化的时候,得到数组里面的值
+    public ArrayList<ParserTreeNode> getInitValList() {
+        if (this.getChildren().get(0).getType() == SyntaxType.Token &&
+            this.getChildren().get(0).getToken().type() == TokenType.LBRACE) {
+            // { initValList }
+            ArrayList<ParserTreeNode> initValList = new ArrayList<>();
+            for (int i = 1; i < this.getChildren().size(); i+=2) {
+                initValList.add(this.getChildren().get(i));
+            }
+            return initValList;
+        } else {
+            // StringConst 传出去全是Token的node
+            String str = this.getChildren().get(0).getToken().value().substring(1, this.getChildren().get(0).getToken().value().length() - 2); // 去掉前后的双引号
+            ArrayList<ParserTreeNode> initValList = new ArrayList<>();
+            for (int i = 0; i < str.length(); i++) {
+                initValList.add(new ParserTreeNode(new Token(TokenType.CHRCON, "'" + str.charAt(i) + "'", this.getChildren().get(0).getToken().line())));
+            }
+            return initValList;
+        }
+    }
+
+    // 变量赋值的时候看是否有赋值
+    public boolean varDefHasAssign() {
+        return this.getChildren().size() > 2 &&
+                this.getChildren().get(this.getChildren().size() - 2).getToken().type() == TokenType.ASSIGN;
     }
 }

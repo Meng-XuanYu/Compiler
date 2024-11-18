@@ -5,44 +5,35 @@ import frontend.SymbolParser.SymbolType;
 import java.util.ArrayList;
 
 public class SymbolVar extends Symbol {
-    private int valueInt;
-    private ArrayList<Integer> valueIntArray;
-    private Character valueChar;
-    private ArrayList<Character> valueCharArray;
+    private int initVal;
+    private ArrayList<Integer> initValArray;
+    boolean all0 = false;
 
     public SymbolVar(String name, SymbolType symbolType) {
         super(name, symbolType);
     }
 
-    public void setValueInt(int valueInt) {
-        this.valueInt = valueInt;
+    public void setInitVal(int initVal) {
+        this.initVal = initVal;
     }
 
-    public void setValueIntArray(ArrayList<Integer> valueIntArray) {
-        this.valueIntArray = valueIntArray;
+    public void setAll0(boolean all0) {
+        this.all0 = all0;
     }
 
-    public void setValueChar(Character valueChar) {
-        this.valueChar = valueChar;
+    public boolean getAll0() {
+        return this.all0;
     }
 
-    public void setValueCharArray(ArrayList<Character> valueCharArray) {
-        this.valueCharArray = valueCharArray;
+    public void setInitValArray(ArrayList<Integer> initValArray) {
+        this.initValArray = initValArray;
     }
 
-    public int getValueInt() {
-        return valueInt;
+    public int getInitVal() {
+        return initVal;
     }
 
-    public ArrayList<Integer> getValueIntArray() {
-        return valueIntArray;
-    }
-
-    public Character getValueChar() {
-        return valueChar;
-    }
-
-    public ArrayList<Character> getValueCharArray() {
-        return valueCharArray;
+    public ArrayList<Integer> getInitValArray() {
+        return initValArray;
     }
 }

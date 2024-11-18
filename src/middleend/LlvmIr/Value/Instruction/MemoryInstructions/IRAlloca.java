@@ -1,8 +1,6 @@
 package middleend.LlvmIr.Value.Instruction.MemoryInstructions;
 
 import middleend.LlvmIr.IRValue;
-import middleend.LlvmIr.Types.IRCharType;
-import middleend.LlvmIr.Types.IRIntegerType;
 import middleend.LlvmIr.Types.IRPointerType;
 import middleend.LlvmIr.Types.IRValueType;
 import middleend.LlvmIr.Value.Instruction.IRInstruction;
@@ -26,13 +24,7 @@ public class IRAlloca extends IRInstruction {
         ArrayList<String> ans = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
 
-        if (this.type instanceof IRIntegerType) {
-            sb.append(this.value.getName()).append(" = alloca i32");
-        } else if (this.type instanceof IRCharType) {
-            sb.append(this.value.getName()).append(" = alloca i8");
-        } else {
-            System.out.println("ERROR in IRAlloca");
-        }
+        sb.append(this.value.getName()).append(" = alloca ").append(this.type.printIR().get(0));
 
         int size = this.getSize();
         if (size != 0) {

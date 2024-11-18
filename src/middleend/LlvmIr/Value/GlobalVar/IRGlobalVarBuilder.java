@@ -4,19 +4,23 @@ import frontend.Parser.ParserTreeNode;
 import frontend.SyntaxType;
 import frontend.Token;
 import frontend.TokenType;
-import frontend.SymbolParser.SymbolParser;
-import frontend.SymbolParser.SymbolTableParser;
 import frontend.SymbolParser.SymbolType;
+import middleend.LlvmIr.Types.IRIntegerType;
+import middleend.LlvmIr.Value.Constant.IRConstantInt;
+import middleend.LlvmIr.Value.Constant.IRConstantIntArray;
 import middleend.Symbol.Symbol;
+import middleend.Symbol.SymbolConst;
+import middleend.Symbol.SymbolTable;
+import middleend.Symbol.SymbolVar;
 
 import java.util.ArrayList;
 
 public class IRGlobalVarBuilder {
-    private final SymbolTableParser symbolTableParser;
+    private final SymbolTable symbolTable;
     private final ParserTreeNode decl;
 
-    public IRGlobalVarBuilder(SymbolTableParser symbolTableParser, ParserTreeNode decl) {
-        this.symbolTableParser = symbolTableParser;
+    public IRGlobalVarBuilder(SymbolTable symbolTable, ParserTreeNode decl) {
+        this.symbolTable = symbolTable;
         this.decl = decl;
     }
 
@@ -27,7 +31,9 @@ public class IRGlobalVarBuilder {
         if (declElement.getType() == SyntaxType.ConstDecl) {
             ParserTreeNode constDecl = declElement;
             boolean ischar = constDecl.getChildren().get(1).getChildren().get(0).getToken().type() == TokenType.CHARTK;
-            globalVars.add(globalVar);
+            for (int i = 2; i < constDecl.getChildren().size(); i+=2) {
+                globalVars.add(generateConstGlobalVar(constDecl.getChildren().get(i), ischar));
+            }
         } else if (declElement.getType() == SyntaxType.VarDecl) {
             ParserTreeNode varDecl = declElement;
 
@@ -39,7 +45,7 @@ public class IRGlobalVarBuilder {
     }
 
     // constVar生成
-    private IRGlobalVar generateGlobalVar(ParserTreeNode constDef, boolean isChar) {
+    private IRGlobalVar generateConstGlobalVar(ParserTreeNode constDef, boolean isChar) {
         Token ident = constDef.getChildren().get(0).getToken();
 
         SymbolType symbolType;
@@ -52,9 +58,109 @@ public class IRGlobalVarBuilder {
         } else {
             symbolType = SymbolType.ConstInt;
         }
-        Symbol symbol = new Symbol(ident.value(), symbolType);
+        SymbolConst symbolConst = new SymbolConst(ident.value(), symbolType);
+        setConstInit(symbolConst, constDef.getChildren().get(constDef.getChildren().size() - 1));
+        this.symbolTable.addSymbol(symbolConst);
 
-        IRGlobalVar globalVar = new IRGlobalVar();
+        IRGlobalVar globalVar = null;
+        String name = "GlobalConst_" + IRGlobalVarNameCnt.getCount();
+        if (isChar && constDef.hasLbrack()) {
+            ArrayList<Integer> initVal = symbolConst.getValueIntArray();
+            ArrayList<IRConstantInt> constantInts = new ArrayList<>();
+            for (int i = 0; i < initVal.size(); i++) {
+                constantInts.add(new IRConstantInt((int) initVal.get(i), IRIntegerType.get8()));
+            }
+            IRConstantIntArray constantIntArray = new IRConstantIntArray(constantInts, constantInts.size(), IRIntegerType.get8());
+            globalVar = new IRGlobalVar(IRIntegerType.get8(), name, constantIntArray, true);
+            symbolConst.setValue(globalVar);
+        } else if (isChar) {
+            IRConstantInt constantInt = new IRConstantInt(symbolConst.getValueInt(), IRIntegerType.get8());
+            globalVar = new IRGlobalVar(IRIntegerType.get8(), name, constantInt, true);
+            symbolConst.setValue(globalVar);
+        } else if (constDef.hasLbrack()) {
+            ArrayList<Integer> initVal = symbolConst.getValueIntArray();
+            ArrayList<IRConstantInt> constantInts = new ArrayList<>();
+            for (int i = 0; i < initVal.size(); i++) {
+                constantInts.add(new IRConstantInt(initVal.get(i), IRIntegerType.get32()));
+            }
+            IRConstantIntArray constantIntArray = new IRConstantIntArray(constantInts,constantInts.size() , IRIntegerType.get32());
+            globalVar = new IRGlobalVar(IRIntegerType.get32(), name, constantIntArray, true);
+            symbolConst.setValue(globalVar);
+        } else {
+            IRConstantInt constantInt = new IRConstantInt(symbolConst.getValueInt(), IRIntegerType.get32());
+            globalVar = new IRGlobalVar(IRIntegerType.get32(), name, constantInt, true);
+            symbolConst.setValue(globalVar);
+        }
         return globalVar;
+    }
+
+    // const的情况
+    private void setConstInit(Symbol symbol, ParserTreeNode constInitVal) {
+        // const的情况一定会有initVal
+        SymbolConst symbolConst = (SymbolConst) symbol;
+        if (symbol.isArray()) {
+            ArrayList<Integer> initVal = new ArrayList<>();
+            for (ParserTreeNode exp : constInitVal.getInitValList()) {
+                initVal.add(exp.calIntInitVal(symbolTable));
+            }
+            symbolConst.setValueIntArray(initVal);
+        } else {
+            symbolConst.setValueInt(constInitVal.calIntInitVal(symbolTable));
+            // char和int 都用int存储
+        }
+    }
+
+    // var生成
+    private IRGlobalVar generateVarGlobalVar(ParserTreeNode varDef, boolean isChar) {
+        Token ident = varDef.getChildren().get(0).getToken();
+        SymbolType symbolType;
+
+        if (isChar && varDef.hasLbrack()) {
+            symbolType = SymbolType.CharArray;
+        } else if (isChar) {
+            symbolType = SymbolType.Char;
+        } else if (varDef.hasLbrack()) {
+            symbolType = SymbolType.IntArray;
+        } else {
+            symbolType = SymbolType.Int;
+        }
+
+        SymbolVar symbolVar = new SymbolVar(ident.value(), symbolType);
+        if (varDef.varDefHasAssign()) {
+            // 有初始化
+            setVarInit(symbolVar, varDef.getChildren().get(varDef.getChildren().size() - 1), isChar);
+        } else {
+            // 没有初始化
+            setVarInit(symbolVar, null, isChar);
+        }
+        this.symbolTable.addSymbol(symbolVar);
+    }
+
+    // var的情况
+    private void setVarInit(SymbolVar symbolVar, ParserTreeNode initVal, boolean isChar) {
+        if (initVal != null) {
+            if (symbolVar.isArray()) {
+                // 数组的初始化
+                ArrayList<Integer> initVals = new ArrayList<>();
+                for (ParserTreeNode exp : initVal.getInitValList()) {
+                    initVals.add(exp.calIntInitVal(symbolTable));
+                }
+                symbolVar.setInitValArray(initVals);
+            } else {
+                // 非数组的初始化, initVal是Exp
+                symbolVar.setInitVal(initVal.calIntInitVal(symbolTable));
+            }
+        } else {
+            // 没有初始化,全部初始化为0
+            if (symbolVar.isArray()) {
+                ArrayList<Integer> initVals = new ArrayList<>();
+                for (int i = 0; i < symbolVar.getDimension(); i++) {
+                    initVals.add(0);
+                }
+                symbolVar.setInitValArray(initVals);
+            } else {
+                symbolVar.setInitVal(0);
+            }
+        }
     }
 }

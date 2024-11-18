@@ -17,18 +17,9 @@ public class IRParameter extends IRValue implements IRNode {
         ArrayList<String> ans = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         if (this.getType() instanceof IRIntegerType) {
-            sb.append("i32 ");
-            sb.append(this.getName());
+            sb.append(this.getType().printIR().get(0)).append(" ").append(this.getName());
         } else if (this.getType() instanceof IRIntArrayType) {
-            sb.append("i32* ");
-            sb.append(this.getName());
-            sb.append("[] ");
-        } else if (this.getType() instanceof IRCharType) {
-            sb.append("i8 ");
-            sb.append(this.getName());
-        } else if (this.getType() instanceof IRCharArrayType) {
-            sb.append("i8* ");
-            sb.append(this.getName());
+            sb.append(this.getType().printIR().get(0)).append(" ").append(this.getName());
             sb.append("[] ");
         }
         ans.add(sb.toString());

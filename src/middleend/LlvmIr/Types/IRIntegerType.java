@@ -7,14 +7,23 @@ public class IRIntegerType extends IRValueType {
     private int bitWidth;
     // 只有两种类型，32位和1位
     public static final IRIntegerType I1 = new IRIntegerType(1);
+    private static final IRIntegerType I8 = new IRIntegerType(8);
     public static final IRIntegerType I32 = new IRIntegerType(32);
 
     private IRIntegerType(int bitWidth) {
         this.bitWidth = bitWidth;
     }
 
+    public int getBitWidth() {
+        return this.bitWidth;
+    }
+
     public static IRIntegerType get1() {
         return I1;
+    }
+
+    public static IRIntegerType get8() {
+        return I8;
     }
 
     public static IRIntegerType get32() {
@@ -24,12 +33,12 @@ public class IRIntegerType extends IRValueType {
     @Override
     public ArrayList<String> printIR() {
         ArrayList<String> ans = new ArrayList<>();
-        if (this.equals(I32)) {
-            ans.add("i32");
-        } else if (this.equals(I1)) {
+        if (this.bitWidth == 1) {
             ans.add("i1");
-        } else {
-            System.out.println("ERROR in IRIntegerType : should not reach here");
+        } else if (this.bitWidth == 8) {
+            ans.add("i8");
+        } else if (this.bitWidth == 32) {
+            ans.add("i32");
         }
         return ans;
     }
