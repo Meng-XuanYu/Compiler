@@ -7,6 +7,8 @@ import frontend.TokenType;
 import middleend.LlvmIr.IRModule;
 import middleend.LlvmIr.IRValue;
 import middleend.LlvmIr.Types.*;
+import middleend.LlvmIr.Value.BasicBlock.IRBasicBlock;
+import middleend.LlvmIr.Value.BasicBlock.IRBlockBuilder;
 import middleend.Symbol.SymbolFunc;
 import middleend.Symbol.SymbolTable;
 import middleend.Symbol.SymbolVar;
@@ -84,12 +86,15 @@ public class IRFunctionBuilder {
         IRFunctionType functionType = new IRFunctionType(returnType, paramTypes);
         functionType.setParameters(paramValues);
 
-        IRFunction function = new IRFunction(functionType, this.module, this.funcDef.getChildren().get(1).getToken().value());
+        IRFunction function = new IRFunction(functionType, this.module, "@" + this.funcDef.getChildren().get(1).getToken().value(), this.functionCnt);
 
         this.symbolFunc.setValue(function);
 
         // Block
-
+        ParserTreeNode block = this.funcDef.getLastChild();
+        IRBlockBuilder blockBuilder = new IRBlockBuilder(block,this.symbolTable, this.functionCnt,null,null);
+        function.addBlocks(blockBuilder.generateIRBlocks());
+        return function;
     }
 
     // 添加参数符号,生成该变量在LLVM IR中的名字
@@ -155,5 +160,9 @@ public class IRFunctionBuilder {
         this.symbolFunc.setValue(function);
 
         // Block
+        ParserTreeNode block = this.mainFuncDef.getLastChild();
+        IRBlockBuilder blockBuilder = new IRBlockBuilder(block, this.symbolTable, this.functionCnt, null, null);
+        function.addBlocks(blockBuilder.generateIRBlocks());
+        return function;
     }
 }

@@ -100,6 +100,10 @@ public class IRCall extends IRInstruction {
         return ans;
     }
 
+    public boolean isVoid() {
+        return this.functionType == 0;
+    }
+
     // getInt()函数返回一个整数值，该值表示调用函数的返回值是否为整数。
     public IRCall(String functionName) {
         super(IRInstructionType.Call, IRIntegerType.get32(), 0);

@@ -239,6 +239,165 @@ public class ParserTreeNode {
         return false;
     }
 
+    // AddExp 得到第一个 mulExp
+    public ParserTreeNode getFirstMulExp() {
+        if (this.children.size() == 1) {
+            return this.children.get(0);
+        } else {
+            return this.children.get(0).getFirstMulExp();
+        }
+    }
+
+    // addExp 得到所有的 mulExp
+    public ArrayList<ParserTreeNode> getOtherMulExps() {
+        ArrayList<ParserTreeNode> mulExps = new ArrayList<>();
+        if (this.children.size() > 1) {
+            mulExps.add(this.children.get(2));
+            mulExps.addAll(this.children.get(0).getOtherMulExps());
+        }
+        return mulExps;
+    }
+
+    // AddExp 得到所有的 operad
+    public ArrayList<TokenType> getOperators() {
+        ArrayList<TokenType> operands = new ArrayList<>();
+        if (this.children.size() > 1) {
+            operands.add(this.children.get(1).getToken().type());
+            operands.addAll(this.children.get(0).getOperators());
+        }
+        return operands;
+    }
+
+    // MulExp 得到第一个 unaryExp
+    public ParserTreeNode getFirstUnaryExp() {
+        if (this.children.size() == 1) {
+            return this.children.get(0);
+        } else {
+            return this.children.get(0).getFirstUnaryExp();
+        }
+    }
+
+    // mulExp 得到所有的 unaryExp
+    public ArrayList<ParserTreeNode> getOtherUnaryExps() {
+        ArrayList<ParserTreeNode> unaryExps = new ArrayList<>();
+        if (this.children.size() > 1) {
+            unaryExps.add(this.children.get(2));
+            unaryExps.addAll(this.children.get(0).getOtherUnaryExps());
+        }
+        return unaryExps;
+    }
+
+
+    // print 的 exp
+    public ArrayList<ParserTreeNode> getOutputExps() {
+        ArrayList<ParserTreeNode> exps = new ArrayList<>();
+        for (ParserTreeNode child : this.getChildren()) {
+            if (child.getType() == SyntaxType.Exp) {
+                exps.add(child);
+            }
+        }
+        return exps;
+    }
+
+    // LOrExp 得到所有 LAndExp
+    public ArrayList<ParserTreeNode> getLAndExps() {
+        ArrayList<ParserTreeNode> lAndExps = new ArrayList<>();
+        if (this.getChildren().size() == 1) {
+            lAndExps.add(this.getChildren().get(0));
+        } else {
+            lAndExps.add(this.getChildren().get(2));
+            lAndExps.addAll(this.getChildren().get(0).getLAndExps());
+        }
+        return lAndExps;
+    }
+
+    // LAndExp 得到所有 EqExp
+    public ArrayList<ParserTreeNode> getEqExps() {
+        ArrayList<ParserTreeNode> eqExps = new ArrayList<>();
+        if (this.getChildren().size() == 1) {
+            eqExps.add(this.getChildren().get(0));
+        } else {
+            eqExps.add(this.getChildren().get(2));
+            eqExps.addAll(this.getChildren().get(0).getEqExps());
+        }
+        return eqExps;
+    }
+
+    // EqExp 得到所有 RelExp
+    public ArrayList<ParserTreeNode> getRelExps() {
+        ArrayList<ParserTreeNode> relExps = new ArrayList<>();
+        if (this.getChildren().size() == 1) {
+            relExps.add(this.getChildren().get(0));
+        } else {
+            relExps.addAll(this.getChildren().get(0).getRelExps());
+            relExps.add(this.getChildren().get(2));
+        }
+        return relExps;
+    }
+
+    // EqExp 得到所有 op
+    public ArrayList<TokenType> getRelops() {
+        ArrayList<TokenType> relops = new ArrayList<>();
+        if (this.getChildren().size() > 1) {
+            relops.addAll(this.getChildren().get(0).getRelops());
+            relops.add(this.getChildren().get(1).getToken().type());
+        }
+        return relops;
+    }
+
+    // RelExp 得到所有 AddExp
+    public ArrayList<ParserTreeNode> getAddExps() {
+        ArrayList<ParserTreeNode> addExps = new ArrayList<>();
+        if (this.getChildren().size() == 1) {
+            addExps.add(this.getChildren().get(0));
+        } else {
+            addExps.addAll(this.getChildren().get(0).getAddExps());
+            addExps.add(this.getChildren().get(2));
+        }
+        return addExps;
+    }
+
+    // RelExp 得到所有 op
+    public ArrayList<TokenType> getAddops() {
+        ArrayList<TokenType> addops = new ArrayList<>();
+        if (this.getChildren().size() > 1) {
+            addops.addAll(this.getChildren().get(0).getAddops());
+            addops.add(this.getChildren().get(1).getToken().type());
+        }
+        return addops;
+    }
+
+    // for语句
+    public ParserTreeNode getForInit() {
+        if (this.children.get(2).getToken().type() == TokenType.SEMICN) {
+            return null;
+        } else {
+            return this.children.get(2);
+        }
+    }
+
+    public ParserTreeNode getForCond() {
+        for (int i = 0; i < this.children.size(); i++) {
+            ParserTreeNode child = this.children.get(i);
+            if (child.getToken() != null && child.getToken().type() == TokenType.SEMICN) {
+                return this.children.get(i + 1);
+            }
+        }
+        System.err.println("Error in getForCond: no SEMICN");
+        return null;
+    }
+
+    public ParserTreeNode getForStep() {
+        for (int i = 0; i < this.children.size(); i++) {
+            ParserTreeNode child = this.children.get(i);
+            if (child.getToken() != null && child.getToken().type() == TokenType.RPARENT) {
+                return this.children.get(i-1);
+            }
+        }
+        System.err.println("Error in getForStep: no RPARENT");
+        return null;
+    }
+
     // 初始化的时候的计算
     // 这个是在定义全局const变量单int的情况
     public int calIntInitVal(SymbolTable symbolTable) {

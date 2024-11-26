@@ -20,7 +20,7 @@ public class Compiler {
 
     private static final Logger logger = Logger.getLogger(Compiler.class.getName());
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws FileNotFoundException {
         // 读取文件
         List<String> lines = readFile(inputFileName);
 
@@ -61,8 +61,33 @@ public class Compiler {
             // 生成中间代码
             ParserTreeNode root = parser.getRoot();
             IRBuilder irBuilder = new IRBuilder(root);
-            IRModule irModule = irBuilder.getModule();
-
+            IRModule irModule = irBuilder.generateIRModule();
+            ArrayList<String> output = irModule.printIR();
+            String ans = "";
+            int tableCnt = 0;
+            for (String s : output) {
+                if (s.contains("}")) {
+                    tableCnt -= 1;
+                }
+                if (tableCnt > 0) {
+                    String temp = "";
+                    for (int j = 0; j < tableCnt; j++) {
+                        temp = temp + "    ";
+                    }
+                    ans = ans + temp + s;
+                } else {
+                    ans = ans + s;
+                }
+                if (s.contains("{")) {
+                    tableCnt += 1;
+                }
+            }
+            OutputStream outputStream = new FileOutputStream(llvmIrOutputFileName);
+            try {
+                outputStream.write(ans.getBytes());
+            } catch (IOException e) {
+                System.err.println("Can not write " + llvmIrOutputFileName);
+            }
         }
     }
 

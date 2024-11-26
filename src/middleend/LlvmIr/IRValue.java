@@ -9,6 +9,7 @@ public class IRValue implements IRNode {
     private IRValueType type;
     private ArrayList<IRUse> uses;
     private int size;// 如果是数组，size表示数组大小；否则size为0
+    private ArrayList<Integer> inits1;
 
     // 函数调用时的维数，-1表示常数，0表示一维，1表示二维
     // 此处架构设计借鉴
@@ -64,6 +65,28 @@ public class IRValue implements IRNode {
         }
     }
 
+    public boolean isParam() {
+        return isParam;
+    }
+
+    public IRValue clone() {
+        IRValue ret = new IRValue(this.getType());
+        ret.setDimensionValue(this.dimensionValue);
+        if (this.dimension1Value == null) {
+            ret.setDimension1Value(null);
+        } else {
+            ret.setDimension1Value(this.dimension1Value.clone());
+        }
+        ret.setSize(this.getSize());
+        ret.setName(this.name);
+        ret.setParam(this.isParam);
+        return ret;
+    }
+
+    public void setParam(boolean isParam) {
+        this.isParam = isParam;
+    }
+
     public void setSize(int size) {
         this.size = size;
     }
@@ -95,5 +118,13 @@ public class IRValue implements IRNode {
 
     public IRValue getDimension1Value() {
         return dimension1Value;
+    }
+
+    public void setInits1(ArrayList<Integer> inits1) {
+        this.inits1 = inits1;
+    }
+
+    public ArrayList<Integer> getInits1() {
+        return inits1;
     }
 }

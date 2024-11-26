@@ -59,7 +59,7 @@ public class IRGlobalVarBuilder {
             symbolType = SymbolType.ConstInt;
         }
         SymbolConst symbolConst = new SymbolConst(ident.value(), symbolType);
-        setConstInit(symbolConst, constDef.getChildren().get(constDef.getChildren().size() - 1));
+        setConstInit(symbolConst, constDef.getChildren().get(constDef.getChildren().size() - 1), this.symbolTable);
         this.symbolTable.addSymbol(symbolConst);
 
         IRGlobalVar globalVar = null;
@@ -95,7 +95,7 @@ public class IRGlobalVarBuilder {
     }
 
     // const的情况
-    private void setConstInit(Symbol symbol, ParserTreeNode constInitVal) {
+    public static void setConstInit(Symbol symbol, ParserTreeNode constInitVal, SymbolTable symbolTable) {
         // const的情况一定会有initVal
         SymbolConst symbolConst = (SymbolConst) symbol;
         if (symbol.isArray()) {
@@ -128,10 +128,10 @@ public class IRGlobalVarBuilder {
         SymbolVar symbolVar = new SymbolVar(ident.value(), symbolType);
         if (varDef.varDefHasAssign()) {
             // 有初始化
-            setVarInit(symbolVar, varDef.getChildren().get(varDef.getChildren().size() - 1), isChar);
+            setVarInit(symbolVar, varDef.getChildren().get(varDef.getChildren().size() - 1), this.symbolTable);
         } else {
             // 没有初始化
-            setVarInit(symbolVar, null, isChar);
+            setVarInit(symbolVar, null, this.symbolTable);
         }
         this.symbolTable.addSymbol(symbolVar);
 
@@ -169,7 +169,7 @@ public class IRGlobalVarBuilder {
     }
 
     // var的情况
-    private void setVarInit(SymbolVar symbolVar, ParserTreeNode initVal, boolean isChar) {
+    public static void setVarInit(SymbolVar symbolVar, ParserTreeNode initVal, SymbolTable symbolTable) {
         if (initVal != null) {
             if (symbolVar.isArray()) {
                 // 数组的初始化
