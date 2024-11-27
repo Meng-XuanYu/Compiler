@@ -35,7 +35,7 @@ public class IRGlobalVarBuilder {
             }
         } else if (declElement.getType() == SyntaxType.VarDecl) {
             boolean ischar = declElement.getChildren().get(1).getChildren().get(0).getToken().type() == TokenType.CHARTK;
-            for (int i = 2; i < declElement.getChildren().size(); i+=2) {
+            for (int i = 1; i < declElement.getChildren().size(); i+=2) {
                 globalVars.add(generateVarGlobalVar(declElement.getChildren().get(i), ischar));
             }
         } else {

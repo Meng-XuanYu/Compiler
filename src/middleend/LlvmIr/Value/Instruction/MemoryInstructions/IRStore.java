@@ -22,14 +22,25 @@ public class IRStore extends IRInstruction {
     private IRValue dimension1RightValue = null;
     private IRValue dimension1PointerValue = null;
     private boolean isIrValue = false;
+    private boolean isChar;
 
     // 默认构造器，处理左右都是普通变量的情况
+    public IRStore(IRValue value, IRValue pointer, boolean isChar) {
+        super(IRInstructionType.Store, IRVoidType.getVoidType(), 2);
+        this.setOperand(value, 0);
+        this.setOperand(pointer, 1);
+        this.dimensionRight = 0;
+        this.dimensionPointer = 0;
+        this.isChar = isChar;
+    }
+
     public IRStore(IRValue value, IRValue pointer) {
         super(IRInstructionType.Store, IRVoidType.getVoidType(), 2);
         this.setOperand(value, 0);
         this.setOperand(pointer, 1);
         this.dimensionRight = 0;
         this.dimensionPointer = 0;
+        this.isChar = false;
     }
 
     // 处理涉及数组的赋值，维度变量是常量
@@ -43,11 +54,12 @@ public class IRStore extends IRInstruction {
         this.dimension1Right = dimension1Right;
         this.dimension1Pointer = dimension1Pointer;
         this.isIrValue = false;
+        this.isChar = false;
     }
 
     //处理涉及数组的赋值，维度变量是Exp（IrValue）
     public IRStore(IRValue value, IRValue pointer, int dimensionRight, int dimensionPointer,
-                    IRValue dimension1RightValue, IRValue dimension1PointerValue) {
+                    IRValue dimension1RightValue, IRValue dimension1PointerValue, boolean isChar) {
         super(IRInstructionType.Store, IRVoidType.getVoidType(), 2);
         this.setOperand(value, 0);
         this.setOperand(pointer, 1);
@@ -56,6 +68,20 @@ public class IRStore extends IRInstruction {
         this.dimension1RightValue = dimension1RightValue;
         this.dimension1PointerValue = dimension1PointerValue;
         this.isIrValue = true;
+        this.isChar = isChar;
+    }
+
+    public IRStore(IRValue value, IRValue pointer, int dimensionRight, int dimensionPointer,
+                   IRValue dimension1RightValue, IRValue dimension1PointerValue) {
+        super(IRInstructionType.Store, IRVoidType.getVoidType(), 2);
+        this.setOperand(value, 0);
+        this.setOperand(pointer, 1);
+        this.dimensionRight = dimensionRight;
+        this.dimensionPointer = dimensionPointer;
+        this.dimension1RightValue = dimension1RightValue;
+        this.dimension1PointerValue = dimension1PointerValue;
+        this.isIrValue = true;
+        this.isChar = false;
     }
 
     @Override
@@ -64,7 +90,7 @@ public class IRStore extends IRInstruction {
         StringBuilder sb = new StringBuilder();
 
         if (isIrValue) {
-            if (this.getType() instanceof IRIntegerType) {
+            if (!isChar) {
                 sb.append(this.getName()).append(" = store i32 ");
             } else {
                 sb.append(this.getName()).append(" = store i8 ");
@@ -76,7 +102,7 @@ public class IRStore extends IRInstruction {
                 sb.append("[").append(this.dimension1RightValue.getName()).append("]");
             }
             sb.append(", ");
-            if (this.getType() instanceof IRIntegerType) {
+            if (!isChar) {
                 sb.append("i32* ");
             } else {
                 sb.append("i8* ");
@@ -88,7 +114,7 @@ public class IRStore extends IRInstruction {
             sb.append("\n");
         } else {
             if (this.dimensionRight == 0 && this.dimensionPointer == 0) {
-                if (this.getType() instanceof IRIntegerType) {
+                if (!isChar) {
                     sb.append("store i32 ");
                 } else {
                     sb.append("store i8 ");
@@ -96,14 +122,14 @@ public class IRStore extends IRInstruction {
                 IRValue value = this.getOperand(0);
                 IRValue pointer = this.getOperand(1);
                 sb.append(value.getName()).append(", ");
-                if (this.getType() instanceof IRIntegerType) {
+                if (!isChar) {
                     sb.append("i32* ");
                 } else {
                     sb.append("i8* ");
                 }
                 sb.append(pointer.getName()).append("\n");
             } else {
-                if (this.getType() instanceof IRIntegerType) {
+                if (!isChar) {
                     sb.append(this.getName()).append(" = store i32 ");
                 } else {
                     sb.append(this.getName()).append(" = store i8 ");
@@ -115,7 +141,7 @@ public class IRStore extends IRInstruction {
                     sb.append("[").append(this.dimension1Right).append("]");
                 }
                 sb.append(", ");
-                if (this.getType() instanceof IRIntegerType) {
+                if (!isChar) {
                     sb.append("i32* ");
                 } else {
                     sb.append("i8* ");

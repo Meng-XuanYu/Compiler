@@ -41,12 +41,19 @@ public class IRFunctionBuilder {
     }
 
     public IRFunction generateIRFunction() {
-        addFuncSymbol(this.funcDef); // 把函数名加入父符号表，并且定义symbolFunc
         if (this.funcDef != null) {
+            addFuncSymbol(this.funcDef);
             return IRFunctionStandard();
         } else {
+            addMainFuncSymbol(this.mainFuncDef);
             return IRFunctionMain();
         }
+    }
+
+    private void addMainFuncSymbol(ParserTreeNode mainFuncDef) {
+        SymbolFunc symbolFunc = new SymbolFunc("main", SymbolType.IntFunc);
+        this.symbolTable.getParent().addSymbol(symbolFunc);
+        this.symbolFunc = symbolFunc;
     }
 
     // 负责把函数名加入父符号表

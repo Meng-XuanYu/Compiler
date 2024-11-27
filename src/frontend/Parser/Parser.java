@@ -107,17 +107,24 @@ public class Parser {
                 (Objects.requireNonNull(getNextToken()).type() == TokenType.IDENFR &&
                         (currentToken.type() == TokenType.INTTK || currentToken.type() == TokenType.CHARTK) &&
                         (Objects.requireNonNull(getNext2Token()).type() != TokenType.LPARENT))) {
-            if (currentToken.type() == TokenType.CONSTTK) {
-                node.addChild(parseConstDecl(node));
-            } else {
-                node.addChild(parseVarDecl(node));
-            }
+            node.addChild(parserDecl(node));
         }
         while (currentToken.type() == TokenType.VOIDTK || currentToken.type() == TokenType.CHARTK ||
                 (currentToken.type() == TokenType.INTTK && Objects.requireNonNull(getNextToken()).type() != TokenType.MAINTK)) {
             node.addChild(parseFuncDef(node));
         }
         node.addChild(parseMainFuncDef(node));
+        return node;
+    }
+
+    private ParserTreeNode parserDecl(ParserTreeNode parent) {
+        ParserTreeNode node = new ParserTreeNode(SyntaxType.Decl);
+        node.setParent(parent);
+        if (currentToken.type() == TokenType.CONSTTK) {
+            node.addChild(parseConstDecl(node));
+        } else {
+            node.addChild(parseVarDecl(node));
+        }
         return node;
     }
 

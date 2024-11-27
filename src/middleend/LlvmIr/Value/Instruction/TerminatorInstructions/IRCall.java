@@ -59,7 +59,7 @@ public class IRCall extends IRInstruction {
     public ArrayList<String> printIR() {
         ArrayList<String> ans = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
-        if (this.functionType == 0) {
+        if (this.functionType != 0) {
             sb.append(this.getName()).append(" = ");
         }
         sb.append("call ");
@@ -120,7 +120,7 @@ public class IRCall extends IRInstruction {
 
     // putch()函数
     public IRCall(String functionName, char c) {
-        super(IRInstructionType.Call, IRVoidType.getVoidType(), 1);
+        super(IRInstructionType.Call, IRVoidType.getVoidType(), 2);
         this.functionName = functionName;
         this.functionType = 0;
         this.setOperand(new IRValue(String.valueOf((int)c), IRIntegerType.get32()), 1);

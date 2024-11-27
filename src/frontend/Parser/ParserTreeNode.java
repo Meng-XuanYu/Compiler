@@ -369,7 +369,7 @@ public class ParserTreeNode {
 
     // for语句
     public ParserTreeNode getForInit() {
-        if (this.children.get(2).getToken().type() == TokenType.SEMICN) {
+        if (this.children.get(2).getType() == SyntaxType.Token && this.children.get(2).getToken().type() == TokenType.SEMICN) {
             return null;
         } else {
             return this.children.get(2);

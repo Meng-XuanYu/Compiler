@@ -44,7 +44,7 @@ public class IRBlockBuilder {
                           IRLabel forBegin,
                           IRLabel forEnd) {
         this(symbolTable, functionCnt, forBegin, forEnd);
-        if (node.getFirstChild().getType() == SyntaxType.Block) {
+        if (node.getType() == SyntaxType.Block) {
             this.block = node;
             this.blockItems = block.getBlockItems();
         } else {
@@ -431,9 +431,11 @@ public class IRBlockBuilder {
                     return BlockItemType.StmtContinue;
                 } else if (tokenType == TokenType.RETURNTK) {
                     return BlockItemType.StmtReturn;
-                } else {
+                } else if (tokenType == TokenType.SEMICN) {
                     // tokenType == TokenType.SEMICN
                     return BlockItemType.StmtSemicon;
+                } else {
+                    return BlockItemType.StmtOutput;
                 }
             } else if (stmt.getFirstChild().getType() == SyntaxType.LVal) {
                 if (stmt.getChildren().get(2).getType() == SyntaxType.Token) {
@@ -448,10 +450,9 @@ public class IRBlockBuilder {
                 }
             } else if (stmt.getFirstChild().getType() == SyntaxType.Block) {
                 return BlockItemType.Block;
-            } else if (stmt.getFirstChild().getType() == SyntaxType.Exp) {
-                return BlockItemType.StmtExp;
             } else {
-                return BlockItemType.StmtOutput;
+                // if (stmt.getFirstChild().getType() == SyntaxType.Exp)
+                return BlockItemType.StmtExp;
             }
         }
     }
@@ -461,7 +462,7 @@ public class IRBlockBuilder {
         int len = this.blockItems.size();
         int pointer = 0;
         while (pointer < len) {
-            ParserTreeNode blockItem = this.blockItems.get(pointer).getFirstChild();
+            ParserTreeNode blockItem = this.blockItems.get(pointer);
             BlockItemType blockItemType = getItemType(blockItem);
             if (blockItemType.ordinal() <= BlockItemType.Block.ordinal()) {
                 // 递归处理
@@ -474,7 +475,7 @@ public class IRBlockBuilder {
                 // 不需要递归处理
                 IRBasicBlock block = new IRBasicBlock();
                 while (pointer < this.blockItems.size()) {
-                    ParserTreeNode blockItemNow = this.blockItems.get(pointer).getFirstChild();
+                    ParserTreeNode blockItemNow = this.blockItems.get(pointer);
                     BlockItemType blockItemTypeNow = getItemType(blockItemNow);
                     if (blockItemTypeNow.ordinal() <= BlockItemType.Block.ordinal()) {
                         break;

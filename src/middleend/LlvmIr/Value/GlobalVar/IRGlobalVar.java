@@ -1,5 +1,6 @@
 package middleend.LlvmIr.Value.GlobalVar;
 import middleend.LlvmIr.IRUser;
+import middleend.LlvmIr.Types.IRIntegerType;
 import middleend.LlvmIr.Types.IRValueType;
 import middleend.LlvmIr.Value.Constant.IRConstant;
 import middleend.LlvmIr.Value.Constant.IRConstantIntArray;
@@ -47,5 +48,42 @@ public class IRGlobalVar extends IRUser implements IRNode {
         }  else {
             return 0; // 代表不是数组
         }
+    }
+
+    @Override
+    public ArrayList<String> printIR() {
+        ArrayList<String> ans = new ArrayList<>();
+
+        if (this.isConstant) {
+            String string;
+            if (this.type.equals(IRIntegerType.get32())) {
+                string = this.getName() + " = dso_local global " +
+                        this.type.printIR().get(0) + " " + this.initialValue.printIR().get(0) + "\n";
+            } else if (this.type.equals(IRIntegerType.get8())) {
+                string = this.getName() + " = dso_local global " +
+                        this.type.printIR().get(0) + " " + this.initialValue.printIR().get(0) + "\n";
+            } else {
+                // 数组类型
+                string = this.getName() + " = dso_local global " +
+                        this.type.printIR().get(0) + " " + this.initialValue.printIR().get(0) + "\n";
+            }
+            ans.add(string);
+        } else {
+            String string;
+            if (this.type.equals(IRIntegerType.get32())) {
+                string = this.getName() + " = dso_local global " +
+                        this.type.printIR().get(0) + " " + this.initialValue.printIR().get(0) + "\n";
+            } else if (this.type.equals(IRIntegerType.get8())) {
+                string = this.getName() + " = dso_local global " +
+                        this.type.printIR().get(0) + " " + this.initialValue.printIR().get(0) + "\n";
+            } else {
+                // 数组类型
+                string = this.getName() + " = dso_local global " +
+                        this.type.printIR().get(0) + " " + this.initialValue.printIR().get(0) + "\n";
+            }
+            ans.add(string);
+        }
+
+        return ans;
     }
 }

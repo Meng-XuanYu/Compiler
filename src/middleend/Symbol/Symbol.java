@@ -38,4 +38,8 @@ public class Symbol {
     public boolean isArray() {
         return symbolType == SymbolType.CharArray || symbolType == SymbolType.ConstCharArray || symbolType == SymbolType.IntArray || symbolType == SymbolType.ConstIntArray;
     }
+
+    public boolean isChar() {
+        return symbolType == SymbolType.Char || symbolType == SymbolType.ConstChar || symbolType == SymbolType.CharArray || symbolType == SymbolType.ConstCharArray;
+    }
 }
