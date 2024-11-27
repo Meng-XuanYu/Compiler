@@ -262,8 +262,8 @@ public class ParserTreeNode {
     public ArrayList<TokenType> getOperators() {
         ArrayList<TokenType> operands = new ArrayList<>();
         if (this.children.size() > 1) {
-            operands.add(this.children.get(1).getToken().type());
             operands.addAll(this.children.get(0).getOperators());
+            operands.add(this.children.get(1).getToken().type());
         }
         return operands;
     }
@@ -281,8 +281,8 @@ public class ParserTreeNode {
     public ArrayList<ParserTreeNode> getOtherUnaryExps() {
         ArrayList<ParserTreeNode> unaryExps = new ArrayList<>();
         if (this.children.size() > 1) {
-            unaryExps.add(this.children.get(2));
             unaryExps.addAll(this.children.get(0).getOtherUnaryExps());
+            unaryExps.add(this.children.get(2));
         }
         return unaryExps;
     }
@@ -401,7 +401,7 @@ public class ParserTreeNode {
     // 初始化的时候的计算
     // 这个是在定义全局const变量单int的情况
     public int calIntInitVal(SymbolTable symbolTable) {
-        if (this.getType() == SyntaxType.ConstInitVal) {
+        if (this.getType() == SyntaxType.ConstInitVal || this.getType() == SyntaxType.InitVal) {
             return this.getChildren().get(0).calIntInitVal(symbolTable);
         } else if (this.getType() == SyntaxType.ConstExp) {
             return this.getChildren().get(0).calIntInitVal(symbolTable);
@@ -431,8 +431,8 @@ public class ParserTreeNode {
             return left;
         } else if (this.getType() == SyntaxType.UnaryExp) {
             if (this.getChildren().get(0).getType() == SyntaxType.UnaryOp &&
-                    (this.getChildren().get(0).getToken().type() == TokenType.MINU ||
-                            this.getChildren().get(0).getToken().type() == TokenType.NOT)) {
+                    (this.getFirstChild().getFirstChild().getToken().type() == TokenType.MINU ||
+                            this.getFirstChild().getFirstChild().getToken().type() == TokenType.PLUS)) {
                 return -this.getChildren().get(1).calIntInitVal(symbolTable);
             } else if (this.getChildren().get(0).getType() == SyntaxType.PrimaryExp) {
                 return this.getChildren().get(0).calIntInitVal(symbolTable);
@@ -445,10 +445,9 @@ public class ParserTreeNode {
             if (this.getChildren().get(0).getType() == SyntaxType.LVal) {
                 return this.getChildren().get(0).calIntInitVal(symbolTable);
             } else if (this.getChildren().get(0).getType() == SyntaxType.Number) {
-                return Integer.parseInt(this.getChildren().get(0).getToken().value());
+                return Integer.parseInt(this.getFirstChild().getFirstChild().getToken().value());
             } else if (this.getChildren().get(0).getType() == SyntaxType.Character) {
-                // charactor 转化为 int
-                return this.getChildren().get(0).getToken().value().charAt(0);
+                return this.getFirstChild().getFirstChild().getToken().value().charAt(0);
             } else {
                 // ( Exp )
                 return this.getChildren().get(1).calIntInitVal(symbolTable);
@@ -494,7 +493,12 @@ public class ParserTreeNode {
 
     // 变量赋值的时候看是否有赋值
     public boolean varDefHasAssign() {
-        return this.getChildren().size() > 2 &&
-                this.getChildren().get(this.getChildren().size() - 2).getToken().type() == TokenType.ASSIGN;
+        if (this.hasLbrack()) {
+            return this.getChildren().size() > 4 &&
+                    this.getChildren().get(this.getChildren().size() - 2).getToken().type() == TokenType.ASSIGN;
+        } else {
+            return this.getChildren().size() > 2 &&
+                    this.getChildren().get(this.getChildren().size() - 2).getToken().type() == TokenType.ASSIGN;
+        }
     }
 }

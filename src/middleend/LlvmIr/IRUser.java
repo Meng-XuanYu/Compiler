@@ -44,7 +44,6 @@ public abstract class IRUser extends IRValue {
                 return use.getValue();
             }
         }
-        System.out.println("ERROR in IRUser");
         return null;
     }
 

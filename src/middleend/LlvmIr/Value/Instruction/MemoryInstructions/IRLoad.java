@@ -31,10 +31,6 @@ public class IRLoad extends IRInstruction {
         return isArray;
     }
 
-    public IRValue getDimension1() {
-        return dimension1;
-    }
-
     @Override
     public ArrayList<String> printIR() {
         ArrayList<String> ans = new ArrayList<>();
@@ -42,16 +38,20 @@ public class IRLoad extends IRInstruction {
 
         if (isArray()) {
             if (this.getType() instanceof IRIntegerType) {
-                sb.append(this.getName()).append(" = load i32, i32* ");
-            } else {
-                sb.append(this.getName()).append(" = load i8, i8* ");
+                if (((IRIntegerType) this.getType()).getBitWidth() == 32) {
+                    sb.append(this.getName()).append(" = load i32, i32* ");
+                } else {
+                    sb.append(this.getName()).append(" = load i8, i8* ");
+                }
             }
             sb.append(this.getOperand(0).getName()).append("[").append(this.dimension1.getName()).append("]\n");
         } else {
             if (this.getType() instanceof IRIntegerType) {
-                sb.append(this.getName()).append(" = load i32, i32* ");
-            } else {
-                sb.append(this.getName()).append(" = load i8, i8* ");
+                if (((IRIntegerType) this.getType()).getBitWidth() == 32) {
+                    sb.append(this.getName()).append(" = load i32, i32* ");
+                } else {
+                    sb.append(this.getName()).append(" = load i8, i8* ");
+                }
             }
             sb.append(this.getOperand(0).getName()).append("\n");
         }

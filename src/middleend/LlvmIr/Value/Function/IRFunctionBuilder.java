@@ -115,20 +115,20 @@ public class IRFunctionBuilder {
             if (funcFParam.getFirstChild().getFirstChild().getToken() != null &&
                 funcFParam.getFirstChild().getFirstChild().getToken().type() == TokenType.INTTK) {
                 returnValue = new IRValue(name, IRIntegerType.get32(), true);
-                symbolVar = new SymbolVar(name, SymbolType.IntArray, returnValue);
+                symbolVar = new SymbolVar(funcFParam.getChildren().get(1).getToken().value(), SymbolType.IntArray, returnValue);
             } else {
                 returnValue = new IRValue(name, IRIntegerType.get8(), true);
-                symbolVar = new SymbolVar(name, SymbolType.CharArray, returnValue);
+                symbolVar = new SymbolVar(funcFParam.getChildren().get(1).getToken().value(), SymbolType.CharArray, returnValue);
             }
         } else {
             // 普通变量
             if (funcFParam.getFirstChild().getToken() != null &&
                 funcFParam.getFirstChild().getToken().type() == TokenType.INTTK) {
                 returnValue = new IRValue(name, IRIntegerType.get32(), true);
-                symbolVar = new SymbolVar(name, SymbolType.Int, returnValue);
+                symbolVar = new SymbolVar(funcFParam.getChildren().get(1).getToken().value(), SymbolType.Int, returnValue);
             } else {
                 returnValue = new IRValue(name, IRIntegerType.get8(), true);
-                symbolVar = new SymbolVar(name, SymbolType.Char, returnValue);
+                symbolVar = new SymbolVar(funcFParam.getChildren().get(1).getToken().value(), SymbolType.Char, returnValue);
             }
         }
         this.symbolFunc.addSymbol(symbolVar);
@@ -147,8 +147,8 @@ public class IRFunctionBuilder {
                 return new IRIntArrayType(IRIntegerType.get8(), -1);
             }
         } else {
-            if (funcFParam.getFirstChild().getToken() != null &&
-                funcFParam.getFirstChild().getToken().type() == TokenType.INTTK) {
+            if (funcFParam.getFirstChild().getFirstChild().getToken() != null &&
+                funcFParam.getFirstChild().getFirstChild().getToken().type() == TokenType.INTTK) {
                 return IRIntegerType.get32();
             } else {
                 return IRIntegerType.get8();
@@ -163,7 +163,7 @@ public class IRFunctionBuilder {
         ArrayList<IRValueType> paramTypes = new ArrayList<>();
         IRFunctionType functionType = new IRFunctionType(returnType, paramTypes);
 
-        IRFunction function = new IRFunction(functionType, this.module, "main");
+        IRFunction function = new IRFunction(functionType, this.module, "@main");
         this.symbolFunc.setValue(function);
 
         // Block

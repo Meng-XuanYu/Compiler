@@ -10,9 +10,7 @@ import middleend.LlvmIr.Types.IRValueType;
 import middleend.LlvmIr.Value.BasicBlock.IRBasicBlock;
 import middleend.LlvmIr.Value.Function.FunctionCnt;
 import middleend.LlvmIr.Value.Function.IRFunction;
-import middleend.LlvmIr.Value.Instruction.MemoryInstructions.IRAlloca;
-import middleend.LlvmIr.Value.Instruction.MemoryInstructions.IRLoad;
-import middleend.LlvmIr.Value.Instruction.MemoryInstructions.IRStore;
+import middleend.LlvmIr.Value.Instruction.MemoryInstructions.*;
 import middleend.LlvmIr.Value.Instruction.TerminatorInstructions.IRCall;
 import middleend.LlvmIr.Value.Instruction.TerminatorInstructions.IRGoto;
 import middleend.LlvmIr.Value.Instruction.TerminatorInstructions.IRRet;
@@ -109,9 +107,9 @@ public class IRInstructionBuilder {
 
     public ArrayList<IRInstruction> generateInstructions() {
         if (blockItem != null) {
-            if (this.blockItem.getType() == SyntaxType.Decl) {
+            if (this.blockItem.getFirstChild().getType() == SyntaxType.Decl) {
                 ParserTreeNode decl = blockItem.getFirstChild();
-                if (decl.getType() == SyntaxType.ConstDecl) {
+                if (decl.getFirstChild().getType() == SyntaxType.ConstDecl) {
                     ParserTreeNode constDecl = decl.getFirstChild();
                     generateIRInstructionConstDecl(constDecl);
                 } else {
@@ -239,15 +237,16 @@ public class IRInstructionBuilder {
                 call = new IRCall("@putch", '\n');
             } else if (c == '%' && i + 1 < chars.length && chars[i + 1] == 'c') {
                 IRValue value = values.get(cnt);
+                if (value.getType() == IRIntegerType.get32()) {
+                    IRZext zext = new IRZext(value, IRIntegerType.get8());
+                    zext.setName("%LocalVar" + functionCnt.getCnt());
+                    this.instructions.add(zext);
+                    value = zext;
+                }
                 call = new IRCall("@putch", value);
                 i++;
                 cnt++;
-            } else if (c == '%' && i + 1 < chars.length && chars[i + 1] == 's') {
-                IRValue value = values.get(cnt);
-                call = new IRCall("@putstr", value);
-                i++;
-                cnt++;
-            } else {
+            }  else {
                 call = new IRCall("@putch", c);
             }
             this.instructions.add(call);
@@ -262,9 +261,13 @@ public class IRInstructionBuilder {
     private void generateIRinstructionFromStmtInputChar() {
         ParserTreeNode lVal = stmtInput.getChildren().get(0);
         IRValue left = generateIRInstructionFromLVal(lVal, true);
-        IRCall call = new IRCall("@getchar", true);
+        IRCall call = new IRCall("@getchar");
         call.setName("%LocalVar" + functionCnt.getCnt());
         this.instructions.add(call);
+
+        IRTrunc trunc = new IRTrunc(call, IRIntegerType.get8());
+        trunc.setName("%LocalVar" + functionCnt.getCnt());
+        this.instructions.add(trunc);
 
         IRStore store;
         if (left.getSize() == 0) {
@@ -337,7 +340,7 @@ public class IRInstructionBuilder {
     }
 
     private void generateIRInstructionVarDecl(ParserTreeNode varDecl) {
-        for (int i = 2; i < varDecl.getChildren().size(); i += 2) {
+        for (int i = 1; i < varDecl.getChildren().size(); i += 2) {
             ParserTreeNode varDef = varDecl.getChildren().get(i);
             addVar(varDef, varDecl.getChildren().get(1).getChildren().get(0).getToken().type() == TokenType.CHARTK);
         }
@@ -388,17 +391,11 @@ public class IRInstructionBuilder {
                 }
             } else {
                 // 单个变量
-                if (isChar) {
-                    symbol = new Symbol(name, SymbolType.Char);
-                } else {
-                    symbol = new Symbol(name, SymbolType.Int);
-                }
-                this.symbolTable.addSymbol(symbol);
                 IRValue value = new IRValue(name, irIntegerType);
                 value.setName(name);
 
                 SymbolType symbolType = isChar ? SymbolType.Char : SymbolType.Int;
-                SymbolVar symbolVar = new SymbolVar(name, symbolType, value);
+                SymbolVar symbolVar = new SymbolVar(varDef.getFirstChild().getToken().value(), symbolType, value);
                 this.symbolTable.addSymbol(symbolVar);
 
                 IRAlloca alloca = new IRAlloca(irIntegerType, value);
@@ -407,18 +404,11 @@ public class IRInstructionBuilder {
                 this.instructions.add(alloca);
 
                 ParserTreeNode initVal = varDef.getLastChild();
-                if (initVal.getType() == SyntaxType.Exp) {
-                    // 表达式
-                    IRValue initValue = new IRValue(initVal.getToken().value(), irIntegerType);
-                    this.instructions.add(new IRStore(initValue, value, 0, 1, -1, 0));
-                } else {
-                    // 字符串
-                    String str = initVal.getToken().value();
-                    for (int i = 0; i < str.length(); i++) {
-                        IRValue initValue = new IRValue(String.valueOf(str.charAt(i)), irIntegerType);
-                        this.instructions.add(new IRStore(initValue, value, 0, 1, -1, i));
-                    }
-                }
+                // 一定是表达式
+                ParserTreeNode exp = initVal.getFirstChild();
+                IRValue right = generateIRInstructionFromExp(exp, false);
+                IRStore store = new IRStore(right, value, isChar);
+                this.instructions.add(store);
             }
         } else {
             // 无初始化
@@ -439,18 +429,11 @@ public class IRInstructionBuilder {
                 alloca.setSize(value.getSize());
                 this.instructions.add(alloca);
             } else {
-                // 单个变量
-                if (isChar) {
-                    symbol = new Symbol(name, SymbolType.Char);
-                } else {
-                    symbol = new Symbol(name, SymbolType.Int);
-                }
-                this.symbolTable.addSymbol(symbol);
                 IRValue value = new IRValue(name, irIntegerType);
                 value.setName(name);
 
                 SymbolType symbolType = isChar ? SymbolType.Char : SymbolType.Int;
-                SymbolVar symbolVar = new SymbolVar(name, symbolType, value);
+                SymbolVar symbolVar = new SymbolVar(varDef.getFirstChild().getToken().value(), symbolType, value);
                 this.symbolTable.addSymbol(symbolVar);
 
                 IRAlloca alloca = new IRAlloca(irIntegerType, value);
@@ -552,13 +535,13 @@ public class IRInstructionBuilder {
         IRValue ans = null;
         ParserTreeNode unaryExp_child = unaryExp.getChildren().get(1);
         ParserTreeNode unaryOp = unaryExp.getChildren().get(0);
-        TokenType type = unaryOp.getToken().type();
+        TokenType type = unaryOp.getFirstChild().getToken().type();
         if (type == TokenType.PLUS) {
             ans = generateIRInstructionFromUnaryExp(unaryExp_child, isLeft);
         } else if (type == TokenType.MINU) {
-            IRValue left = new IRValue("0", IRIntegerType.get32());
+            IRValue left = new IRValue("-1", IRIntegerType.get32());
             IRBinaryInstruction mulExp = new IRBinaryInstruction(IRIntegerType.get32(),
-                    IRInstructionType.Mul, left, generateIRInstructionFromUnaryExp(unaryExp, isLeft));
+                    IRInstructionType.Mul, left, generateIRInstructionFromUnaryExp(unaryExp_child, isLeft));
             String name = "%LocalVar" + functionCnt.getCnt();
             mulExp.setName(name);
             this.instructions.add(mulExp);
@@ -594,20 +577,21 @@ public class IRInstructionBuilder {
                 Symbol symbolNowExp = symbols.get(k);
                 if (symbolNowExp.isArray()) {
                     arg = generateIRInstructionFromExp(exp, true);
-                    args.add(arg);
+                    //todo
                 } else {
-                    arg = generateIRInstructionFromExp(exp, true);
-                    IRValue left = new IRValue(arg.getType());
-                    String name_alloca = "%LocalVar" + functionCnt.getCnt();
-                    IRAlloca alloca = new IRAlloca(arg.getType(), left);
-                    alloca.setName(name_alloca);
-                    this.instructions.add(alloca);
-                    IRStore store = new IRStore(arg, left);
-                    left.setName(name_alloca);
-                    store.setName(name_alloca);
-                    this.instructions.add(store);
-                    args.add(store);
+                    arg = generateIRInstructionFromExp(exp, false);
+//                    IRValue left = new IRValue(arg.getType());
+//                    String name_alloca = "%LocalVar" + functionCnt.getCnt();
+//                    IRAlloca alloca = new IRAlloca(arg.getType(), left);
+//                    alloca.setName(name_alloca);
+//                    this.instructions.add(alloca);
+//                    IRStore store = new IRStore(arg, left);
+//                    left.setName(name_alloca);
+//                    store.setName(name_alloca);
+//                    this.instructions.add(store);
+//                    args.add(store);
                 }
+                args.add(arg);
                 k++;
             }
             call = new IRCall(function, args);
@@ -622,7 +606,7 @@ public class IRInstructionBuilder {
             return call;
         } else {
             this.instructions.add(call);
-            return null;
+            return call;
         }
     }
 

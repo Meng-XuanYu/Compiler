@@ -76,15 +76,15 @@ public class IRCall extends IRInstruction {
             IRValue arg = this.getOperand(i);
 
             if (arg.getDimensionValue() == -1) {
-                sb.append(arg.getType().printIR().get(0)).append(" ");
+                sb.append("i32 ").append(" ");
                 sb.append(arg.getName());
             } else if (arg.getDimensionValue() == 0) {
-                sb.append(arg.getType().printIR().get(0)).append(" ");
+                sb.append("i32 ").append(" ");
                 sb.append(arg.getName());
                 // arg符号本身的维数不可能是0，因为是0不会走到setDimensionValue
                 sb.append("[").append(arg.getDimension1Value().getName()).append("]");
             } else if (arg.getDimensionValue() == 1) {
-                sb.append(arg.getType().printIR()).append(" ");
+                sb.append("i32 ").append(" ");
                 sb.append(arg.getName());
                 // 要传入一个1维参数, 就不需要再append什么内容
             } else {
@@ -104,18 +104,11 @@ public class IRCall extends IRInstruction {
         return this.functionType == 0;
     }
 
-    // getInt()函数返回一个整数值，该值表示调用函数的返回值是否为整数。
+    // getInt()函数返回一个整数值，该值表示调用函数的返回值是否为整数,getChar()也是
     public IRCall(String functionName) {
         super(IRInstructionType.Call, IRIntegerType.get32(), 0);
         this.functionName = functionName;
         this.functionType = 1;
-    }
-
-    // getChar()函数
-    public IRCall(String functionName, boolean isChar) {
-        super(IRInstructionType.Call, IRIntegerType.get8(), 0);
-        this.functionName = functionName;
-        this.functionType = 2;
     }
 
     // putch()函数

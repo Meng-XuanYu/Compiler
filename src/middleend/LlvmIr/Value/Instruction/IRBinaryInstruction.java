@@ -59,27 +59,31 @@ public class IRBinaryInstruction extends IRInstruction{
                 sb.append("srem ");
                 break;
             case Lt:
-                sb.append("Lt ");
+                sb.append("icmp slt ");
                 break;
             case Gt:
-                sb.append("Gt ");
+                sb.append("icmp sgt ");
                 break;
             case Le:
-                sb.append("Le ");
+                sb.append("icmp sle ");
                 break;
             case Ge:
-                sb.append("Ge ");
+                sb.append("icmp sge ");
                 break;
             case Not:
                 sb.append("Not ");
                 break;
             case Ne:
-                sb.append("Ne ");
+                sb.append("icmp ne ");
                 break;
             case Eq:
-                sb.append("Eq ");
+                sb.append("icmp eq ");
                 break;
         }
+        if (this.getType() instanceof IRIntegerType) {
+            sb.append("i32 ");
+        }
+
         sb.append(this.getOperand(0).getName());
         if (this.getOperand(1) != null && this.getInstructionType() != IRInstructionType.Not) {
             // Not指令只有一个操作数

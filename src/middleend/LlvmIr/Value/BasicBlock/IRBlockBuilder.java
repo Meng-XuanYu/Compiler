@@ -64,12 +64,13 @@ public class IRBlockBuilder {
     public ArrayList<IRBasicBlock> generateIRBlocks() {
         if (this.block != null) {
             return generateIRBlockFromBlock();
-        } else if (this.stmtCond != null) {
-            return generateIRBlockFromCond();
-        } else if (this.stmtFor != null) {
-            return generateIRBlockFromFor();
-        } else {
-            System.out.println("ERROR in IRBlockBuilder! No block or stmt!");
+//        } else if (this.stmtCond != null) {
+//            return generateIRBlockFromCond();
+//        } else if (this.stmtFor != null) {
+//            return generateIRBlockFromFor();
+//        } else {
+//            System.out.println("ERROR in IRBlockBuilder! No block or stmt!");
+//        }
         }
         return null;
     }
@@ -113,6 +114,7 @@ public class IRBlockBuilder {
             } else if (getItemType(stmt) == BlockItemType.StmtFor) {
                 blockBuilder = new IRBlockBuilder(stmt, newSymbolTable, this.functionCnt, this.forBegin, this.forEnd);
             } else {
+                stmt = stmt.getFirstChild();
                 blockBuilder = new IRBlockBuilder(stmt, newSymbolTable, this.functionCnt, this.forBegin, this.forEnd);
             }
             this.blocks.addAll(blockBuilder.generateIRBlocks());
@@ -125,7 +127,7 @@ public class IRBlockBuilder {
             ifBlock.addIrInstruction(irGoto);
             this.blocks.add(ifBlock);
         } else {
-            irInstructionBuilder = new IRInstructionBuilder(stmt, this.symbolTable, ifBlock, this.functionCnt, this.forBegin, this.forEnd);
+            irInstructionBuilder = new IRInstructionBuilder(this.symbolTable, stmt, ifBlock, this.functionCnt, this.forBegin, this.forEnd);
             instructions = irInstructionBuilder.generateInstructions();
             ifBlock.addAllIrInstruction(instructions);
             // 添加forStep
@@ -152,7 +154,7 @@ public class IRBlockBuilder {
         int labelCntElse = -1;
         IRLabel elseLabel = null;
         // 标记是否有else
-        boolean hasElse = this.stmtCond.getChildren().size() == 5;
+        boolean hasElse = this.stmtCond.getChildren().size() != 5;
         if (hasElse) {
             labelCntElse = IRLabelCnt.getCnt();
             elseLabel = new IRLabel(IRLabelCnt.getName(labelCntElse));
@@ -198,7 +200,7 @@ public class IRBlockBuilder {
             ifBlock.addIrInstruction(irGoto);
             this.blocks.add(ifBlock);
         } else {
-            IRInstructionBuilder irInstructionBuilder = new IRInstructionBuilder(stmt, this.symbolTable, ifBlock, this.functionCnt, this.forBegin, this.forEnd);
+            IRInstructionBuilder irInstructionBuilder = new IRInstructionBuilder(this.symbolTable, stmt, ifBlock, this.functionCnt, this.forBegin, this.forEnd);
             ArrayList<IRInstruction> instructions = irInstructionBuilder.generateInstructions();
             ifBlock.addAllIrInstruction(instructions);
             IRGoto irGoto = new IRGoto(endLabel);
@@ -236,7 +238,7 @@ public class IRBlockBuilder {
                 elseBlock.addIrInstruction(irGoto);
                 this.blocks.add(elseBlock);
             } else {
-                IRInstructionBuilder irInstructionBuilder = new IRInstructionBuilder(stmtElse, this.symbolTable, elseBlock, this.functionCnt, this.forBegin, this.forEnd);
+                IRInstructionBuilder irInstructionBuilder = new IRInstructionBuilder(this.symbolTable, stmtElse, elseBlock, this.functionCnt, this.forBegin, this.forEnd);
                 ArrayList<IRInstruction> instructions = irInstructionBuilder.generateInstructions();
                 elseBlock.addAllIrInstruction(instructions);
                 IRGoto irGoto = new IRGoto(endLabel);
@@ -467,9 +469,18 @@ public class IRBlockBuilder {
             if (blockItemType.ordinal() <= BlockItemType.Block.ordinal()) {
                 // 递归处理
                 SymbolTable symbolTableSon = new SymbolTable(this.symbolTable);
-                ParserTreeNode stmt = blockItem.getFirstChild();
+                ParserTreeNode stmt;
+                if (blockItemType == BlockItemType.StmtCond) {
+                    stmt = blockItem.getFirstChild();
+                } else if (blockItemType == BlockItemType.StmtFor) {
+                    stmt = blockItem.getFirstChild();
+                } else {
+                    stmt = blockItem.getFirstChild().getFirstChild();
+                }
                 IRBlockBuilder blockBuilder = new IRBlockBuilder(stmt, symbolTableSon, this.functionCnt, this.forBegin, this.forEnd);
-                this.blocks.addAll(blockBuilder.generateIRBlocks());
+                if (blockBuilder.generateIRBlocks() != null) {
+                    this.blocks.addAll(blockBuilder.generateIRBlocks());
+                }
                 pointer++;
             } else if (blockItemType.ordinal() < BlockItemType.StmtSemicon.ordinal()) {
                 // 不需要递归处理

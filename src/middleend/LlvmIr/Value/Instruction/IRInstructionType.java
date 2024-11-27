@@ -34,6 +34,7 @@ public enum IRInstructionType {
     Store,
     GEP, // Get Element Ptr
     Zext,
+    Trunc,
     Phi,
     // Label
     Label,

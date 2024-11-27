@@ -1,0 +1,10 @@
+declare i32 @getint()          ; 读取一个整数
+declare i32 @getchar()     ; 读取一个字符
+declare void @putint(i32)      ; 输出一个整数
+declare void @putch(i32)       ; 输出一个字符
+@GlobalVar_0 = dso_local global i32 [
+@GlobalVar_1 = dso_local global i32 0
+
+define dso_local i32 @main() {
+    ret i32 0
+}
