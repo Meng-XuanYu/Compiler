@@ -19,14 +19,10 @@ public class IRParameter extends IRValue implements IRNode {
         if (this.getType() instanceof IRIntegerType) {
             sb.append(this.getType().printIR().get(0)).append(" ").append(this.getName());
         } else if (this.getType() instanceof IRIntArrayType) {
-            sb.append(this.getType().printIR().get(0)).append(" ").append(this.getName());
-            sb.append("[] ");
+            IRIntegerType elementType = ((IRIntArrayType) this.getType()).getType();
+            sb.append(elementType.printIR().get(0)).append("*").append(" ").append(this.getName());
         }
         ans.add(sb.toString());
         return ans;
-    }
-
-    public int getPosition() {
-        return position;
     }
 }

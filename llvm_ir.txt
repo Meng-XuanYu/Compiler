@@ -2,9 +2,34 @@ declare i32 @getint()          ; 读取一个整数
 declare i32 @getchar()     ; 读取一个字符
 declare void @putint(i32)      ; 输出一个整数
 declare void @putch(i32)       ; 输出一个字符
-@GlobalVar_0 = dso_local global i32 [
-@GlobalVar_1 = dso_local global i32 0
 
 define dso_local i32 @main() {
+    %LocalVar0 = alloca i32
+    %LocalVar2 = alloca i32
+    %LocalVar3 = alloca i32
+    call void @putch(i32 50)
+    call void @putch(i32 49)
+    call void @putch(i32 51)
+    call void @putch(i32 55)
+    call void @putch(i32 49)
+    call void @putch(i32 50)
+    call void @putch(i32 57)
+    call void @putch(i32 53)
+    call void @putch(i32 10)
+    store i32 0, i32* %LocalVar0
+    %LocalVar1 = add i32 0, 1
+    store i32 1, i32* %LocalVar2
+    store i32 2, i32* %LocalVar3
+    %LocalVar4 = load i32, i32* %LocalVar2
+    %LocalVar5 = add i32 %LocalVar4, 1
+    %LocalVar6 = mul i32 3, 4
+    %LocalVar7 = sdiv i32 %LocalVar6, 3
+    %LocalVar8 = srem i32 %LocalVar7, 2
+    %LocalVar9 = sub i32 %LocalVar5, %LocalVar8
+    store i32 %LocalVar9, i32* %LocalVar2
+    %LocalVar10 = add i32 1, 1
+    store i32 %LocalVar10, i32* %LocalVar2
+    %LocalVar11 = mul i32 -1, 1
+    store i32 %LocalVar11, i32* %LocalVar2
     ret i32 0
 }

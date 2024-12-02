@@ -14,9 +14,4 @@ public class IRConstant extends IRUser implements IRNode {
     public IRConstant(IRValueType IRValueType, int numOfOperands) {
         super(IRValueType, numOfOperands);
     }
-
-    @Override
-    public ArrayList<String> printIR() {
-        return new ArrayList<>();
-    }
 }

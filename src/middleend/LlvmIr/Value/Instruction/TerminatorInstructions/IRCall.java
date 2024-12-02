@@ -76,15 +76,18 @@ public class IRCall extends IRInstruction {
             IRValue arg = this.getOperand(i);
 
             if (arg.getDimensionValue() == -1) {
-                sb.append("i32 ").append(" ");
+                int bitWidth = ((IRIntegerType)arg.getType()).getBitWidth();
+                if (bitWidth == 8) {
+                    sb.append("i8 ");
+                } else if (bitWidth == 32) {
+                    sb.append("i32 ");
+                }
                 sb.append(arg.getName());
             } else if (arg.getDimensionValue() == 0) {
-                sb.append("i32 ").append(" ");
+                sb.append("i32 ");
                 sb.append(arg.getName());
-                // arg符号本身的维数不可能是0，因为是0不会走到setDimensionValue
-                sb.append("[").append(arg.getDimension1Value().getName()).append("]");
             } else if (arg.getDimensionValue() == 1) {
-                sb.append("i32 ").append(" ");
+                sb.append("i32* ");
                 sb.append(arg.getName());
                 // 要传入一个1维参数, 就不需要再append什么内容
             } else {

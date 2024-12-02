@@ -94,12 +94,11 @@ public class IRFunctionBuilder {
         functionType.setParameters(paramValues);
 
         IRFunction function = new IRFunction(functionType, this.module, "@" + this.funcDef.getChildren().get(1).getToken().value(), this.functionCnt);
-
         this.symbolFunc.setValue(function);
 
         // Block
         ParserTreeNode block = this.funcDef.getLastChild();
-        IRBlockBuilder blockBuilder = new IRBlockBuilder(block,this.symbolTable, this.functionCnt,null,null);
+        IRBlockBuilder blockBuilder = new IRBlockBuilder(block,this.symbolTable, this.functionCnt,null,null, function);
         function.addBlocks(blockBuilder.generateIRBlocks());
         return function;
     }
@@ -110,20 +109,19 @@ public class IRFunctionBuilder {
 
         IRValue returnValue;
         SymbolVar symbolVar;
+        TokenType type = funcFParam.getFirstChild().getFirstChild().getToken().type();
         if (funcFParam.hasLbrack()) {
             // 1维数组
-            if (funcFParam.getFirstChild().getFirstChild().getToken() != null &&
-                funcFParam.getFirstChild().getFirstChild().getToken().type() == TokenType.INTTK) {
-                returnValue = new IRValue(name, IRIntegerType.get32(), true);
+            if (type == TokenType.INTTK) {
+                returnValue = new IRValue(name, new IRIntArrayType(IRIntegerType.get32(), -1), true);
                 symbolVar = new SymbolVar(funcFParam.getChildren().get(1).getToken().value(), SymbolType.IntArray, returnValue);
             } else {
-                returnValue = new IRValue(name, IRIntegerType.get8(), true);
+                returnValue = new IRValue(name, new IRIntArrayType(IRIntegerType.get8(), -1), true);
                 symbolVar = new SymbolVar(funcFParam.getChildren().get(1).getToken().value(), SymbolType.CharArray, returnValue);
             }
         } else {
             // 普通变量
-            if (funcFParam.getFirstChild().getToken() != null &&
-                funcFParam.getFirstChild().getToken().type() == TokenType.INTTK) {
+            if (type == TokenType.INTTK) {
                 returnValue = new IRValue(name, IRIntegerType.get32(), true);
                 symbolVar = new SymbolVar(funcFParam.getChildren().get(1).getToken().value(), SymbolType.Int, returnValue);
             } else {
@@ -168,7 +166,7 @@ public class IRFunctionBuilder {
 
         // Block
         ParserTreeNode block = this.mainFuncDef.getLastChild();
-        IRBlockBuilder blockBuilder = new IRBlockBuilder(block, this.symbolTable, this.functionCnt, null, null);
+        IRBlockBuilder blockBuilder = new IRBlockBuilder(block, this.symbolTable, this.functionCnt, null, null, function);
         function.addBlocks(blockBuilder.generateIRBlocks());
         return function;
     }

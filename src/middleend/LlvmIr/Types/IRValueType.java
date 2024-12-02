@@ -9,4 +9,9 @@ public class IRValueType implements IRNode {
     public ArrayList<String> printIR() {
         return null;
     }
+
+    public boolean isInt32() {
+        return (this instanceof IRIntegerType && ((IRIntegerType) this).getBitWidth() == 32) ||
+                (this instanceof IRIntArrayType && ((IRIntArrayType) this).getType() != null && ((IRIntegerType) ((IRIntArrayType) this).getType()).getBitWidth() == 32);
+    }
 }

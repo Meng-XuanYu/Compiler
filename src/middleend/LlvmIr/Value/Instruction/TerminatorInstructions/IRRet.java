@@ -14,7 +14,8 @@ public class IRRet extends IRInstruction {
     public IRRet(IRValue val) {
         super(IRInstructionType.Ret, val.getType(), 1);
         this.setOperand(val, 0);
-        this.RetType = (val.getType() instanceof IRIntegerType) ? 1 : 2;
+        int bitwidth = ((IRIntegerType) val.getType()).getBitWidth();
+        this.RetType = (bitwidth == 32) ? 1 : 2;
     }
 
     public IRRet() {

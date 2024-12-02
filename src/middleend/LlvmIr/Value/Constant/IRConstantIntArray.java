@@ -19,14 +19,18 @@ public class IRConstantIntArray extends IRConstant {
     @Override
     public ArrayList<String> printIR() {
         ArrayList<String> ans = new ArrayList<>();
-        ans.add("[");
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("[");
         for (int i = 0; i < values.size(); i++) {
-            ans.add(values.get(i).printIR().get(0));
+            stringBuilder.append(values.get(i).getType().printIR().get(0));
+            stringBuilder.append(" ");
+            stringBuilder.append(values.get(i).printIR().get(0));
             if (i != values.size() - 1) {
-                ans.add(", ");
+                stringBuilder.append(", ");
             }
         }
-        ans.add("]");
+        stringBuilder.append("]");
+        ans.add(stringBuilder.toString());
         return ans;
     }
 

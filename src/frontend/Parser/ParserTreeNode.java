@@ -252,8 +252,8 @@ public class ParserTreeNode {
     public ArrayList<ParserTreeNode> getOtherMulExps() {
         ArrayList<ParserTreeNode> mulExps = new ArrayList<>();
         if (this.children.size() > 1) {
-            mulExps.add(this.children.get(2));
             mulExps.addAll(this.children.get(0).getOtherMulExps());
+            mulExps.add(this.children.get(2));
         }
         return mulExps;
     }
@@ -305,8 +305,8 @@ public class ParserTreeNode {
         if (this.getChildren().size() == 1) {
             lAndExps.add(this.getChildren().get(0));
         } else {
-            lAndExps.add(this.getChildren().get(2));
             lAndExps.addAll(this.getChildren().get(0).getLAndExps());
+            lAndExps.add(this.getChildren().get(2));
         }
         return lAndExps;
     }
@@ -317,8 +317,8 @@ public class ParserTreeNode {
         if (this.getChildren().size() == 1) {
             eqExps.add(this.getChildren().get(0));
         } else {
-            eqExps.add(this.getChildren().get(2));
             eqExps.addAll(this.getChildren().get(0).getEqExps());
+            eqExps.add(this.getChildren().get(2));
         }
         return eqExps;
     }
@@ -396,6 +396,12 @@ public class ParserTreeNode {
         }
         System.err.println("Error in getForStep: no RPARENT");
         return null;
+    }
+
+    // 确定是array之后得到size
+    public int getArraySize(SymbolTable symbolTable) {
+        ParserTreeNode constExp = this.getChildren().get(2);
+        return constExp.getFirstChild().calIntInitVal(symbolTable);
     }
 
     // 初始化的时候的计算

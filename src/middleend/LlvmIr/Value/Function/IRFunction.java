@@ -3,6 +3,7 @@ import middleend.LlvmIr.IRModule;
 import middleend.LlvmIr.IRValue;
 import middleend.LlvmIr.Types.IRFunctionType;
 import middleend.LlvmIr.Types.IRValueType;
+import middleend.LlvmIr.Types.IRVoidType;
 import middleend.LlvmIr.Value.BasicBlock.IRBasicBlock;
 import middleend.LlvmIr.Value.IRNode;
 import java.util.ArrayList;
@@ -69,6 +70,10 @@ public class IRFunction extends IRValue implements IRNode {
 
         for (IRBasicBlock block : this.blocks) {
             init.addAll(block.printIR());
+        }
+        IRValueType type = ((IRFunctionType)this.getType()).getReturnType();
+        if (type instanceof IRVoidType && !init.get(init.size() - 1).contains("ret")) {
+            init.add("ret void\n");
         }
 
         init.add("}\n");

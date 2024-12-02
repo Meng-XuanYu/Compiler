@@ -1,5 +1,6 @@
 package middleend.LlvmIr.Value.GlobalVar;
 import middleend.LlvmIr.IRUser;
+import middleend.LlvmIr.Types.IRIntArrayType;
 import middleend.LlvmIr.Types.IRIntegerType;
 import middleend.LlvmIr.Types.IRValueType;
 import middleend.LlvmIr.Value.Constant.IRConstant;
@@ -11,9 +12,10 @@ public class IRGlobalVar extends IRUser implements IRNode {
     private IRValueType type;
     private IRConstant initialValue;
     private boolean isConstant;
+    private boolean isZero;
 
     // 名称和类型
-    public IRGlobalVar(IRValueType type, String name) {
+    private IRGlobalVar(IRValueType type, String name) {
         super(type);
         this.type = type;
         this.setName(name);
@@ -24,11 +26,7 @@ public class IRGlobalVar extends IRUser implements IRNode {
         this(type, name);
         this.initialValue = initialValue;
         this.isConstant = isConstant;
-    }
-
-    // 获取i32类型,i8类型的初始值
-    public int getIntInit() {
-        return Integer.parseInt(this.initialValue.printIR().get(0));
+        this.isZero = initialValue==null || initialValue instanceof IRConstantIntArray && ((IRConstantIntArray) initialValue).getConstantInts().isEmpty();
     }
 
     // 获取i32数组类型, i8数组类型的初始值
@@ -64,8 +62,25 @@ public class IRGlobalVar extends IRUser implements IRNode {
                         this.type.printIR().get(0) + " " + this.initialValue.printIR().get(0) + "\n";
             } else {
                 // 数组类型
-                string = this.getName() + " = dso_local global " +
-                        this.type.printIR().get(0) + " " + this.initialValue.printIR().get(0) + "\n";
+                int size = ((IRIntArrayType) this.type).getSize();
+                boolean ischar = ((IRIntArrayType) this.type).ischar();
+                if (ischar) {
+                    if (isZero) {
+                        string = this.getName() + " = dso_local global [" + size + " x " +
+                                "i8" + "] zeroinitializer\n";
+                    } else {
+                        string = this.getName() + " = dso_local global [" + size + " x " +
+                                "i8" + "] " + this.initialValue.printIR().get(0) + "\n";
+                    }
+                } else {
+                    if (isZero) {
+                        string = this.getName() + " = dso_local global [" + size + " x " +
+                                "i32" + "] zeroinitializer\n";
+                    } else {
+                        string = this.getName() + " = dso_local global [" + size + " x " +
+                                "i32" + "] " + this.initialValue.printIR().get(0) + "\n";
+                    }
+                }
             }
             ans.add(string);
         } else {
@@ -78,8 +93,25 @@ public class IRGlobalVar extends IRUser implements IRNode {
                         this.type.printIR().get(0) + " " + this.initialValue.printIR().get(0) + "\n";
             } else {
                 // 数组类型
-                string = this.getName() + " = dso_local global " +
-                        this.type.printIR().get(0) + " " + this.initialValue.printIR().get(0) + "\n";
+                int size = ((IRIntArrayType) this.type).getSize();
+                boolean ischar = ((IRIntArrayType) this.type).ischar();
+                if (ischar) {
+                    if (isZero) {
+                        string = this.getName() + " = dso_local global [" + size + " x " +
+                                "i8" + "] zeroinitializer\n";
+                    } else {
+                        string = this.getName() + " = dso_local global [" + size + " x " +
+                                "i8" + "] " + this.initialValue.printIR().get(0) + "\n";
+                    }
+                } else {
+                    if (isZero) {
+                        string = this.getName() + " = dso_local global [" + size + " x " +
+                                "i32" + "] zeroinitializer\n";
+                    } else {
+                        string = this.getName() + " = dso_local global [" + size + " x " +
+                                "i32" + "] " + this.initialValue.printIR().get(0) + "\n";
+                    }
+                }
             }
             ans.add(string);
         }

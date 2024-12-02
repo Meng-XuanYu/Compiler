@@ -9,6 +9,15 @@ public class SymbolVar extends Symbol {
     private int initVal;
     private ArrayList<Integer> initValArray;
     boolean all0 = false;
+    private IRValue irValue; // 中间代码的对应的指令
+
+    public void setIns(IRValue irValue) {
+        this.irValue = irValue;
+    }
+
+    public IRValue getIns() {
+        return irValue;
+    }
 
     public SymbolVar(String name, SymbolType symbolType) {
         super(name, symbolType);

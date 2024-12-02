@@ -5,6 +5,7 @@ import frontend.SyntaxType;
 import frontend.Token;
 import frontend.TokenType;
 import frontend.SymbolParser.SymbolType;
+import middleend.LlvmIr.Types.IRIntArrayType;
 import middleend.LlvmIr.Types.IRIntegerType;
 import middleend.LlvmIr.Value.Constant.IRConstantInt;
 import middleend.LlvmIr.Value.Constant.IRConstantIntArray;
@@ -34,7 +35,7 @@ public class IRGlobalVarBuilder {
                 globalVars.add(generateConstGlobalVar(declElement.getChildren().get(i), ischar));
             }
         } else if (declElement.getType() == SyntaxType.VarDecl) {
-            boolean ischar = declElement.getChildren().get(1).getChildren().get(0).getToken().type() == TokenType.CHARTK;
+            boolean ischar = declElement.getChildren().get(0).getChildren().get(0).getToken().type() == TokenType.CHARTK;
             for (int i = 1; i < declElement.getChildren().size(); i+=2) {
                 globalVars.add(generateVarGlobalVar(declElement.getChildren().get(i), ischar));
             }
@@ -68,10 +69,11 @@ public class IRGlobalVarBuilder {
             ArrayList<Integer> initVal = symbolConst.getValueIntArray();
             ArrayList<IRConstantInt> constantInts = new ArrayList<>();
             for (int i = 0; i < initVal.size(); i++) {
-                constantInts.add(new IRConstantInt((int) initVal.get(i), IRIntegerType.get8()));
+                constantInts.add(new IRConstantInt(initVal.get(i), IRIntegerType.get8()));
             }
+            IRIntArrayType irIntArrayType = new IRIntArrayType(IRIntegerType.get8(), initVal.size());
             IRConstantIntArray constantIntArray = new IRConstantIntArray(constantInts, constantInts.size(), IRIntegerType.get8());
-            globalVar = new IRGlobalVar(IRIntegerType.get8(), name, constantIntArray, true);
+            globalVar = new IRGlobalVar(irIntArrayType, name, constantIntArray, true);
             symbolConst.setValue(globalVar);
         } else if (isChar) {
             IRConstantInt constantInt = new IRConstantInt(symbolConst.getValueInt(), IRIntegerType.get8());
@@ -83,8 +85,9 @@ public class IRGlobalVarBuilder {
             for (int i = 0; i < initVal.size(); i++) {
                 constantInts.add(new IRConstantInt(initVal.get(i), IRIntegerType.get32()));
             }
+            IRIntArrayType irIntArrayType = new IRIntArrayType(IRIntegerType.get32(), initVal.size());
             IRConstantIntArray constantIntArray = new IRConstantIntArray(constantInts,constantInts.size() , IRIntegerType.get32());
-            globalVar = new IRGlobalVar(IRIntegerType.get32(), name, constantIntArray, true);
+            globalVar = new IRGlobalVar(irIntArrayType, name, constantIntArray, true);
             symbolConst.setValue(globalVar);
         } else {
             IRConstantInt constantInt = new IRConstantInt(symbolConst.getValueInt(), IRIntegerType.get32());
@@ -106,7 +109,6 @@ public class IRGlobalVarBuilder {
             symbolConst.setValueIntArray(initVal);
         } else {
             symbolConst.setValueInt(constInitVal.calIntInitVal(symbolTable));
-            // char和int 都用int存储
         }
     }
 
@@ -128,37 +130,54 @@ public class IRGlobalVarBuilder {
         SymbolVar symbolVar = new SymbolVar(ident.value(), symbolType);
         if (varDef.varDefHasAssign()) {
             // 有初始化
-            setVarInit(symbolVar, varDef.getChildren().get(varDef.getChildren().size() - 1), this.symbolTable);
+            setVarInit(symbolVar, varDef.getLastChild(), this.symbolTable);
         } else {
             // 没有初始化
             setVarInit(symbolVar, null, this.symbolTable);
         }
         this.symbolTable.addSymbol(symbolVar);
 
-        IRGlobalVar globalVar = null;
+        IRGlobalVar globalVar;
         String name = "@GlobalVar_" + IRGlobalVarNameCnt.getCount();
 
+
         if (isChar && varDef.hasLbrack()) {
+            int size = varDef.getArraySize(this.symbolTable);
             ArrayList<Integer> initVal = symbolVar.getInitValArray();
             ArrayList<IRConstantInt> constantInts = new ArrayList<>();
-            for (int i = 0; i < initVal.size(); i++) {
-                constantInts.add(new IRConstantInt(initVal.get(i), IRIntegerType.get8()));
+            if (initVal.size() > 0) {
+                for (int i = 0; i < size; i++) {
+                    if (i < initVal.size()) {
+                        constantInts.add(new IRConstantInt(initVal.get(i), IRIntegerType.get8()));
+                    } else {
+                        constantInts.add(new IRConstantInt(0, IRIntegerType.get8()));
+                    }
+                }
             }
+            IRIntArrayType irIntArrayType = new IRIntArrayType(IRIntegerType.get8(), size);
             IRConstantIntArray constantIntArray = new IRConstantIntArray(constantInts, constantInts.size(), IRIntegerType.get8());
-            globalVar = new IRGlobalVar(IRIntegerType.get8(), name, constantIntArray, false);
+            globalVar = new IRGlobalVar(irIntArrayType, name, constantIntArray, false);
             symbolVar.setValue(globalVar);
         } else if (isChar) {
             IRConstantInt constantInt = new IRConstantInt(symbolVar.getInitVal(), IRIntegerType.get8());
             globalVar = new IRGlobalVar(IRIntegerType.get8(), name, constantInt, false);
             symbolVar.setValue(globalVar);
         } else if (varDef.hasLbrack()) {
+            int size = varDef.getArraySize(this.symbolTable);
             ArrayList<Integer> initVal = symbolVar.getInitValArray();
             ArrayList<IRConstantInt> constantInts = new ArrayList<>();
-            for (int i = 0; i < initVal.size(); i++) {
-                constantInts.add(new IRConstantInt(initVal.get(i), IRIntegerType.get32()));
+            if (initVal.size() > 0) {
+                for (int i = 0; i < size; i++) {
+                    if (i < initVal.size()) {
+                        constantInts.add(new IRConstantInt(initVal.get(i), IRIntegerType.get32()));
+                    } else {
+                        constantInts.add(new IRConstantInt(0, IRIntegerType.get32()));
+                    }
+                }
             }
+            IRIntArrayType irIntArrayType = new IRIntArrayType(IRIntegerType.get32(), size);
             IRConstantIntArray constantIntArray = new IRConstantIntArray(constantInts, constantInts.size(), IRIntegerType.get32());
-            globalVar = new IRGlobalVar(IRIntegerType.get32(), name, constantIntArray, false);
+            globalVar = new IRGlobalVar(irIntArrayType, name, constantIntArray, false);
             symbolVar.setValue(globalVar);
         } else {
             IRConstantInt constantInt = new IRConstantInt(symbolVar.getInitVal(), IRIntegerType.get32());
@@ -180,18 +199,17 @@ public class IRGlobalVarBuilder {
                 symbolVar.setInitValArray(initVals);
             } else {
                 // 非数组的初始化, initVal是Exp
-                symbolVar.setInitVal(initVal.calIntInitVal(symbolTable));
+                symbolVar.setInitVal(initVal.getFirstChild().calIntInitVal(symbolTable));
             }
         } else {
             // 没有初始化,全部初始化为0
             if (symbolVar.isArray()) {
                 ArrayList<Integer> initVals = new ArrayList<>();
-                // todo 这里建议使用zeroinitializer 所以不做任何操作？
                 symbolVar.setInitValArray(initVals);
+                symbolVar.setAll0();
             } else {
                 symbolVar.setInitVal(0);
             }
-            symbolVar.setAll0();
         }
     }
 }

@@ -36,6 +36,7 @@ public enum IRInstructionType {
     Zext,
     Trunc,
     Phi,
+    GetElementPtr,
     // Label
     Label,
 }

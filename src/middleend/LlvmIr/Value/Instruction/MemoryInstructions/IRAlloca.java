@@ -1,6 +1,7 @@
 package middleend.LlvmIr.Value.Instruction.MemoryInstructions;
 
 import middleend.LlvmIr.IRValue;
+import middleend.LlvmIr.Types.IRIntegerType;
 import middleend.LlvmIr.Types.IRPointerType;
 import middleend.LlvmIr.Types.IRValueType;
 import middleend.LlvmIr.Value.Instruction.IRInstruction;
@@ -26,10 +27,6 @@ public class IRAlloca extends IRInstruction {
 
         sb.append(this.value.getName()).append(" = alloca ").append(this.type.printIR().get(0));
 
-        int size = this.getSize();
-        if (size != 0) {
-            sb.append("[").append(size).append("]");
-        }
         sb.append("\n");
         ans.add(sb.toString());
         return ans;

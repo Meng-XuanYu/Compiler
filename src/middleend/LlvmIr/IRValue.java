@@ -69,20 +69,6 @@ public class IRValue implements IRNode {
         return isParam;
     }
 
-    public IRValue clone() {
-        IRValue ret = new IRValue(this.getType());
-        ret.setDimensionValue(this.dimensionValue);
-        if (this.dimension1Value == null) {
-            ret.setDimension1Value(null);
-        } else {
-            ret.setDimension1Value(this.dimension1Value.clone());
-        }
-        ret.setSize(this.getSize());
-        ret.setName(this.name);
-        ret.setParam(this.isParam);
-        return ret;
-    }
-
     public void setParam(boolean isParam) {
         this.isParam = isParam;
     }
