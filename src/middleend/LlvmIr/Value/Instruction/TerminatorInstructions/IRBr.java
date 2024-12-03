@@ -34,7 +34,7 @@ public class IRBr extends IRInstruction {
     public ArrayList<String> printIR() {
         ArrayList<String> ans = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
-        sb.append("br i1 ").append(this.getLeft().getName()).append(", label ").append(this.getLabel().getName()).append(", label ").append(this.getElseLabel().getName()).append("\n");
+        sb.append("br i1 ").append(this.getLeft().getName()).append(", label %").append(this.getLabel().getName()).append(", label %").append(this.getElseLabel().getName()).append("\n");
 
 
         ans.add(sb.toString());

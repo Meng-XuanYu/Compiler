@@ -1,6 +1,7 @@
 package middleend.LlvmIr.Value.Instruction.MemoryInstructions;
 
 import middleend.LlvmIr.IRValue;
+import middleend.LlvmIr.Types.IRIntegerType;
 import middleend.LlvmIr.Types.IRValueType;
 import middleend.LlvmIr.Value.Instruction.IRInstruction;
 import middleend.LlvmIr.Value.Instruction.IRInstructionType;
@@ -17,11 +18,20 @@ public class IRZext extends IRInstruction {
     @Override
     public ArrayList<String> printIR() {
         ArrayList<String> ans = new ArrayList<>();
-        String sb = this.getName() + " = zext " +
-                "i8 " +
-                this.getOperand(0).getName() +
-                " to " +
-                "i32\n";
+        String sb;
+        if (this.getOperand(0).getType() == IRIntegerType.get8()) {
+            sb = this.getName() + " = zext " +
+                    "i8 " +
+                    this.getOperand(0).getName() +
+                    " to " +
+                    "i32\n";
+        } else {
+            sb = this.getName() + " = zext " +
+                    "i1 " +
+                    this.getOperand(0).getName() +
+                    " to " +
+                    "i32\n";
+        }
         ans.add(sb);
         return ans;
     }

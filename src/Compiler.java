@@ -69,7 +69,7 @@ public class Compiler {
                 if (s.contains("}")) {
                     tableCnt -= 1;
                 }
-                if (tableCnt > 0) {
+                if (tableCnt > 0 && !s.startsWith("Label")) {
                     String temp = "";
                     for (int j = 0; j < tableCnt; j++) {
                         temp = temp + "    ";

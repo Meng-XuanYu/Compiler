@@ -14,7 +14,7 @@ public class IRLabel extends IRInstruction {
     @Override
     public ArrayList<String> printIR() {
         ArrayList<String> ans = new ArrayList<>();
-        ans.add(this.getName() + " : \n");
+        ans.add(this.getName() + ": \n");
         return ans;
     }
 }

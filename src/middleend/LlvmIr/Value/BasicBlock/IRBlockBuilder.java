@@ -2,12 +2,14 @@ package middleend.LlvmIr.Value.BasicBlock;
 
 import frontend.Parser.ParserTreeNode;
 import frontend.SyntaxType;
+import frontend.Token;
 import frontend.TokenType;
 import middleend.LlvmIr.IRValue;
 import middleend.LlvmIr.Types.IRIntegerType;
 import middleend.LlvmIr.Value.Function.FunctionCnt;
 import middleend.LlvmIr.Value.Function.IRFunction;
 import middleend.LlvmIr.Value.Instruction.*;
+import middleend.LlvmIr.Value.Instruction.MemoryInstructions.IRZext;
 import middleend.LlvmIr.Value.Instruction.TerminatorInstructions.IRBr;
 import middleend.LlvmIr.Value.Instruction.TerminatorInstructions.IRGoto;
 import middleend.Symbol.SymbolTable;
@@ -108,11 +110,15 @@ public class IRBlockBuilder {
         IRLabel endLabel = new IRLabel(endName);
         // for的处理逻辑类似于if
         // 处理forInit
-        IRInstructionBuilder irInstructionBuilder = new IRInstructionBuilder(this.symbolTable,forInit, block, this.functionCnt, this.forBegin, this.forEnd);
-        ArrayList<IRInstruction> instructions = irInstructionBuilder.generateInstructions();
-        block.addAllIrInstruction(instructions);
+        if (forInit != null) {
+            IRInstructionBuilder irInstructionBuilder = new IRInstructionBuilder(this.symbolTable,forInit, block, this.functionCnt, this.forBegin, this.forEnd);
+            ArrayList<IRInstruction> instructions = irInstructionBuilder.generateInstructions();
+            block.addAllIrInstruction(instructions);
+        }
         // 处理forCond
-        generateCond(forCond, ifLabel, endLabel);
+        if (forCond != null) {
+            generateCond(forCond, ifLabel, endLabel);
+        }
         // 处理stmt
         IRBasicBlock ifBlock = new IRBasicBlock();
         ifBlock.addIrInstruction(ifLabel);
@@ -132,21 +138,25 @@ public class IRBlockBuilder {
             }
             this.blocks.addAll(blockBuilder.generateIRBlocks());
             // 添加forStep
-            irInstructionBuilder = new IRInstructionBuilder(this.symbolTable,forStep, ifBlock, this.functionCnt, this.forBegin, this.forEnd);
-            instructions = irInstructionBuilder.generateInstructions();
-            ifBlock.addAllIrInstruction(instructions);
+            if (forStep != null) {
+                IRInstructionBuilder irInstructionBuilder = new IRInstructionBuilder(this.symbolTable,forStep, ifBlock, this.functionCnt, this.forBegin, this.forEnd);
+                ArrayList<IRInstruction> instructions = irInstructionBuilder.generateInstructions();
+                ifBlock.addAllIrInstruction(instructions);
+            }
             // 添加goto
             IRGoto irGoto = new IRGoto(beginLabel);
             ifBlock.addIrInstruction(irGoto);
             this.blocks.add(ifBlock);
         } else {
-            irInstructionBuilder = new IRInstructionBuilder(this.symbolTable, stmt, ifBlock, this.functionCnt, this.forBegin, this.forEnd);
-            instructions = irInstructionBuilder.generateInstructions();
+            IRInstructionBuilder irInstructionBuilder = new IRInstructionBuilder(this.symbolTable, stmt, ifBlock, this.functionCnt, this.forBegin, this.forEnd);
+            ArrayList<IRInstruction> instructions = irInstructionBuilder.generateInstructions();
             ifBlock.addAllIrInstruction(instructions);
             // 添加forStep
-            irInstructionBuilder = new IRInstructionBuilder(this.symbolTable,forStep, ifBlock, this.functionCnt, this.forBegin, this.forEnd);
-            instructions = irInstructionBuilder.generateInstructions();
-            ifBlock.addAllIrInstruction(instructions);
+            if (forStep != null) {
+                IRInstructionBuilder irInstructionBuilder1 = new IRInstructionBuilder(this.symbolTable,forStep, ifBlock, this.functionCnt, this.forBegin, this.forEnd);
+                ArrayList<IRInstruction> instructions1 = irInstructionBuilder1.generateInstructions();
+                ifBlock.addAllIrInstruction(instructions1);
+            }
             // 添加goto
             IRGoto irGoto = new IRGoto(beginLabel);
             ifBlock.addIrInstruction(irGoto);
@@ -179,9 +189,9 @@ public class IRBlockBuilder {
         // 处理cond
         ParserTreeNode cond = this.stmtCond.getChildren().get(2);
         if (hasElse) {
-            this.blocks.addAll(generateCond(cond, ifLabel, elseLabel));
+            generateCond(cond, ifLabel, elseLabel);
         } else {
-            this.blocks.addAll(generateCond(cond, ifLabel, endLabel));
+            generateCond(cond, ifLabel, endLabel);
         }
         // 处理stmt
         ParserTreeNode stmt = this.stmtCond.getChildren().get(4);
@@ -266,44 +276,43 @@ public class IRBlockBuilder {
         return this.blocks;
     }
 
-    private ArrayList<IRBasicBlock> generateCond(ParserTreeNode cond, IRLabel ifLabel, IRLabel endLable) {
+    private void generateCond(ParserTreeNode cond, IRLabel ifLabel, IRLabel endLabel) {
         // 处理cond
-        IRBasicBlock block = new IRBasicBlock();
-
         ParserTreeNode LOrExp = cond.getFirstChild();
         // 处理LOrExp
+        IRLabel ans;
         ArrayList<ParserTreeNode> landExps = LOrExp.getLAndExps();
-        for (int i = 0; i < landExps.size(); i++) {
-            IRLabel nextLabel = generateIRInstructionFromLandExp(landExps.get(i), ifLabel, endLable);
-            if (nextLabel != null) {
-                IRBasicBlock block1 = new IRBasicBlock();
-                block1.addIrInstruction(nextLabel);
-                this.blocks.add(block1);
+        if (landExps.size() == 1) {
+            generateIRInstructionFromLandExp(landExps.get(0), ifLabel, endLabel);
+        } else {
+            for (int i = 0; i < landExps.size() - 1; i++) {
+                IRBasicBlock block = new IRBasicBlock();
+                String name = IRLabelCnt.getName(IRLabelCnt.getCnt());
+                ans = new IRLabel(name);
+                generateIRInstructionFromLandExp(landExps.get(i), ifLabel, ans);
+                block.addIrInstruction(ans);
+                this.blocks.add(block);
             }
+            generateIRInstructionFromLandExp(landExps.get(landExps.size() - 1), ifLabel,endLabel);
         }
-//        IRGoto irGoto = new IRGoto(endLable);
-//        block.addIrInstruction(irGoto);
-        this.blocks.add(block);
-        return new ArrayList<>();
     }
 
-    private IRLabel generateIRInstructionFromLandExp(ParserTreeNode landExp, IRLabel ifLabel, IRLabel endLabel) {
+    private void generateIRInstructionFromLandExp(ParserTreeNode landExp, IRLabel ifLabel, IRLabel endLabel) {
         ArrayList<ParserTreeNode> eqExps = landExp.getEqExps();
-        IRLabel ans = null;
+        IRLabel ans;
         if (eqExps.size() == 1) {
             generateIRInstructionFromEqExp(eqExps.get(0), ifLabel,endLabel, true);
         } else {
-            String name = IRLabelCnt.getName(IRLabelCnt.getCnt());
-            ans = new IRLabel(name);
-            for (int i = 0; i < eqExps.size(); i++) {
-                generateIRInstructionFromEqExp(eqExps.get(i), ans,endLabel, false);
+            for (int i = 0; i < eqExps.size() - 1; i++) {
+                IRBasicBlock block = new IRBasicBlock();
+                String name = IRLabelCnt.getName(IRLabelCnt.getCnt());
+                ans = new IRLabel(name);
+                generateIRInstructionFromEqExp(eqExps.get(i), ans ,endLabel, true);
+                block.addIrInstruction(ans);
+                this.blocks.add(block);
             }
-            IRBasicBlock block = new IRBasicBlock();
-            IRGoto irGoto = new IRGoto(ifLabel);
-            block.addIrInstruction(irGoto);
-            this.blocks.add(block);
+            generateIRInstructionFromEqExp(eqExps.get(eqExps.size() - 1), ifLabel,endLabel, true);
         }
-        return ans;
     }
 
     private void generateIRInstructionFromEqExp(ParserTreeNode eqexp, IRLabel ifLable,IRLabel endLabel, boolean pos) {
@@ -311,19 +320,19 @@ public class IRBlockBuilder {
         ArrayList<TokenType> relops = eqexp.getRelops();
 
         IRValue left = generateIRInstructionFromRelExp(relExps.get(0));
-        IRValue right = null;
+        IRValue right;
 
         for (int i = 1; i < relExps.size(); i++) {
             right = generateIRInstructionFromRelExp(relExps.get(i));
             // 生成比较指令
             IRBinaryInstruction instruction;
             if (relops.get(i - 1) == TokenType.EQL) {
-                instruction = new IRBinaryInstruction(IRIntegerType.get32(), IRInstructionType.Eq, left, right);
+                instruction = new IRBinaryInstruction(IRIntegerType.get1(), IRInstructionType.Eq, left, right);
             } else {
-                instruction = new IRBinaryInstruction(IRIntegerType.get32(), IRInstructionType.Ne, left, right);
+                instruction = new IRBinaryInstruction(IRIntegerType.get1(), IRInstructionType.Ne, left, right);
             }
             String name = "%LocalVar" + this.functionCnt.getCnt();
-            left = new IRValue(name, IRIntegerType.get32());
+            left = new IRValue(name, IRIntegerType.get1());
             instruction.setName(name);
             // store
             IRBasicBlock basicBlock = new IRBasicBlock();
@@ -335,13 +344,32 @@ public class IRBlockBuilder {
         }
         // 生成Branch指令
         IRBr irBr;
+        if (left.getType() instanceof IRIntegerType) {
+            int bitWidth = ((IRIntegerType) left.getType()).getBitWidth();
+            if (bitWidth != 32) {
+                IRZext irZext = new IRZext(left, IRIntegerType.get32());
+                String name = "%LocalVar" + this.functionCnt.getCnt();
+                irZext.setName(name);
+                IRBasicBlock block = new IRBasicBlock();
+                block.addIrInstruction(irZext);
+                this.blocks.add(block);
+                left = irZext;
+            }
+        }
+        IRInstructionBuilder irInstructionBuilder = new IRInstructionBuilder();
+        IRValue zero = irInstructionBuilder.generateZero();
+        IRInstruction instruction = new IRBinaryInstruction(IRIntegerType.get1(), IRInstructionType.Ne, left, zero);
+        String name = "%LocalVar" + this.functionCnt.getCnt();
+        left = new IRValue(name, IRIntegerType.get1());
+        instruction.setName(name);
+        IRBasicBlock block = new IRBasicBlock();
+        block.addIrInstruction(instruction);
+        this.blocks.add(block);
         if (pos) {
             // 正常
             if(relops.isEmpty()) {
                 // 无relops,只有一个relExp
-                IRInstructionBuilder irInstructionBuilder = new IRInstructionBuilder();
-                IRValue zero = irInstructionBuilder.generateZero();
-                irBr = new IRBr(left,  ifLable,endLabel, IRInstructionType.Bne);
+                irBr = new IRBr(left, ifLable,endLabel, IRInstructionType.Bne);
             } else if (relops.get(relops.size() - 1) == TokenType.EQL) {
                 irBr = new IRBr(left, ifLable,endLabel, IRInstructionType.Beq);
             } else {
@@ -351,8 +379,6 @@ public class IRBlockBuilder {
             // 取反
             if (relops.isEmpty()) {
                 // 无relops,只有一个relExp
-                IRInstructionBuilder irInstructionBuilder = new IRInstructionBuilder();
-                IRValue zero = irInstructionBuilder.generateZero();
                 irBr = new IRBr(left, ifLable,endLabel, IRInstructionType.Beq);
             } else if (relops.get(relops.size() - 1) == TokenType.EQL) {
                 irBr = new IRBr(left, ifLable,endLabel, IRInstructionType.Bne);
@@ -385,18 +411,18 @@ public class IRBlockBuilder {
             IRBinaryInstruction instruction = null;
             TokenType addop = addops.get(i - 1);
             if (addop == TokenType.LSS) {
-                instruction = new IRBinaryInstruction(IRIntegerType.get32(),IRInstructionType.Lt, left, right);
+                instruction = new IRBinaryInstruction(IRIntegerType.get1(),IRInstructionType.Lt, left, right);
             } else if (addop == TokenType.LEQ) {
-                instruction = new IRBinaryInstruction(IRIntegerType.get32(),IRInstructionType.Le, left, right);
+                instruction = new IRBinaryInstruction(IRIntegerType.get1(),IRInstructionType.Le, left, right);
             } else if (addop == TokenType.GRE) {
-                instruction = new IRBinaryInstruction(IRIntegerType.get32(),IRInstructionType.Gt, left, right);
+                instruction = new IRBinaryInstruction(IRIntegerType.get1(),IRInstructionType.Gt, left, right);
             } else if (addop == TokenType.GEQ) {
-                instruction = new IRBinaryInstruction(IRIntegerType.get32(),IRInstructionType.Ge, left, right);
+                instruction = new IRBinaryInstruction(IRIntegerType.get1(),IRInstructionType.Ge, left, right);
             } else {
                 System.out.println("ERROR in generateIRInstructionFromRelExp!");
             }
             String name = "%LocalVar" + this.functionCnt.getCnt();
-            left = new IRValue(name,IRIntegerType.get32());
+            left = new IRValue(name,IRIntegerType.get1());
             instruction.setName(name);
             basicBlock.addIrInstruction(instruction);
         }
@@ -495,7 +521,7 @@ public class IRBlockBuilder {
                     blockBuilder = new IRBlockBuilder(stmt, symbolTableSon, this.functionCnt, this.forBegin, this.forEnd);
                 } else {
                     stmt = blockItem.getFirstChild().getFirstChild();
-                    blockBuilder = new IRBlockBuilder(stmt.getFirstChild(), symbolTableSon, this.functionCnt, this.forBegin, this.forEnd, this.parentFunction);
+                    blockBuilder = new IRBlockBuilder(stmt, symbolTableSon, this.functionCnt, this.forBegin, this.forEnd, this.parentFunction);
                 }
                 ArrayList<IRBasicBlock> blocks = blockBuilder.generateIRBlocks();
                 if (blocks != null) {

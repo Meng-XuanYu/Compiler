@@ -6,19 +6,196 @@ declare void @putch(i32)       ; 输出一个字符
 define dso_local i32 @main() {
     %LocalVar0 = alloca i32
     %LocalVar1 = alloca i32
+    %LocalVar2 = alloca i32
+    %LocalVar3 = alloca i32
+    %LocalVar4 = alloca i32
+    %LocalVar5 = alloca i32
+    %LocalVar6 = alloca i32
+    %LocalVar7 = alloca i32
+    store i32 0, i32* %LocalVar0
     store i32 0, i32* %LocalVar1
-    store i32 1, i32* %LocalVar0
-    %LocalVar2 = load i32, i32* %LocalVar1
-    %LocalVar3 = icmp eq i32 %LocalVar2, 0
-    br i1 %LocalVar3, label %Label_1, label %Label_2
-    %Label_1 : 
-    store i32 2, i32* %LocalVar0
-    store i32 3, i32* %LocalVar0
-    store i32 4, i32* %LocalVar0
-    br label %Label_2
-    %Label_2 : 
-    %LocalVar4 = load i32, i32* %LocalVar0
-    call void @putint(i32 %LocalVar4)
+    store i32 2, i32* %LocalVar2
+    store i32 1, i32* %LocalVar5
+    %LocalVar8 = call i32 @getint()
+    store i32 %LocalVar8, i32* %LocalVar1
+    %LocalVar9 = call i32 @getint()
+    store i32 %LocalVar9, i32* %LocalVar3
+    %LocalVar10 = call i32 @getint()
+    store i32 %LocalVar10, i32* %LocalVar4
+    %LocalVar11 = call i32 @getint()
+    store i32 %LocalVar11, i32* %LocalVar6
+    %LocalVar12 = call i32 @getint()
+    store i32 %LocalVar12, i32* %LocalVar7
+    %LocalVar13 = load i32, i32* %LocalVar1
+    %LocalVar14 = icmp sge i32 %LocalVar13, 2
+    %LocalVar15 = zext i1 %LocalVar14 to i32
+    %LocalVar16 = icmp ne i32 %LocalVar15, 0
+    br i1 %LocalVar16, label %Label_1, label %Label_2
+Label_1: 
+    %LocalVar17 = load i32, i32* %LocalVar0
+    %LocalVar18 = icmp ne i32 %LocalVar17, 0
+    %LocalVar19 = zext i1 %LocalVar18 to i32
+    %LocalVar20 = icmp ne i32 %LocalVar19, 0
+    br i1 %LocalVar20, label %Label_4, label %Label_5
+Label_4: 
+    %LocalVar21 = load i32, i32* %LocalVar1
+    call void @putint(i32 %LocalVar21)
+    call void @putch(i32 32)
+    call void @putch(i32 105)
+    call void @putch(i32 115)
+    call void @putch(i32 32)
+    call void @putch(i32 110)
+    call void @putch(i32 111)
+    call void @putch(i32 116)
+    call void @putch(i32 32)
+    call void @putch(i32 97)
+    call void @putch(i32 32)
+    call void @putch(i32 112)
+    call void @putch(i32 114)
+    call void @putch(i32 105)
+    call void @putch(i32 109)
+    call void @putch(i32 101)
+    call void @putch(i32 32)
+    call void @putch(i32 110)
+    call void @putch(i32 117)
+    call void @putch(i32 109)
+    call void @putch(i32 98)
+    call void @putch(i32 101)
+    call void @putch(i32 114)
     call void @putch(i32 10)
+    br label %Label_6
+Label_5: 
+    %LocalVar22 = load i32, i32* %LocalVar1
+    call void @putint(i32 %LocalVar22)
+    call void @putch(i32 32)
+    call void @putch(i32 105)
+    call void @putch(i32 115)
+    call void @putch(i32 32)
+    call void @putch(i32 97)
+    call void @putch(i32 32)
+    call void @putch(i32 112)
+    call void @putch(i32 114)
+    call void @putch(i32 105)
+    call void @putch(i32 109)
+    call void @putch(i32 101)
+    call void @putch(i32 32)
+    call void @putch(i32 110)
+    call void @putch(i32 117)
+    call void @putch(i32 109)
+    call void @putch(i32 98)
+    call void @putch(i32 101)
+    call void @putch(i32 114)
+    call void @putch(i32 10)
+    br label %Label_6
+Label_6: 
+    br label %Label_3
+Label_2: 
+    %LocalVar23 = load i32, i32* %LocalVar1
+    call void @putint(i32 %LocalVar23)
+    call void @putch(i32 32)
+    call void @putch(i32 105)
+    call void @putch(i32 115)
+    call void @putch(i32 32)
+    call void @putch(i32 110)
+    call void @putch(i32 101)
+    call void @putch(i32 105)
+    call void @putch(i32 116)
+    call void @putch(i32 104)
+    call void @putch(i32 101)
+    call void @putch(i32 114)
+    call void @putch(i32 32)
+    call void @putch(i32 112)
+    call void @putch(i32 114)
+    call void @putch(i32 105)
+    call void @putch(i32 109)
+    call void @putch(i32 101)
+    call void @putch(i32 32)
+    call void @putch(i32 110)
+    call void @putch(i32 111)
+    call void @putch(i32 114)
+    call void @putch(i32 32)
+    call void @putch(i32 99)
+    call void @putch(i32 111)
+    call void @putch(i32 109)
+    call void @putch(i32 112)
+    call void @putch(i32 111)
+    call void @putch(i32 115)
+    call void @putch(i32 105)
+    call void @putch(i32 116)
+    call void @putch(i32 101)
+    call void @putch(i32 10)
+    br label %Label_3
+Label_3: 
+    %LocalVar24 = load i32, i32* %LocalVar3
+    %LocalVar25 = icmp sgt i32 %LocalVar24, 0
+    %LocalVar26 = zext i1 %LocalVar25 to i32
+    %LocalVar27 = icmp ne i32 %LocalVar26, 0
+    br i1 %LocalVar27, label %Label_10, label %Label_8
+Label_10: 
+    %LocalVar28 = load i32, i32* %LocalVar4
+    %LocalVar29 = icmp sgt i32 %LocalVar28, 0
+    %LocalVar30 = zext i1 %LocalVar29 to i32
+    %LocalVar31 = icmp ne i32 %LocalVar30, 0
+    br i1 %LocalVar31, label %Label_7, label %Label_8
+Label_7: 
+    call void @putch(i32 99)
+    call void @putch(i32 32)
+    call void @putch(i32 97)
+    call void @putch(i32 110)
+    call void @putch(i32 100)
+    call void @putch(i32 32)
+    call void @putch(i32 100)
+    call void @putch(i32 32)
+    call void @putch(i32 97)
+    call void @putch(i32 114)
+    call void @putch(i32 101)
+    call void @putch(i32 32)
+    call void @putch(i32 98)
+    call void @putch(i32 111)
+    call void @putch(i32 116)
+    call void @putch(i32 104)
+    call void @putch(i32 32)
+    call void @putch(i32 112)
+    call void @putch(i32 111)
+    call void @putch(i32 115)
+    call void @putch(i32 105)
+    call void @putch(i32 116)
+    call void @putch(i32 105)
+    call void @putch(i32 118)
+    call void @putch(i32 101)
+    call void @putch(i32 10)
+    br label %Label_9
+Label_8: 
+    call void @putch(i32 78)
+    call void @putch(i32 101)
+    call void @putch(i32 105)
+    call void @putch(i32 116)
+    call void @putch(i32 104)
+    call void @putch(i32 101)
+    call void @putch(i32 114)
+    call void @putch(i32 32)
+    call void @putch(i32 99)
+    call void @putch(i32 32)
+    call void @putch(i32 110)
+    call void @putch(i32 111)
+    call void @putch(i32 114)
+    call void @putch(i32 32)
+    call void @putch(i32 100)
+    call void @putch(i32 32)
+    call void @putch(i32 97)
+    call void @putch(i32 114)
+    call void @putch(i32 101)
+    call void @putch(i32 32)
+    call void @putch(i32 112)
+    call void @putch(i32 111)
+    call void @putch(i32 115)
+    call void @putch(i32 105)
+    call void @putch(i32 116)
+    call void @putch(i32 105)
+    call void @putch(i32 118)
+    call void @putch(i32 101)
+    call void @putch(i32 10)
+    br label %Label_9
+Label_9: 
     ret i32 0
 }

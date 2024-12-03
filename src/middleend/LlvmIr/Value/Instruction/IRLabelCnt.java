@@ -10,6 +10,6 @@ public class IRLabelCnt {
     }
 
     public static String getName(int num) {
-        return "%Label_" + num;
+        return "Label_" + num;
     }
 }

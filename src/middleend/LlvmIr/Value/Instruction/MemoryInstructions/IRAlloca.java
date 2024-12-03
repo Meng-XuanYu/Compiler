@@ -25,7 +25,7 @@ public class IRAlloca extends IRInstruction {
         ArrayList<String> ans = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
 
-        sb.append(this.value.getName()).append(" = alloca ").append(this.type.printIR().get(0));
+        sb.append(this.getName()).append(" = alloca ").append(this.type.printIR().get(0));
 
         sb.append("\n");
         ans.add(sb.toString());

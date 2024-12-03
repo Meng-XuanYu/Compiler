@@ -236,6 +236,18 @@ public class IRInstructionBuilder {
             IRCall call;
             if (c == '%' && i + 1 < chars.length && chars[i + 1] == 'd') {
                 IRValue value = values.get(cnt);
+                if (value.isParam()) {
+                    IRAlloca alloca = new IRAlloca(value.getType(), value);
+                    alloca.setName("%LocalVar" + functionCnt.getCnt());
+                    this.instructions.add(alloca);
+                    IRStore store = new IRStore(value, alloca, false);
+                    this.instructions.add(store);
+                    IRLoad load = new IRLoad(value.getType(), alloca);
+                    load.setName("%LocalVar" + functionCnt.getCnt());
+                    this.instructions.add(load);
+                    value = load;
+                    value.setValueType(IRIntegerType.get32());
+                }
                 call = new IRCall("@putint", value);
                 i++;
                 cnt++;
@@ -245,6 +257,18 @@ public class IRInstructionBuilder {
             } else if (c == '%' && i + 1 < chars.length && chars[i + 1] == 'c') {
                 IRValue value = values.get(cnt);
                 IRIntegerType irIntegerType = (IRIntegerType) value.getType();
+                if (value.isParam()) {
+                    IRAlloca alloca = new IRAlloca(value.getType(), value);
+                    alloca.setName("%LocalVar" + functionCnt.getCnt());
+                    this.instructions.add(alloca);
+                    IRStore store = new IRStore(value, alloca, true);
+                    this.instructions.add(store);
+                    IRLoad load = new IRLoad(value.getType(), alloca);
+                    load.setName("%LocalVar" + functionCnt.getCnt());
+                    this.instructions.add(load);
+                    value = load;
+                    value.setValueType(IRIntegerType.get8());
+                }
                 if (irIntegerType.getBitWidth() == 8) {
                     IRZext zext = new IRZext(value, IRIntegerType.get32());
                     zext.setName("%LocalVar" + functionCnt.getCnt());
@@ -620,7 +644,7 @@ public class IRInstructionBuilder {
             this.instructions.add(mulExp);
             ans = mulExp;
         } else if (type == TokenType.NOT) {
-            IRBinaryInstruction not = new IRBinaryInstruction(IRIntegerType.get32(),
+            IRBinaryInstruction not = new IRBinaryInstruction(IRIntegerType.get1(),
                     IRInstructionType.Not, generateIRInstructionFromUnaryExp(unaryExp_child, isLeft), null);
             String name = "%LocalVar" + functionCnt.getCnt();
             not.setName(name);

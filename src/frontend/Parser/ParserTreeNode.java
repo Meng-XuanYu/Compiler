@@ -391,6 +391,9 @@ public class ParserTreeNode {
         for (int i = 0; i < this.children.size(); i++) {
             ParserTreeNode child = this.children.get(i);
             if (child.getToken() != null && child.getToken().type() == TokenType.RPARENT) {
+                if (this.children.get(i-1).getToken().type() == TokenType.SEMICN) {
+                    return null;
+                }
                 return this.children.get(i-1);
             }
         }
@@ -453,7 +456,7 @@ public class ParserTreeNode {
             } else if (this.getChildren().get(0).getType() == SyntaxType.Number) {
                 return Integer.parseInt(this.getFirstChild().getFirstChild().getToken().value());
             } else if (this.getChildren().get(0).getType() == SyntaxType.Character) {
-                return this.getFirstChild().getFirstChild().getToken().value().charAt(0);
+                return this.getFirstChild().getFirstChild().getToken().value().charAt(1);
             } else {
                 // ( Exp )
                 return this.getChildren().get(1).calIntInitVal(symbolTable);

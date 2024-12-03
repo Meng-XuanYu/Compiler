@@ -1,14 +1,35 @@
 int main()
 {
-    int a;
-    int z=0;
-    a=1;
-    if(z == 0)
+    int a = 0;
+    int num = 0;
+    int i = 2;
+    int c,d;
+    int j = 1, sum;
+    int k;
+    num = getint();
+    c = getint();
+    d = getint();
+    sum = getint();
+    k = getint();
+    if(num >= 2)
     {
-        a=2;
-        a=3;
-        a=4;
+        if(a!=0){
+            printf("%d is not a prime number\n", num);
+        }else{
+            printf("%d is a prime number\n", num);
+        }
     }
-    printf("%d\n",a);
+    else
+    {
+        printf("%d is neither prime nor composite\n", num);
+    }
+    if(c>0 && d>0)
+    {
+        printf("c and d are both positive\n");
+    }
+    else
+    {
+        printf("Neither c nor d are positive\n");
+    }
     return 0;
 }

@@ -107,7 +107,7 @@ public class IRBinaryInstruction extends IRInstruction{
                 sb.append(this.getOperand(1).getName());
                 break;
             case Not:
-                sb.append("icmp ne i32 0,");
+                sb.append("icmp eq i32 0,");
                 sb.append(this.getOperand(0).getName());
                 break;
             case Ne:

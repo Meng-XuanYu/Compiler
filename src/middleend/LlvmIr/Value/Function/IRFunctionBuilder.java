@@ -105,7 +105,7 @@ public class IRFunctionBuilder {
 
     // 添加参数符号,生成该变量在LLVM IR中的名字
     private IRValue addSymbol(ParserTreeNode funcFParam) {
-        String name = "%LocalVariable" + this.functionCnt.getCnt();
+        String name = "%param" + this.functionCnt.getCnt();
 
         IRValue returnValue;
         SymbolVar symbolVar;
