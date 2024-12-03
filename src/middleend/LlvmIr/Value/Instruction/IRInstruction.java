@@ -19,10 +19,6 @@ public class IRInstruction extends IRUser implements IRNode {
         this.parent = parent;
     }
 
-    public boolean isTerminator() {
-        return this.type == IRInstructionType.Br || this.type == IRInstructionType.Ret || this.type == IRInstructionType.Call;
-    }
-
     public boolean isArithmeticBinary() {
         return this.type.ordinal() <= IRInstructionType.Div.ordinal();
     }

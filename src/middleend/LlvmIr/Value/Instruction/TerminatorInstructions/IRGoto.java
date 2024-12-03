@@ -16,7 +16,7 @@ public class IRGoto extends IRInstruction {
     @Override
     public ArrayList<String> printIR() {
         ArrayList<String> ans = new ArrayList<>();
-        ans.add("goto " + this.getOperand(0).getName() + "\n");
+        ans.add("br label " + this.getOperand(0).getName() + "\n");
         return ans;
     }
 }

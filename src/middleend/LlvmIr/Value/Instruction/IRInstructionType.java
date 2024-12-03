@@ -32,10 +32,8 @@ public enum IRInstructionType {
     Alloca,
     Load,
     Store,
-    GEP, // Get Element Ptr
     Zext,
     Trunc,
-    Phi,
     GetElementPtr,
     // Label
     Label,
