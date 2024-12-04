@@ -1,4 +1,6 @@
 package middleend.Symbol;
+import middleend.LlvmIr.IRValue;
+
 import java.util.HashMap;
 
 // 符号表
@@ -40,6 +42,19 @@ public class SymbolTable {
         while (table != null) {
             if (table.symbols.containsKey(name)) {
                 return table.symbols.get(name);
+            }
+            table = table.parent;
+        }
+        return null;
+    }
+
+    public Symbol getSymbol(IRValue value) {
+        SymbolTable table = this;
+        while (table != null) {
+            for (Symbol symbol : table.symbols.values()) {
+                if (symbol.getValue().equals(value)) {
+                    return symbol;
+                }
             }
             table = table.parent;
         }

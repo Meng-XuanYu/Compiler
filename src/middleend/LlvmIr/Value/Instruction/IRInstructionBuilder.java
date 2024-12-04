@@ -503,11 +503,11 @@ public class IRInstructionBuilder {
                 alloca.setSize(value.getSize());
                 this.instructions.add(alloca);
 
-                IRIntArrayType irIntArrayType = new IRIntArrayType(irValueType, value.getSize());
-                IRGetElementPtr firstPtr = new IRGetElementPtr(irIntArrayType, alloca, new IRConstantInt(0, irValueType));
+                IRGetElementPtr firstPtr = new IRGetElementPtr(irValueType, alloca, new IRConstantInt(0, irValueType));
                 String name1 = "%LocalVar" + functionCnt.getCnt();
                 firstPtr.setName(name1);
                 this.instructions.add(firstPtr);
+                symbol.setIns(firstPtr);
             } else {
                 IRIntegerType irIntegerType = isChar ? IRIntegerType.get8() : IRIntegerType.get32();
                 IRValue value = new IRValue(name, irIntegerType);
@@ -766,7 +766,7 @@ public class IRInstructionBuilder {
             if (isLeft) {
                 // 如果是二维则需要getelementptr,且一定有[]
                 ParserTreeNode exp = lVal.getChildren().get(2);
-                IRValue dimension1 = generateIRInstructionFromExp(exp, true);
+                IRValue dimension1 = generateIRInstructionFromExp(exp, false);
                 IRValueType irIntegerType = ((IRIntArrayType)value.getType()).getType();
 
                 IRValue firstPtr;
@@ -777,10 +777,10 @@ public class IRInstructionBuilder {
                     System.out.println("Error: generateIRInstructionFromLVal");
                 }
                 if (firstPtr == null) {
-                    IRAlloca alloca = new IRAlloca(irIntegerType, value);
-                    alloca.setSize(value.getSize());
-                    firstPtr = new IRGetElementPtr(irIntegerType, alloca, new IRConstantInt(0, irIntegerType));
-                    firstPtr.setName(value.getName());
+                    // 说明是全局变量,直接取用
+                    IRAlloca alloca = new IRAlloca(value.getType(), value);
+                    alloca.setName(value.getName());
+                    firstPtr = alloca;
                 }
                 IRGetElementPtr getPtr = new IRGetElementPtr(irIntegerType, firstPtr, dimension1);
                 String ans_name = "%LocalVar" + functionCnt.getCnt();
@@ -791,7 +791,7 @@ public class IRInstructionBuilder {
                 getPtr.setDimensionValue(0);
                 getPtr.setDimension1Value(dimension1);
             } else {
-                // 二维数组，不是左值可能是a[1],和a
+                // 不是左值可能是a[1],和a
                 if (lVal.hasLbrack()) {
                     ParserTreeNode exp = lVal.getChildren().get(2);
                     IRValue dimension1 = generateIRInstructionFromExp(exp, false);
@@ -804,11 +804,10 @@ public class IRInstructionBuilder {
                         firstPtr = ((SymbolConst)symbol).getIns();
                     }
                     if (firstPtr == null) {
-                        // IRAlloca指令
-                        IRAlloca alloca = new IRAlloca(irIntegerType, value);
-                        alloca.setSize(value.getSize());
-                        firstPtr = new IRGetElementPtr(irIntegerType, alloca, new IRConstantInt(0, irIntegerType));
-                        firstPtr.setName(value.getName());
+                        // 说明是全局变量
+                        IRAlloca alloca = new IRAlloca(value.getType(), value);
+                        alloca.setName(value.getName());
+                        firstPtr = alloca;
                     }
                     IRGetElementPtr getPtr = new IRGetElementPtr(irIntegerType, firstPtr, dimension1);
                     getPtr.setName(ans_name);
@@ -868,8 +867,7 @@ public class IRInstructionBuilder {
             this.instructions.add(alloca);
 
             // 初始化
-            IRIntArrayType irIntArrayType = new IRIntArrayType(irValueType, value.getSize());
-            IRGetElementPtr firstPtr = new IRGetElementPtr(irIntArrayType, alloca, new IRConstantInt(0, IRIntegerType.get32()));
+            IRGetElementPtr firstPtr = new IRGetElementPtr(irValueType, alloca, new IRConstantInt(0, IRIntegerType.get32()));
             String name1 = "%LocalVar" + functionCnt.getCnt();
             firstPtr.setName(name1);
             this.instructions.add(firstPtr);

@@ -2,16 +2,20 @@ package middleend.LlvmIr.Value.BasicBlock;
 
 import frontend.Parser.ParserTreeNode;
 import frontend.SyntaxType;
-import frontend.Token;
 import frontend.TokenType;
 import middleend.LlvmIr.IRValue;
 import middleend.LlvmIr.Types.IRIntegerType;
+import middleend.LlvmIr.Types.IRValueType;
 import middleend.LlvmIr.Value.Function.FunctionCnt;
 import middleend.LlvmIr.Value.Function.IRFunction;
 import middleend.LlvmIr.Value.Instruction.*;
+import middleend.LlvmIr.Value.Instruction.MemoryInstructions.IRAlloca;
+import middleend.LlvmIr.Value.Instruction.MemoryInstructions.IRLoad;
+import middleend.LlvmIr.Value.Instruction.MemoryInstructions.IRStore;
 import middleend.LlvmIr.Value.Instruction.MemoryInstructions.IRZext;
 import middleend.LlvmIr.Value.Instruction.TerminatorInstructions.IRBr;
 import middleend.LlvmIr.Value.Instruction.TerminatorInstructions.IRGoto;
+import middleend.Symbol.Symbol;
 import middleend.Symbol.SymbolTable;
 
 import java.util.ArrayList;
@@ -41,7 +45,6 @@ public class IRBlockBuilder {
         this.blocks = new ArrayList<>();
     }
 
-    // Block
     public IRBlockBuilder(ParserTreeNode node,
                           SymbolTable symbolTable,
                           FunctionCnt functionCnt,
@@ -49,20 +52,10 @@ public class IRBlockBuilder {
                           IRLabel forEnd,
                           IRFunction parentFunction) {
         this(symbolTable, functionCnt, forBegin, forEnd);
-        this.block = node;
-        this.blockItems = block.getBlockItems();
         this.parentFunction = parentFunction;
-    }
-
-
-    public IRBlockBuilder(ParserTreeNode node,
-                          SymbolTable symbolTable,
-                          FunctionCnt functionCnt,
-                          IRLabel forBegin,
-                          IRLabel forEnd) {
-        this(symbolTable, functionCnt, forBegin, forEnd);
         if (node.getType() == SyntaxType.Block) {
-            System.out.println("ERROR in IRBlockBuilder! block");
+            this.block = node;
+            this.blockItems = block.getBlockItems();
         } else {
             // stmt
             if (node.getFirstChild().getType() == SyntaxType.Token) {
@@ -96,44 +89,64 @@ public class IRBlockBuilder {
         ParserTreeNode forStep = this.stmtFor.getForStep();
         ParserTreeNode stmt = this.stmtFor.getLastChild();
 
-        // 生成forLabel,标记for循环的开始
-        String name = IRLabelCnt.getName(IRLabelCnt.getCnt());
-        IRLabel beginLabel = new IRLabel(name);
+        // 构造forBegin并跳转
+        String name1 = IRLabelCnt.getName(IRLabelCnt.getCnt());
+        IRLabel forBegin = new IRLabel(name1);
+        IRGoto irGotoFirst = new IRGoto(forBegin);
         IRBasicBlock block = new IRBasicBlock();
-        block.addIrInstruction(beginLabel);
+        block.addIrInstruction(irGotoFirst);
+        block.addIrInstruction(forBegin);
         this.blocks.add(block);
         // 生成ifLabel
-        String ifName = IRLabelCnt.getName(IRLabelCnt.getCnt());
-        IRLabel ifLabel = new IRLabel(ifName);
+        IRLabel loopStartLabel;
         // 生成endLabel
         String endName = IRLabelCnt.getName(IRLabelCnt.getCnt());
         IRLabel endLabel = new IRLabel(endName);
-        // for的处理逻辑类似于if
         // 处理forInit
-        if (forInit != null) {
-            IRInstructionBuilder irInstructionBuilder = new IRInstructionBuilder(this.symbolTable,forInit, block, this.functionCnt, this.forBegin, this.forEnd);
+        IRBasicBlock blockFor = new IRBasicBlock();
+        if (forInit != null) {// 生成ifLabel
+            String ifName = IRLabelCnt.getName(IRLabelCnt.getCnt());
+            loopStartLabel = new IRLabel(ifName);
+
+            this.forBegin = forBegin;
+            this.forEnd = endLabel;
+            IRInstructionBuilder irInstructionBuilder = new IRInstructionBuilder(this.symbolTable,forInit, blockFor, this.functionCnt, this.forBegin, this.forEnd);
             ArrayList<IRInstruction> instructions = irInstructionBuilder.generateInstructions();
-            block.addAllIrInstruction(instructions);
+            blockFor.addAllIrInstruction(instructions);
+            blocks.add(blockFor);
+            IRGoto loopStartGoto = new IRGoto(loopStartLabel);
+            IRBasicBlock block1 = new IRBasicBlock();
+            block1.addIrInstruction(loopStartGoto);
+            block1.addIrInstruction(loopStartLabel);
+            blocks.add(block1);
+        } else {
+            loopStartLabel = forBegin;
+            this.forBegin = forBegin;
+            this.forEnd = endLabel;
         }
         // 处理forCond
         if (forCond != null) {
-            generateCond(forCond, ifLabel, endLabel);
+            String name = IRLabelCnt.getName(IRLabelCnt.getCnt());
+            IRLabel successLabel = new IRLabel(name);
+            generateCond(forCond, successLabel, endLabel);IRBasicBlock block2 = new IRBasicBlock();
+            block2.addIrInstruction(successLabel);
+            blocks.add(block2);
+        } else {
+
         }
+
         // 处理stmt
         IRBasicBlock ifBlock = new IRBasicBlock();
-        ifBlock.addIrInstruction(ifLabel);
-        IRBlockBuilder blockBuilder = null;
+        IRBlockBuilder blockBuilder;
         SymbolTable newSymbolTable = new SymbolTable(this.symbolTable);
         if (getItemType(stmt) == BlockItemType.StmtCond ||
                 getItemType(stmt) == BlockItemType.StmtFor ||
                 getItemType(stmt) == BlockItemType.Block) {
-            this.blocks.add(ifBlock);
             if (getItemType(stmt) == BlockItemType.StmtCond) {
-                blockBuilder = new IRBlockBuilder(stmt, newSymbolTable, this.functionCnt, this.forBegin, this.forEnd);
+                blockBuilder = new IRBlockBuilder(stmt, newSymbolTable, this.functionCnt, this.forBegin, this.forEnd, this.parentFunction);
             } else if (getItemType(stmt) == BlockItemType.StmtFor) {
-                blockBuilder = new IRBlockBuilder(stmt, newSymbolTable, this.functionCnt, this.forBegin, this.forEnd);
+                blockBuilder = new IRBlockBuilder(stmt, newSymbolTable, this.functionCnt, this.forBegin, this.forEnd, this.parentFunction);
             } else {
-                stmt = stmt.getFirstChild();
                 blockBuilder = new IRBlockBuilder(stmt.getFirstChild(), newSymbolTable, this.functionCnt, this.forBegin, this.forEnd, this.parentFunction);
             }
             this.blocks.addAll(blockBuilder.generateIRBlocks());
@@ -144,7 +157,7 @@ public class IRBlockBuilder {
                 ifBlock.addAllIrInstruction(instructions);
             }
             // 添加goto
-            IRGoto irGoto = new IRGoto(beginLabel);
+            IRGoto irGoto = new IRGoto(loopStartLabel);
             ifBlock.addIrInstruction(irGoto);
             this.blocks.add(ifBlock);
         } else {
@@ -158,7 +171,7 @@ public class IRBlockBuilder {
                 ifBlock.addAllIrInstruction(instructions1);
             }
             // 添加goto
-            IRGoto irGoto = new IRGoto(beginLabel);
+            IRGoto irGoto = new IRGoto(loopStartLabel);
             ifBlock.addIrInstruction(irGoto);
             this.blocks.add(ifBlock);
         }
@@ -205,9 +218,9 @@ public class IRBlockBuilder {
                 blockItemType == BlockItemType.Block) {
             this.blocks.add(ifBlock);
             if (blockItemType == BlockItemType.StmtCond) {
-                blockBuilder = new IRBlockBuilder(stmt, newSymbolTable, this.functionCnt, this.forBegin, this.forEnd);
+                blockBuilder = new IRBlockBuilder(stmt, newSymbolTable, this.functionCnt, this.forBegin, this.forEnd, this.parentFunction);
             } else if (blockItemType == BlockItemType.StmtFor) {
-                blockBuilder = new IRBlockBuilder(stmt, newSymbolTable, this.functionCnt, this.forBegin, this.forEnd);
+                blockBuilder = new IRBlockBuilder(stmt, newSymbolTable, this.functionCnt, this.forBegin, this.forEnd, this.parentFunction);
             } else {
                 blockBuilder = new IRBlockBuilder(stmt.getFirstChild(), newSymbolTable, this.functionCnt, this.forBegin, this.forEnd, this.parentFunction);
             }
@@ -243,9 +256,9 @@ public class IRBlockBuilder {
                 this.blocks.add(elseBlock);
                 newSymbolTable = new SymbolTable(this.symbolTable);
                 if (blockItemTypeElse == BlockItemType.StmtCond) {
-                    blockBuilder = new IRBlockBuilder(stmtElse, newSymbolTable, this.functionCnt, this.forBegin, this.forEnd);
+                    blockBuilder = new IRBlockBuilder(stmtElse, newSymbolTable, this.functionCnt, this.forBegin, this.forEnd, this.parentFunction);
                 } else if (blockItemTypeElse == BlockItemType.StmtFor) {
-                    blockBuilder = new IRBlockBuilder(stmtElse, newSymbolTable, this.functionCnt, this.forBegin, this.forEnd);
+                    blockBuilder = new IRBlockBuilder(stmtElse, newSymbolTable, this.functionCnt, this.forBegin, this.forEnd, this.parentFunction);
                 } else {
                     blockBuilder = new IRBlockBuilder(stmtElse.getFirstChild(), newSymbolTable, this.functionCnt, this.forBegin, this.forEnd, this.parentFunction);
                 }
@@ -326,6 +339,49 @@ public class IRBlockBuilder {
             right = generateIRInstructionFromRelExp(relExps.get(i));
             // 生成比较指令
             IRBinaryInstruction instruction;
+            IRBasicBlock basicBlock = new IRBasicBlock();
+            if (left.isParam()) {
+                IRValueType irValueType = left.getType();
+                int cnt = functionCnt.getCnt();
+                String name_temp = "%LocalVar" + cnt;
+                IRValue newValue = new IRValue(name_temp, irValueType);
+                Symbol symbol = this.symbolTable.getSymbol(left);
+                symbol.setValue(newValue);
+                IRAlloca alloca = new IRAlloca(irValueType, newValue);
+                alloca.setName(name_temp);
+                basicBlock.addIrInstruction(alloca);
+                boolean isChar = symbol.isChar();
+                IRStore store = new IRStore(left,newValue,isChar);
+                store.setName(name_temp);
+                basicBlock.addIrInstruction(store);
+                left = newValue;
+                IRLoad irLoad = new IRLoad(left.getType(), left);
+                String name = "%LocalVar" + this.functionCnt.getCnt();
+                irLoad.setName(name);
+                basicBlock.addIrInstruction(irLoad);
+                left = irLoad;
+            }
+            if (right.isParam()) {
+                IRValueType irValueType = right.getType();
+                int cnt = functionCnt.getCnt();
+                String name_temp = "%LocalVar" + cnt;
+                IRValue newValue = new IRValue(name_temp, irValueType);
+                Symbol symbol = this.symbolTable.getSymbol(right);
+                symbol.setValue(newValue);
+                IRAlloca alloca = new IRAlloca(irValueType, newValue);
+                alloca.setName(name_temp);
+                basicBlock.addIrInstruction(alloca);
+                boolean isChar = symbol.isChar();
+                IRStore store = new IRStore(right,newValue,isChar);
+                store.setName(name_temp);
+                basicBlock.addIrInstruction(store);
+                right = newValue;
+                IRLoad irLoad = new IRLoad(right.getType(), right);
+                String name = "%LocalVar" + this.functionCnt.getCnt();
+                irLoad.setName(name);
+                basicBlock.addIrInstruction(irLoad);
+                right = irLoad;
+            }
             if (relops.get(i - 1) == TokenType.EQL) {
                 instruction = new IRBinaryInstruction(IRIntegerType.get1(), IRInstructionType.Eq, left, right);
             } else {
@@ -335,7 +391,6 @@ public class IRBlockBuilder {
             left = new IRValue(name, IRIntegerType.get1());
             instruction.setName(name);
             // store
-            IRBasicBlock basicBlock = new IRBasicBlock();
             basicBlock.addIrInstruction(instruction);
             this.blocks.add(basicBlock);
         }
@@ -358,11 +413,32 @@ public class IRBlockBuilder {
         }
         IRInstructionBuilder irInstructionBuilder = new IRInstructionBuilder();
         IRValue zero = irInstructionBuilder.generateZero();
+        IRBasicBlock block = new IRBasicBlock();
+        if (left.isParam()) {
+            IRValueType irValueType = left.getType();
+            int cnt = functionCnt.getCnt();
+            String name_temp = "%LocalVar" + cnt;
+            IRValue newValue = new IRValue(name_temp, irValueType);
+            Symbol symbol = this.symbolTable.getSymbol(left);
+            symbol.setValue(newValue);
+            IRAlloca alloca = new IRAlloca(irValueType, newValue);
+            alloca.setName(name_temp);
+            block.addIrInstruction(alloca);
+            boolean isChar = symbol.isChar();
+            IRStore store = new IRStore(left,newValue,isChar);
+            store.setName(name_temp);
+            block.addIrInstruction(store);
+            left = newValue;
+            IRLoad irLoad = new IRLoad(left.getType(), left);
+            String name = "%LocalVar" + this.functionCnt.getCnt();
+            irLoad.setName(name);
+            block.addIrInstruction(irLoad);
+            left = irLoad;
+        }
         IRInstruction instruction = new IRBinaryInstruction(IRIntegerType.get1(), IRInstructionType.Ne, left, zero);
         String name = "%LocalVar" + this.functionCnt.getCnt();
         left = new IRValue(name, IRIntegerType.get1());
         instruction.setName(name);
-        IRBasicBlock block = new IRBasicBlock();
         block.addIrInstruction(instruction);
         this.blocks.add(block);
         if (pos) {
@@ -407,6 +483,48 @@ public class IRBlockBuilder {
             instructions = irInstructionBuilder.generateInstructions();
             basicBlock.addAllIrInstruction(instructions);
             right = irInstructionBuilder.getLeft();
+            if (left.isParam()) {
+                IRValueType irValueType = left.getType();
+                int cnt = functionCnt.getCnt();
+                String name_temp = "%LocalVar" + cnt;
+                IRValue newValue = new IRValue(name_temp, irValueType);
+                Symbol symbol = this.symbolTable.getSymbol(left);
+                symbol.setValue(newValue);
+                IRAlloca alloca = new IRAlloca(irValueType, newValue);
+                alloca.setName(name_temp);
+                basicBlock.addIrInstruction(alloca);
+                boolean isChar = symbol.isChar();
+                IRStore store = new IRStore(left,newValue,isChar);
+                store.setName(name_temp);
+                basicBlock.addIrInstruction(store);
+                left = newValue;
+                IRLoad irLoad = new IRLoad(left.getType(), left);
+                String name = "%LocalVar" + this.functionCnt.getCnt();
+                irLoad.setName(name);
+                basicBlock.addIrInstruction(irLoad);
+                left = irLoad;
+            }
+            if (right.isParam()) {
+                IRValueType irValueType = right.getType();
+                int cnt = functionCnt.getCnt();
+                String name_temp = "%LocalVar" + cnt;
+                IRValue newValue = new IRValue(name_temp, irValueType);
+                Symbol symbol = this.symbolTable.getSymbol(right);
+                symbol.setValue(newValue);
+                IRAlloca alloca = new IRAlloca(irValueType, newValue);
+                alloca.setName(name_temp);
+                basicBlock.addIrInstruction(alloca);
+                boolean isChar = symbol.isChar();
+                IRStore store = new IRStore(right,newValue,isChar);
+                store.setName(name_temp);
+                basicBlock.addIrInstruction(store);
+                right = newValue;
+                IRLoad irLoad = new IRLoad(right.getType(), right);
+                String name = "%LocalVar" + this.functionCnt.getCnt();
+                irLoad.setName(name);
+                basicBlock.addIrInstruction(irLoad);
+                right = irLoad;
+            }
             // 生成比较指令
             IRBinaryInstruction instruction = null;
             TokenType addop = addops.get(i - 1);
@@ -515,10 +633,10 @@ public class IRBlockBuilder {
                 IRBlockBuilder blockBuilder;
                 if (blockItemType == BlockItemType.StmtCond) {
                     stmt = blockItem.getFirstChild();
-                    blockBuilder = new IRBlockBuilder(stmt, symbolTableSon, this.functionCnt, this.forBegin, this.forEnd);
+                    blockBuilder = new IRBlockBuilder(stmt, symbolTableSon, this.functionCnt, this.forBegin, this.forEnd, this.parentFunction);
                 } else if (blockItemType == BlockItemType.StmtFor) {
                     stmt = blockItem.getFirstChild();
-                    blockBuilder = new IRBlockBuilder(stmt, symbolTableSon, this.functionCnt, this.forBegin, this.forEnd);
+                    blockBuilder = new IRBlockBuilder(stmt, symbolTableSon, this.functionCnt, this.forBegin, this.forEnd, this.parentFunction);
                 } else {
                     stmt = blockItem.getFirstChild().getFirstChild();
                     blockBuilder = new IRBlockBuilder(stmt, symbolTableSon, this.functionCnt, this.forBegin, this.forEnd, this.parentFunction);

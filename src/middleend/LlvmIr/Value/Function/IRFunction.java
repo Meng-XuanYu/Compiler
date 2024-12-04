@@ -93,7 +93,13 @@ public class IRFunction extends IRValue implements IRNode {
             }
         }
         for (String string : init) {
-            if (!string.contains("dso_local") && !string.contains("alloca")) {
+            if (!string.contains("dso_local") && (string.contains("%param") && string.contains("store"))) {
+                // 基本块标签
+                ans.add(string);
+            }
+        }
+        for (String string : init) {
+            if (!string.contains("dso_local") && !string.contains("alloca") && !(string.contains("%param") && string.contains("store"))) {
                 // 基本块
                 ans.add(string);
             }
