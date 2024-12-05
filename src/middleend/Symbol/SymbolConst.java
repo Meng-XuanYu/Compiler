@@ -29,6 +29,7 @@ public class SymbolConst extends Symbol {
         this.valueInt = valueInt;
     }
 
+
     public void setValueIntArray(ArrayList<Integer> valueIntArray) {
         this.valueIntArray = valueIntArray;
     }

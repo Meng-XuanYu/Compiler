@@ -234,6 +234,8 @@ public class ParserTreeNode {
         for (ParserTreeNode child : this.getChildren()) {
             if (child.getToken() != null && child.getToken().type() == TokenType.LBRACK) {
                 return true;
+            } else if (child.getToken() != null && child.getToken().type() == TokenType.ASSIGN) {
+                return false;
             }
         }
         return false;
@@ -444,9 +446,11 @@ public class ParserTreeNode {
             return left;
         } else if (this.getType() == SyntaxType.UnaryExp) {
             if (this.getChildren().get(0).getType() == SyntaxType.UnaryOp &&
-                    (this.getFirstChild().getFirstChild().getToken().type() == TokenType.MINU ||
-                            this.getFirstChild().getFirstChild().getToken().type() == TokenType.PLUS)) {
+                    this.getFirstChild().getFirstChild().getToken().type() == TokenType.MINU ) {
                 return -this.getChildren().get(1).calIntInitVal(symbolTable);
+            } else if (this.getChildren().get(0).getType() == SyntaxType.UnaryOp &&
+                    this.getFirstChild().getFirstChild().getToken().type() == TokenType.PLUS) {
+                return this.getChildren().get(1).calIntInitVal(symbolTable);
             } else if (this.getChildren().get(0).getType() == SyntaxType.PrimaryExp) {
                 return this.getChildren().get(0).calIntInitVal(symbolTable);
             } else {
@@ -489,13 +493,16 @@ public class ParserTreeNode {
             this.getChildren().get(0).getToken().type() == TokenType.LBRACE) {
             // { initValList }
             ArrayList<ParserTreeNode> initValList = new ArrayList<>();
+            if (this.getChildren().size() == 2) {
+                return initValList;
+            }
             for (int i = 1; i < this.getChildren().size(); i+=2) {
                 initValList.add(this.getChildren().get(i));
             }
             return initValList;
         } else {
             // StringConst 传出去全是Token的node
-            String str = this.getChildren().get(0).getToken().value().substring(1, this.getChildren().get(0).getToken().value().length() - 2); // 去掉前后的双引号
+            String str = this.getChildren().get(0).getToken().value().substring(1, this.getChildren().get(0).getToken().value().length() - 1); // 去掉前后的双引号
             ArrayList<ParserTreeNode> initValList = new ArrayList<>();
             for (int i = 0; i < str.length(); i++) {
                 initValList.add(new ParserTreeNode(new Token(TokenType.CHRCON, "'" + str.charAt(i) + "'", this.getChildren().get(0).getToken().line())));

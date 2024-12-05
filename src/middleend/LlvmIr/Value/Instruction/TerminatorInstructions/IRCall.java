@@ -2,6 +2,7 @@ package middleend.LlvmIr.Value.Instruction.TerminatorInstructions;
 
 import middleend.LlvmIr.IRValue;
 import middleend.LlvmIr.Types.IRFunctionType;
+import middleend.LlvmIr.Types.IRIntArrayType;
 import middleend.LlvmIr.Types.IRIntegerType;
 import middleend.LlvmIr.Types.IRVoidType;
 import middleend.LlvmIr.Value.Function.IRFunction;
@@ -87,7 +88,12 @@ public class IRCall extends IRInstruction {
                 sb.append("i32 ");
                 sb.append(arg.getName());
             } else if (arg.getDimensionValue() == 1) {
-                sb.append("i32* ");
+                int bitWidth = arg.getType().isInt32() ? 32 : 8;
+                if (bitWidth == 8) {
+                    sb.append("i8* ");
+                } else if (bitWidth == 32) {
+                    sb.append("i32* ");
+                }
                 sb.append(arg.getName());
                 // 要传入一个1维参数, 就不需要再append什么内容
             } else {

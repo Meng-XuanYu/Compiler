@@ -11,7 +11,6 @@ import middleend.LlvmIr.Types.IRIntegerType;
 import middleend.LlvmIr.Types.IRValueType;
 import middleend.LlvmIr.Value.BasicBlock.IRBasicBlock;
 import middleend.LlvmIr.Value.Constant.IRConstantInt;
-import middleend.LlvmIr.Value.Constant.IRConstantIntArray;
 import middleend.LlvmIr.Value.Function.FunctionCnt;
 import middleend.LlvmIr.Value.Function.IRFunction;
 import middleend.LlvmIr.Value.Instruction.MemoryInstructions.*;
@@ -21,10 +20,7 @@ import middleend.LlvmIr.Value.Instruction.TerminatorInstructions.IRRet;
 import middleend.Symbol.*;
 
 import java.util.ArrayList;
-import java.util.Locale;
 
-import static middleend.LlvmIr.Value.GlobalVar.IRGlobalVarBuilder.setConstInit;
-import static middleend.LlvmIr.Value.GlobalVar.IRGlobalVarBuilder.setVarInit;
 
 // 除了for,if,Block的Stmt
 public class IRInstructionBuilder {
@@ -236,6 +232,7 @@ public class IRInstructionBuilder {
             IRCall call;
             if (c == '%' && i + 1 < chars.length && chars[i + 1] == 'd') {
                 IRValue value = values.get(cnt);
+                IRIntegerType irIntegerType = (IRIntegerType) value.getType();
                 if (value.isParam()) {
                     IRAlloca alloca = new IRAlloca(value.getType(), value);
                     alloca.setName("%LocalVar" + functionCnt.getCnt());
@@ -247,6 +244,12 @@ public class IRInstructionBuilder {
                     this.instructions.add(load);
                     value = load;
                     value.setValueType(IRIntegerType.get32());
+                }
+                if (irIntegerType.getBitWidth() == 8) {
+                    IRZext zext = new IRZext(value, IRIntegerType.get32());
+                    zext.setName("%LocalVar" + functionCnt.getCnt());
+                    this.instructions.add(zext);
+                    value = zext;
                 }
                 call = new IRCall("@putint", value);
                 i++;
@@ -336,7 +339,7 @@ public class IRInstructionBuilder {
         } else {
             ParserTreeNode exp = this.stmtReturn.getChildren().get(1);
             IRValue value = generateIRInstructionFromExp(exp, false);
-            IRFunction function = (IRFunction) this.block.getParentFunction();
+            IRFunction function = this.block.getParentFunction();
             IRValueType returnType = ((IRFunctionType) function.getType()).getReturnType();
             if (returnType instanceof IRIntegerType) {
                 IRIntegerType irIntegerType = (IRIntegerType) returnType;
@@ -380,6 +383,18 @@ public class IRInstructionBuilder {
 
         IRStore store;
         if (leftSize == 0) {
+            if (right.getType().isInt32() && !left.getType().isInt32()) {
+                IRTrunc trunc = new IRTrunc(right, IRIntegerType.get8());
+                trunc.setName("%LocalVar" + functionCnt.getCnt());
+                this.instructions.add(trunc);
+                right = trunc;
+            }
+            if (!right.getType().isInt32() && left.getType().isInt32()) {
+                IRZext zext = new IRZext(right, IRIntegerType.get32());
+                zext.setName("%LocalVar" + functionCnt.getCnt());
+                this.instructions.add(zext);
+                right = zext;
+            }
             store = new IRStore(right, left, isChar);
         } else {
             IRValue dimension1PointerValue = generateIRInstructionFromExp(exp, false);
@@ -401,23 +416,18 @@ public class IRInstructionBuilder {
         if (varDef.varDefHasAssign()) {
             ParserTreeNode varDefInit = varDef.getLastChild();
             if (varDef.hasLbrack()) {
+                // 处理数组变量
                 int size = varDef.getArraySize(this.symbolTable);
-                IRIntArrayType irIntegerType = isChar ? new IRIntArrayType(IRIntegerType.get8(),size) :
-                        new IRIntArrayType(IRIntegerType.get32(),size);
+                IRIntArrayType irIntegerType = isChar ? new IRIntArrayType(IRIntegerType.get8(), size) :
+                        new IRIntArrayType(IRIntegerType.get32(), size);
                 IRValueType irValueType = isChar ? IRIntegerType.get8() : IRIntegerType.get32();
-                // 数组
-                if (isChar) {
-                    symbol = new SymbolVar(varDef.getFirstChild().getToken().value(), SymbolType.CharArray);
-                } else {
-                    symbol = new SymbolVar(varDef.getFirstChild().getToken().value(), SymbolType.IntArray);
-                }
+                symbol = new SymbolVar(varDef.getFirstChild().getToken().value(), isChar ? SymbolType.CharArray : SymbolType.IntArray);
                 this.symbolTable.addSymbol(symbol);
-                setVarInit(symbol, varDef.getLastChild(),this.symbolTable);
+
                 IRValue value = new IRValue(name, irIntegerType);
                 value.setSize(size);
                 symbol.setValue(value);
 
-                // IRAlloca指令
                 IRAlloca alloca = new IRAlloca(irIntegerType, value);
                 alloca.setSize(value.getSize());
                 alloca.setName(name);
@@ -428,10 +438,14 @@ public class IRInstructionBuilder {
                 firstPtr.setName(name1);
                 this.instructions.add(firstPtr);
                 symbol.setIns(firstPtr);
-                symbol.setValue(firstPtr);
 
                 if (varDefInit.getFirstChild().getType() == SyntaxType.Token && varDefInit.getFirstChild().getToken().type() == TokenType.STRCON) {
                     // 字符串
+                    ArrayList<Integer> initVals = new ArrayList<>();
+                    for (ParserTreeNode exp : varDefInit.getInitValList()) {
+                        initVals.add(exp.calIntInitVal(symbolTable));
+                    }
+                    symbol.setInitValArray(initVals);
                     ArrayList<Integer> initVal = symbol.getInitValArray();
                     for (int i = 0; i < initVal.size(); i++) {
                         IRValue initValue = new IRValue(String.valueOf(initVal.get(i)), irIntegerType);
@@ -439,20 +453,20 @@ public class IRInstructionBuilder {
                         String name2 = "%LocalVar" + functionCnt.getCnt();
                         getPtr.setName(name2);
                         this.instructions.add(getPtr);
-                        IRStore store = new IRStore(initValue, getPtr);
+                        IRStore store = new IRStore(initValue, getPtr, isChar);
                         store.setName(name2);
                         this.instructions.add(store);
                     }
                 } else {
                     // 表达式{}
-                    ArrayList<Integer> initVal = symbol.getInitValArray();
-                    for (int i = 0; i < initVal.size(); i++) {
-                        IRValue initValue = new IRValue(String.valueOf(initVal.get(i)), irIntegerType);
-                        IRGetElementPtr getPtr = new IRGetElementPtr(irIntegerType, firstPtr, new IRConstantInt(i, irValueType));
+                    ArrayList<ParserTreeNode> initValList = varDefInit.getInitValList();
+                    for (int i = 0; i < initValList.size(); i++) {
+                        IRValue initValue = generateIRInstructionFromExp(initValList.get(i), false);
+                        IRGetElementPtr getPtr = new IRGetElementPtr(irValueType, firstPtr, new IRConstantInt(i, IRIntegerType.get32()));
                         String name2 = "%LocalVar" + functionCnt.getCnt();
                         getPtr.setName(name2);
                         this.instructions.add(getPtr);
-                        IRStore store = new IRStore(initValue, getPtr);
+                        IRStore store = new IRStore(initValue, getPtr, isChar);
                         store.setName(name2);
                         this.instructions.add(store);
                     }
@@ -476,6 +490,17 @@ public class IRInstructionBuilder {
                 // 一定是表达式
                 ParserTreeNode exp = initVal.getFirstChild();
                 IRValue right = generateIRInstructionFromExp(exp, false);
+                if (irIntegerType.getBitWidth() == 8 && right.getType().isInt32()) {
+                    IRTrunc trunc = new IRTrunc(right, IRIntegerType.get8());
+                    trunc.setName("%LocalVar" + functionCnt.getCnt());
+                    this.instructions.add(trunc);
+                    right = trunc;
+                } else if (irIntegerType.getBitWidth() == 32 && !right.getType().isInt32()) {
+                    IRZext zext = new IRZext(right, IRIntegerType.get32());
+                    zext.setName("%LocalVar" + functionCnt.getCnt());
+                    this.instructions.add(zext);
+                    right = zext;
+                }
                 IRStore store = new IRStore(right, value, isChar);
                 this.instructions.add(store);
             }
@@ -493,7 +518,9 @@ public class IRInstructionBuilder {
                     symbol = new SymbolVar(varDef.getFirstChild().getToken().value(), SymbolType.IntArray);
                 }
                 this.symbolTable.addSymbol(symbol);
-                setVarInit(symbol, null,this.symbolTable);
+                ArrayList<Integer> initVals = new ArrayList<>();
+                symbol.setInitValArray(initVals);
+                symbol.setAll0();
                 IRValue value = new IRValue(name, irIntegerType);
                 value.setSize(varDef.getChildren().get(2).getChildren().size());
                 symbol.setValue(value);
@@ -521,6 +548,10 @@ public class IRInstructionBuilder {
                 alloca.setName(name);
                 alloca.setSize(0);
                 this.instructions.add(alloca);
+
+                // 初始化为0
+                IRStore store = new IRStore(generateZero(), value, isChar);
+                this.instructions.add(store);
             }
         }
     }
@@ -595,6 +626,18 @@ public class IRInstructionBuilder {
                 TokenType operator = operators.get(i);
                 right = generateIRInstructionFromUnaryExp(unaryExp1, false);
                 IRBinaryInstruction mul;
+                if (!left.getType().isInt32()) {
+                    IRZext zext = new IRZext(left, IRIntegerType.get32());
+                    zext.setName("%LocalVar" + functionCnt.getCnt());
+                    this.instructions.add(zext);
+                    left = zext;
+                }
+                if (!right.getType().isInt32()) {
+                    IRZext zext = new IRZext(right, IRIntegerType.get32());
+                    zext.setName("%LocalVar" + functionCnt.getCnt());
+                    this.instructions.add(zext);
+                    right = zext;
+                }
                 if (operator == TokenType.MULT) {
                     mul = new IRBinaryInstruction(irValueType,IRInstructionType.Mul, left, right);
                 } else if (operator == TokenType.DIV) {
@@ -644,8 +687,15 @@ public class IRInstructionBuilder {
             this.instructions.add(mulExp);
             ans = mulExp;
         } else if (type == TokenType.NOT) {
+            IRValue left = generateIRInstructionFromUnaryExp(unaryExp_child, isLeft);
+            if (!left.getType().isInt32()) {
+                IRZext zext = new IRZext(left, IRIntegerType.get32());
+                zext.setName("%LocalVar" + functionCnt.getCnt());
+                this.instructions.add(zext);
+                left = zext;
+            }
             IRBinaryInstruction not = new IRBinaryInstruction(IRIntegerType.get1(),
-                    IRInstructionType.Not, generateIRInstructionFromUnaryExp(unaryExp_child, isLeft), null);
+                    IRInstructionType.Not,left , null);
             String name = "%LocalVar" + functionCnt.getCnt();
             not.setName(name);
             this.instructions.add(not);
@@ -674,6 +724,16 @@ public class IRInstructionBuilder {
                 Symbol symbolNowExp = symbols.get(k);
                 if (symbolNowExp.isArray()) {
                     arg = generateIRInstructionFromExp(exp, false);
+                    if (arg.getType() instanceof IRIntArrayType) {
+                        IRAlloca alloca = new IRAlloca(arg.getType(), arg);
+                        alloca.setName(arg.getName());
+                        IRGetElementPtr getPtr = new IRGetElementPtr(((IRIntArrayType)arg.getType()).getType(), alloca, new IRConstantInt(0, IRIntegerType.get32()));
+                        String ans_name = "%LocalVar" + functionCnt.getCnt();
+                        getPtr.setName(ans_name);
+                        this.instructions.add(getPtr);
+                        getPtr.setDimensionValue(arg.getDimensionValue());
+                        arg = getPtr;
+                    }
                 } else {
                     arg = generateIRInstructionFromExp(exp, false);
                 }
@@ -750,7 +810,20 @@ public class IRInstructionBuilder {
                 }
 
                 if (value.isParam()) {
-                    return value;
+                    IRValueType irValueType = value.getType();
+                    int cnt = functionCnt.getCnt();
+                    String name_temp = "%LocalVar" + cnt;
+                    IRValue newValue = new IRValue(name_temp, irValueType);
+                    symbol.setValue(newValue);
+
+                    IRAlloca alloca = new IRAlloca(irValueType, newValue);
+                    alloca.setName(name_temp);
+                    this.instructions.add(alloca);
+                    boolean isChar = symbol.isChar();
+                    IRStore store = new IRStore(value,newValue,isChar);
+                    store.setName(name_temp);
+                    this.instructions.add(store);
+                    value = newValue;
                 }
 
                 // 局部变量，需要load
@@ -767,7 +840,7 @@ public class IRInstructionBuilder {
                 // 如果是二维则需要getelementptr,且一定有[]
                 ParserTreeNode exp = lVal.getChildren().get(2);
                 IRValue dimension1 = generateIRInstructionFromExp(exp, false);
-                IRValueType irIntegerType = ((IRIntArrayType)value.getType()).getType();
+
 
                 IRValue firstPtr;
                 if (symbol instanceof SymbolVar) {
@@ -776,12 +849,17 @@ public class IRInstructionBuilder {
                     firstPtr = ((SymbolConst)symbol).getIns();
                     System.out.println("Error: generateIRInstructionFromLVal");
                 }
-                if (firstPtr == null) {
+                if (value.isParam()) {
+                    IRAlloca alloca = new IRAlloca(((IRIntArrayType)value.getType()).ischar() ? IRIntegerType.get8() : IRIntegerType.get32(), value);
+                    alloca.setName(value.getName());
+                    firstPtr = alloca;
+                } else if (firstPtr == null) {
                     // 说明是全局变量,直接取用
                     IRAlloca alloca = new IRAlloca(value.getType(), value);
                     alloca.setName(value.getName());
                     firstPtr = alloca;
                 }
+                IRValueType irIntegerType = ((IRIntArrayType)value.getType()).getType();
                 IRGetElementPtr getPtr = new IRGetElementPtr(irIntegerType, firstPtr, dimension1);
                 String ans_name = "%LocalVar" + functionCnt.getCnt();
                 getPtr.setName(ans_name);
@@ -803,8 +881,12 @@ public class IRInstructionBuilder {
                     } else {
                         firstPtr = ((SymbolConst)symbol).getIns();
                     }
-                    if (firstPtr == null) {
-                        // 说明是全局变量
+                    if (value.isParam()) {
+                        IRAlloca alloca = new IRAlloca(((IRIntArrayType)value.getType()).ischar() ? IRIntegerType.get8() : IRIntegerType.get32(), value);
+                        alloca.setName(value.getName());
+                        firstPtr = alloca;
+                    } else if (firstPtr == null) {
+                        // 说明是全局变量,直接取用
                         IRAlloca alloca = new IRAlloca(value.getType(), value);
                         alloca.setName(value.getName());
                         firstPtr = alloca;
@@ -821,8 +903,29 @@ public class IRInstructionBuilder {
                     getPtr.setDimensionValue(0);
                     getPtr.setDimension1Value(dimension1);
                 } else {
-                    // 直接传递数组名
-                    ans = value;
+                    // 直接传递数组名，需要getelementptr
+                    IRValue firstPtr;
+                    if (symbol instanceof SymbolVar) {
+                        firstPtr = ((SymbolVar)symbol).getIns();
+                    } else {
+                        firstPtr = ((SymbolConst)symbol).getIns();
+                    }
+                    if (value.isParam()) {
+                        IRAlloca alloca = new IRAlloca(((IRIntArrayType)value.getType()).ischar() ? IRIntegerType.get8() : IRIntegerType.get32(), value);
+                        alloca.setName(value.getName());
+                        firstPtr = alloca;
+                    } else if (firstPtr == null) {
+                        // 说明是全局变量,直接取用
+                        IRAlloca alloca = new IRAlloca(value.getType(), value);
+                        alloca.setName(value.getName());
+                        firstPtr = alloca;
+                    }
+                    IRValueType irIntegerType = ((IRIntArrayType)value.getType()).getType();
+                    IRGetElementPtr getPtr = new IRGetElementPtr(irIntegerType, firstPtr, new IRConstantInt(0, IRIntegerType.get32()));
+                    String ans_name = "%LocalVar" + functionCnt.getCnt();
+                    getPtr.setName(ans_name);
+                    this.instructions.add(getPtr);
+                    ans = getPtr;
                     ans.setDimensionValue(1);
                 }
             }
@@ -839,60 +942,65 @@ public class IRInstructionBuilder {
 
     // 处理常量定义 (ConstDef) 并生成相应的 LLVM IR 指令
     private void addCon(ParserTreeNode constDef, boolean isChar) {
-        SymbolConst symbolConst;
+        SymbolConst symbol;
         String name = "%LocalConst" + functionCnt.getCnt();
+        ParserTreeNode constDefInit = constDef.getLastChild();
         if (constDef.hasLbrack()) {
-            IRValueType irIntegerType = isChar ? new IRIntArrayType(IRIntegerType.get8(),constDef.getArraySize(this.symbolTable)) :
-                    new IRIntArrayType(IRIntegerType.get32(),constDef.getArraySize(this.symbolTable));
+            int size = constDef.getArraySize(this.symbolTable);
+            IRIntArrayType irIntegerType = isChar ? new IRIntArrayType(IRIntegerType.get8(),size) :
+                    new IRIntArrayType(IRIntegerType.get32(),size);
             IRValueType irValueType = isChar ? IRIntegerType.get8() : IRIntegerType.get32();
             // 数组
             if (isChar) {
-                symbolConst = new SymbolConst(constDef.getFirstChild().getToken().value(), SymbolType.ConstCharArray);
+                symbol = new SymbolConst(constDef.getFirstChild().getToken().value(), SymbolType.ConstCharArray);
             } else {
-                symbolConst = new SymbolConst(constDef.getFirstChild().getToken().value(), SymbolType.ConstIntArray);
+                symbol = new SymbolConst(constDef.getFirstChild().getToken().value(), SymbolType.ConstIntArray);
             }
-            this.symbolTable.addSymbol(symbolConst);
-            setConstInit(symbolConst, constDef.getLastChild(),this.symbolTable);
-            IRValue value;
-            value = new IRValue(name, irIntegerType);
-            value.setSize(symbolConst.getValueIntArray().size());
-            value.setInits1(symbolConst.getValueIntArray());
-            symbolConst.setValue(value);
+            this.symbolTable.addSymbol(symbol);
+
+            IRValue value = new IRValue(name, irIntegerType);
+            value.setSize(size);
+            symbol.setValue(value);
 
             // IRAlloca指令
             IRAlloca alloca = new IRAlloca(irIntegerType, value);
             alloca.setSize(value.getSize());
-            alloca.setInits1(value.getInits1());
             alloca.setName(name);
             this.instructions.add(alloca);
 
-            // 初始化
-            IRGetElementPtr firstPtr = new IRGetElementPtr(irValueType, alloca, new IRConstantInt(0, IRIntegerType.get32()));
+            IRGetElementPtr firstPtr = new IRGetElementPtr(irValueType, alloca, new IRConstantInt(0, irValueType));
             String name1 = "%LocalVar" + functionCnt.getCnt();
             firstPtr.setName(name1);
             this.instructions.add(firstPtr);
-            symbolConst.setIns(firstPtr);
+            symbol.setIns(firstPtr);
 
-            ArrayList<Integer> initVal = symbolConst.getValueIntArray();
-            if (isChar) {
-                for (int i = 0; i < initVal.size(); i++) {
-                    IRValue initValue = new IRValue(String.valueOf((char)initVal.get(i).intValue()), irIntegerType);
-                    IRGetElementPtr getPtr = new IRGetElementPtr(irIntegerType, firstPtr, new IRConstantInt(i, IRIntegerType.get32()));
+            if (constDefInit.getFirstChild().getType() == SyntaxType.Token && constDefInit.getFirstChild().getToken().type() == TokenType.STRCON) {
+                // 字符串
+                ArrayList<Integer> initVals = new ArrayList<>();
+                for (ParserTreeNode exp : constDefInit.getInitValList()) {
+                    initVals.add(exp.calIntInitVal(symbolTable));
+                }
+                symbol.setValueIntArray(initVals);
+                for (int i = 0; i < initVals.size(); i++) {
+                    IRValue initValue = new IRValue(String.valueOf(initVals.get(i)), IRIntegerType.get8());
+                    IRGetElementPtr getPtr = new IRGetElementPtr(IRIntegerType.get8(), firstPtr, new IRConstantInt(i, IRIntegerType.get32()));
                     String name2 = "%LocalVar" + functionCnt.getCnt();
                     getPtr.setName(name2);
                     this.instructions.add(getPtr);
-                    IRStore store = new IRStore(initValue, getPtr);
+                    IRStore store = new IRStore(initValue, getPtr, true);
                     store.setName(name2);
                     this.instructions.add(store);
                 }
             } else {
-                for (int i = 0; i < initVal.size(); i++) {
-                    IRValue initValue = new IRValue(String.valueOf(initVal.get(i)), irIntegerType);
-                    IRGetElementPtr getPtr = new IRGetElementPtr(irIntegerType, firstPtr, new IRConstantInt(i, IRIntegerType.get32()));
+                // 表达式{}
+                ArrayList<ParserTreeNode> initValList = constDefInit.getInitValList();
+                for (int i = 0; i < initValList.size(); i++) {
+                    IRValue initValue = generateIRInstructionFromExp(initValList.get(i), false);
+                    IRGetElementPtr getPtr = new IRGetElementPtr(irValueType, firstPtr, new IRConstantInt(i, IRIntegerType.get32()));
                     String name2 = "%LocalVar" + functionCnt.getCnt();
                     getPtr.setName(name2);
                     this.instructions.add(getPtr);
-                    IRStore store = new IRStore(initValue, getPtr);
+                    IRStore store = new IRStore(initValue, getPtr, isChar);
                     store.setName(name2);
                     this.instructions.add(store);
                 }
@@ -901,13 +1009,13 @@ public class IRInstructionBuilder {
             IRIntegerType irIntegerType = isChar ? IRIntegerType.get8() : IRIntegerType.get32();
             // 单个常量
             if (isChar) {
-                symbolConst = new SymbolConst(constDef.getFirstChild().getToken().value(), SymbolType.ConstChar);
+                symbol = new SymbolConst(constDef.getFirstChild().getToken().value(), SymbolType.ConstChar);
             } else {
-                symbolConst = new SymbolConst(constDef.getFirstChild().getToken().value(), SymbolType.ConstInt);
+                symbol = new SymbolConst(constDef.getFirstChild().getToken().value(), SymbolType.ConstInt);
             }
-            this.symbolTable.addSymbol(symbolConst);
-            setConstInit(symbolConst, constDef.getLastChild(),this.symbolTable);
-            symbolConst.setValue(new IRValue(String.valueOf(symbolConst.getValueInt()), irIntegerType));
+            this.symbolTable.addSymbol(symbol);
+            symbol.setValueInt(constDef.getLastChild().calIntInitVal(symbolTable));
+            symbol.setValue(new IRValue(String.valueOf(symbol.getValueInt()), irIntegerType));
         }
     }
 }
