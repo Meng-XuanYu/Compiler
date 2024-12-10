@@ -1,5 +1,7 @@
 int main() {
-    char c = '\t';
-    printf("1%c1",c);
+    char c[2] = {'1','\n'};
+    printf("1%c1",c[1]);
+    char d = '\n';
+    printf("1%c1",d);
     return 0;
 }

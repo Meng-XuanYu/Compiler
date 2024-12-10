@@ -464,7 +464,48 @@ public class ParserTreeNode {
             } else if (this.getChildren().get(0).getType() == SyntaxType.Number) {
                 return Integer.parseInt(this.getFirstChild().getFirstChild().getToken().value());
             } else if (this.getChildren().get(0).getType() == SyntaxType.Character) {
-                return this.getFirstChild().getFirstChild().getToken().value().charAt(1);
+                String tokenValue = this.getFirstChild().getFirstChild().getToken().value();
+                char character;
+                if (tokenValue.length() == 3) { // single character like 'a'
+                    character = tokenValue.charAt(1);
+                } else { // escape character like '\t'
+                    switch (tokenValue.charAt(2)) {
+                        case 'a':
+                            character = '\u0007';
+                            break;
+                        case 'b':
+                            character = '\b';
+                            break;
+                        case 'f':
+                            character = '\f';
+                            break;
+                        case 'n':
+                            character = '\n';
+                            break;
+                        case 't':
+                            character = '\t';
+                            break;
+                        case 'v':
+                            character = '\u000B';
+                            break;
+                        case '\\':
+                            character = '\\';
+                            break;
+                        case '\'':
+                            character = '\'';
+                            break;
+                        case '\"':
+                            character = '\"';
+                            break;
+                        case '0':
+                            character = '\u0000';
+                            break;
+                        default:
+                            character = tokenValue.charAt(1);
+                            break;
+                    }
+                }
+                return character;
             } else {
                 // ( Exp )
                 return this.getChildren().get(1).calIntInitVal(symbolTable);
@@ -480,7 +521,48 @@ public class ParserTreeNode {
             return this.getChildren().get(0).calIntInitVal(symbolTable);
         } else if (this.getType() == SyntaxType.Token) {
             // StringConst 传进来的全是Token的node
-            return this.getToken().value().charAt(1);
+            String tokenValue = this.getToken().value();
+            char character;
+            if (tokenValue.length() == 3) { // single character like 'a'
+                character = tokenValue.charAt(1);
+            } else { // escape character like '\t'
+                switch (tokenValue.charAt(2)) {
+                    case 'a':
+                        character = '\u0007';
+                        break;
+                    case 'b':
+                        character = '\b';
+                        break;
+                    case 'f':
+                        character = '\f';
+                        break;
+                    case 'n':
+                        character = '\n';
+                        break;
+                    case 't':
+                        character = '\t';
+                        break;
+                    case 'v':
+                        character = '\u000B';
+                        break;
+                    case '\\':
+                        character = '\\';
+                        break;
+                    case '\'':
+                        character = '\'';
+                        break;
+                    case '\"':
+                        character = '\"';
+                        break;
+                    case '0':
+                        character = '\u0000';
+                        break;
+                    default:
+                        character = tokenValue.charAt(1);
+                        break;
+                }
+            }
+            return character;
         } else {
             System.err.println("Error in calIntInitVal: unexpected type");
             return 0;

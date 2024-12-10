@@ -767,7 +767,48 @@ public class IRInstructionBuilder {
         } else if (element.getType() == SyntaxType.LVal) {
             ans = generateIRInstructionFromLVal(element, isLeft);
         } else if (element.getType() == SyntaxType.Character){
-            String name = ((int)element.getFirstChild().getToken().value().charAt(1)) + "";
+            String tokenValue = element.getFirstChild().getToken().value();
+            char character;
+            if (tokenValue.length() == 3) { // single character like 'a'
+                character = tokenValue.charAt(1);
+            } else { // escape character like '\t'
+                switch (tokenValue.charAt(2)) {
+                    case 'a':
+                        character = '\u0007';
+                        break;
+                    case 'b':
+                        character = '\b';
+                        break;
+                    case 'f':
+                        character = '\f';
+                        break;
+                    case 'n':
+                        character = '\n';
+                        break;
+                    case 't':
+                        character = '\t';
+                        break;
+                    case 'v':
+                        character = '\u000B';
+                        break;
+                    case '\\':
+                        character = '\\';
+                        break;
+                    case '\'':
+                        character = '\'';
+                        break;
+                    case '\"':
+                        character = '\"';
+                        break;
+                    case '0':
+                        character = '\u0000';
+                        break;
+                    default:
+                        character = tokenValue.charAt(1);
+                        break;
+                }
+            }
+            String name = String.format("%d", (int) character);
             ans = new IRValue(name, IRIntegerType.get8());
         } else {
             System.out.println("Error: generateIRInstructionFromPrimaryExp");
