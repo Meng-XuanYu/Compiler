@@ -25,4 +25,8 @@ public class IRParameter extends IRValue implements IRNode {
         ans.add(sb.toString());
         return ans;
     }
+
+    public int getIndex() {
+        return this.position;
+    }
 }

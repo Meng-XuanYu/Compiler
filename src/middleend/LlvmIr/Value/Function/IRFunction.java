@@ -118,4 +118,8 @@ public class IRFunction extends IRValue implements IRNode {
     public ArrayList<IRBasicBlock> getBlocks() {
         return this.blocks;
     }
+
+    public ArrayList<IRBasicBlock> getBasicBlocks() {
+        return this.blocks;
+    }
 }

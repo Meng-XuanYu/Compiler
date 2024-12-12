@@ -40,6 +40,10 @@ public class IRGlobalVar extends IRUser implements IRNode {
         return ans;
     }
 
+    public int getIntInit() {
+        return Integer.parseInt(this.initialValue.printIR().getFirst());
+    }
+
     public int getSize() {
         if (this.initialValue instanceof IRConstantIntArray) {
             return this.initialValue.getSize();

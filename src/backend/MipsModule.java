@@ -25,15 +25,15 @@ public class MipsModule implements MipsNode {
         this.nop = new Nop();
     }
 
-    private void addAsciiz(Asciiz asciiz) {
+    public void addAsciiz(Asciiz asciiz) {
         this.asciizs.add(asciiz);
     }
 
-    private void addFunction(MipsFunction function) {
+    public void addFunction(MipsFunction function) {
         this.functions.add(function);
     }
 
-    private void addGlobal(MipsInstruction instruction) {
+    public void addGlobal(MipsInstruction instruction) {
         this.globals.add(instruction);
     }
 
@@ -53,7 +53,7 @@ public class MipsModule implements MipsNode {
         ans.add(nop.printMips().getFirst());
         for (MipsFunction function : functions) {
             ans.add("\n");
-            ans.addAll(function.mipsOutput());
+            ans.addAll(function.printMips());
         }
         return ans;
     }

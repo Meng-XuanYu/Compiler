@@ -1,14 +1,17 @@
 package backend.MipsSymbol;
 
 import backend.MipsBlock.MipsBasicBlock;
+import backend.MipsInstruction.Lw;
+import backend.MipsInstruction.MipsInstruction;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class MipsSymbolTable {
     private final RegisterTable registerTable;
 
     private HashMap<String, MipsSymbol> table;
-    private int offset;
+    private int offset;// fp offset
 
     public MipsSymbolTable(RegisterTable registerTable) {
         this.registerTable = registerTable;
@@ -54,6 +57,25 @@ public class MipsSymbolTable {
             return symbol.getRegIndex();
         } else {
             int index = this.registerTable.getReg(symbol.isTemp(), symbol, basicBlock);
+            if (load) {
+                Lw lw = new Lw(index, symbol.getBase(), symbol.getOffset());
+                ArrayList<MipsInstruction> temp = new ArrayList<>();
+                temp.add(lw);
+                basicBlock.addInstruction(temp);
+            }
+            return index;
         }
+    }
+
+    public int getFpOffset() {
+        return this.offset;
+    }
+
+    public HashMap<String,MipsSymbol> cloneTable() {
+        HashMap<String, MipsSymbol> newSymbols = new HashMap<>();
+        for (String index : this.table.keySet()) {
+            newSymbols.put(index, this.table.get(index).cloneMipsSymbol());
+        }
+        return newSymbols;
     }
 }

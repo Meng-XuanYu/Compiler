@@ -45,4 +45,8 @@ public class IRRet extends IRInstruction {
     public int getRetType() {
         return RetType;
     }
+
+    public boolean isVoid() {
+        return RetType == 0;
+    }
 }

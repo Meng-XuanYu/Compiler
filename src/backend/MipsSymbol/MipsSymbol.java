@@ -45,6 +45,18 @@ public class MipsSymbol {
         this.used = used;
     }
 
+    // IRAlloca
+    public MipsSymbol(String name ,int base) {
+        this.name = name;
+        this.base = base;
+        this.inReg = false;
+        this.regIndex = -1;
+        this.offset = 0;
+        this.hasRam = false;
+        this.isTemp = false;
+        this.used = false;
+    }
+
     // global
     public MipsSymbol(String name,
                       int base,
@@ -56,6 +68,36 @@ public class MipsSymbol {
         this.regIndex = -1;
         this.hasRam = true;
         this.isTemp = false;
+    }
+
+    // 数组
+    public MipsSymbol(String name, int base
+                    , boolean inReg, int regIndex, boolean hasRam,
+                      int offset, boolean isTemp, boolean used, int size) {
+        this.name = name;
+        this.base = base;
+        this.inReg = inReg;
+        this.regIndex = regIndex;
+        this.isTemp = isTemp;
+        this.hasRam = false;
+        this.used = used;
+        this.size = size;
+        this.isParam = isParam;
+    }
+
+    // 为$a寄存器中的传入参数
+    public MipsSymbol(String name,
+                      int base,
+                      boolean inReg,
+                      int regIndex,
+                      boolean isTemp) {
+        this.name = name;
+        this.base = base;
+        this.inReg = inReg;
+        this.regIndex = regIndex;
+        this.isTemp = isTemp;
+        this.hasRam = false;
+        this.used = false;
     }
 
     public boolean isInReg() {
@@ -92,5 +134,40 @@ public class MipsSymbol {
 
     public int getBase() {
         return base;
+    }
+
+    public void setInReg(boolean b) {
+        this.inReg = b;
+    }
+
+    public void setRegIndex(int ans) {
+        this.regIndex = ans;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
+    }
+
+    public void setParam(boolean b) {
+        this.isParam = b;
+    }
+
+    public void setUsed(boolean b) {
+        this.used = b;
+    }
+
+    public MipsSymbol cloneMipsSymbol() {
+        return new MipsSymbol(this.name,
+                this.base, this.inReg, this.regIndex,
+                this.hasRam, this.offset, this.isTemp,
+                this.isUsed());
+    }
+
+    public boolean isParam() {
+        return isParam;
     }
 }

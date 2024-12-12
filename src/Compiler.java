@@ -1,3 +1,5 @@
+import backend.MipsBuilder;
+import backend.MipsModule;
 import frontend.*;
 import frontend.Parser.Parser;
 import frontend.Parser.ParserTreeNode;
@@ -87,6 +89,40 @@ public class Compiler {
                 outputStream.write(ans.getBytes());
             } catch (IOException e) {
                 System.err.println("Can not write " + llvmIrOutputFileName);
+            }
+
+            // 生成MIPS代码
+            MipsBuilder mipsBuilder = new MipsBuilder(irModule);
+            MipsModule mipsModule = mipsBuilder.genMipsModule();
+            ArrayList<String> mips = mipsModule.printMips();
+            String mipsAns = "";
+            int mipsTableCnt = 0; // 换行符个数
+            String table = "";
+            String tableSing = "    ";
+            /* 制表符美化mips代码 */
+            for (String index : mips) {
+                if (index.contains("**********")) {
+                    mipsTableCnt -= 1;
+                    table = "";
+                    for (int j = 0; j < mipsTableCnt; j++) {
+                        table = table + tableSing;
+                    }
+                }
+                if (index.contains(":") && mipsTableCnt > 0) {
+                    mipsAns = mipsAns + table.substring(0, table.length() - 4) + index;
+                } else {
+                    mipsAns = mipsAns + table + index;
+                }
+                if (index.contains("----------")) {
+                    mipsTableCnt += 1;
+                    table = table + tableSing;
+                }
+            }
+            OutputStream mipsOutputStream = new FileOutputStream("mips.txt");
+            try {
+                mipsOutputStream.write(mipsAns.getBytes());
+            } catch (IOException e) {
+                System.err.println("Can not write mips.txt");
             }
         }
     }

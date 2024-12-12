@@ -46,4 +46,8 @@ public class IRModule implements IRNode {
         }
         return ans;
     }
+
+    public ArrayList<IRGlobalVar> getGlobalVariables() {
+        return this.globalVars;
+    }
 }

@@ -1,6 +1,7 @@
 package middleend.LlvmIr.Value.Instruction.TerminatorInstructions;
 
 import middleend.LlvmIr.IRValue;
+import middleend.LlvmIr.Types.IRIntegerType;
 import middleend.LlvmIr.Types.IRLabelType;
 import middleend.LlvmIr.Value.Instruction.IRInstruction;
 import middleend.LlvmIr.Value.Instruction.IRInstructionType;
@@ -33,11 +34,11 @@ public class IRBr extends IRInstruction {
     @Override
     public ArrayList<String> printIR() {
         ArrayList<String> ans = new ArrayList<>();
-        StringBuilder sb = new StringBuilder();
-        sb.append("br i1 ").append(this.getLeft().getName()).append(", label %").append(this.getLabel().getName()).append(", label %").append(this.getElseLabel().getName()).append("\n");
-
-
-        ans.add(sb.toString());
+        ans.add("br i1 " + this.getLeft().getName() + ", label %" + this.getLabel().getName() + ", label %" + this.getElseLabel().getName() + "\n");
         return ans;
+    }
+
+    public IRValue getRight() {
+        return new IRValue("1", IRIntegerType.get1());
     }
 }

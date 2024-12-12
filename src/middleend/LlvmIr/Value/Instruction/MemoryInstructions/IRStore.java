@@ -22,7 +22,7 @@ public class IRStore extends IRInstruction {
     private IRValue dimension1RightValue = null;
     private IRValue dimension1PointerValue = null;
     private boolean isIrValue = false;
-    private boolean isChar;
+    private final boolean isChar;
 
     // 默认构造器，处理左右都是普通变量的情况
     public IRStore(IRValue value, IRValue pointer, boolean isChar) {
@@ -155,5 +155,29 @@ public class IRStore extends IRInstruction {
         }
         ans.add(sb.toString());
         return ans;
+    }
+
+    public boolean isIrValue() {
+        return isIrValue;
+    }
+
+    public int getDimension1Pointer() {
+        return dimension1Pointer;
+    }
+
+    public int getDimension1Right() {
+        return dimension1Right;
+    }
+
+    public IRValue getDimension1PointerValue() {
+        return dimension1PointerValue;
+    }
+
+    public IRValue getDimension1RightValue() {
+        return dimension1RightValue;
+    }
+
+    public int getDimensionPointer() {
+        return dimensionPointer;
     }
 }

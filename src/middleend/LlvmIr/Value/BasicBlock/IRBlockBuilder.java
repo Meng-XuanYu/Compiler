@@ -346,7 +346,7 @@ public class IRBlockBuilder {
         ArrayList<TokenType> relops = eqexp.getRelops();
 
         IRValue left = generateIRInstructionFromRelExp(relExps.get(0));
-        IRValue right;
+        IRValue right = null;
 
         for (int i = 1; i < relExps.size(); i++) {
             right = generateIRInstructionFromRelExp(relExps.get(i));
@@ -474,7 +474,7 @@ public class IRBlockBuilder {
             if(relops.isEmpty()) {
                 // 无relops,只有一个relExp
                 irBr = new IRBr(left, ifLable,endLabel, IRInstructionType.Bne);
-            } else if (relops.get(relops.size() - 1) == TokenType.EQL) {
+            } else if (relops.getLast() == TokenType.EQL) {
                 irBr = new IRBr(left, ifLable,endLabel, IRInstructionType.Beq);
             } else {
                 irBr = new IRBr(left, ifLable,endLabel, IRInstructionType.Bne);
@@ -484,7 +484,7 @@ public class IRBlockBuilder {
             if (relops.isEmpty()) {
                 // 无relops,只有一个relExp
                 irBr = new IRBr(left, ifLable,endLabel, IRInstructionType.Beq);
-            } else if (relops.get(relops.size() - 1) == TokenType.EQL) {
+            } else if (relops.getLast() == TokenType.EQL) {
                 irBr = new IRBr(left, ifLable,endLabel, IRInstructionType.Bne);
             } else {
                 irBr = new IRBr(left, ifLable,endLabel, IRInstructionType.Beq);
