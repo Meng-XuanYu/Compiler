@@ -48,6 +48,8 @@ public class MipsBuilder {
                             mipsModule.addGlobal(new Sw(24, 28, gpOffset));
                         }
                         gpOffset += 4;
+                    } else {
+                        gpOffset += 4;
                     }
                 }
             }

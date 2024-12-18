@@ -1,7 +1,8 @@
-int main() {
-    char c[2] = {'1','\n'};
-    printf("1%c1",c[1]);
-    char d = '\n';
-    printf("1%c1",d);
-    return 0;
+const int len = 1;
+
+int arr[len + 1] = {1, 2};
+int main()
+{
+printf("arr[0] = %d\n", arr[0]);
+return 0;
 }

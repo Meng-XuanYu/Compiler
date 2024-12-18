@@ -41,7 +41,7 @@ public class IRGlobalVar extends IRUser implements IRNode {
     }
 
     public int getIntInit() {
-        return Integer.parseInt(this.initialValue.printIR().getFirst());
+        return Integer.parseInt(this.initialValue.printIR().get(0));
     }
 
     public int getSize() {

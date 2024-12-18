@@ -30,6 +30,7 @@ public class MipsFunction implements MipsNode {
     @Override
     public ArrayList<String> printMips() {
         ArrayList<String> ans =  new ArrayList<>();
+        ans.add("# ---------- " + this.name + "函数开始 ----------\n");
         ans.add(this.name + ":\n");
         ArrayList<String> temp;
         for (MipsBasicBlock block : this.mipsBasicBlocks) {
@@ -53,6 +54,7 @@ public class MipsFunction implements MipsNode {
             temp = jr.printMips();
             ans.addAll(temp);
         }
+        ans.add("# ********** " + this.name + "函数结束 **********\n");
         return ans;
     }
 
@@ -65,7 +67,7 @@ public class MipsFunction implements MipsNode {
     }
 
     public boolean isMain() {
-        return name.equals("@main");
+        return name.equals("main");
     }
 
     public MipsModule getParent() {

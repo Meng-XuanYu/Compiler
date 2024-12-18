@@ -12,7 +12,6 @@ import middleend.LlvmIr.Value.BasicBlock.IRBasicBlock;
 import middleend.LlvmIr.Value.Function.IRFunction;
 import middleend.LlvmIr.Value.Function.IRParameter;
 
-import javax.imageio.plugins.tiff.TIFFImageReadParam;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -52,7 +51,7 @@ public class MipsFunctionBuilder {
             }
             if (target != null) {
                 String name = target.getName();
-                MipsSymbol symbol = null;
+                MipsSymbol symbol;
                 if (index < 4) {
                     symbol = new MipsSymbol(name, 30, true, index + 8, false);
                     registerTable.addSymbol(index + 8, symbol);
@@ -71,7 +70,7 @@ public class MipsFunctionBuilder {
     }
 
     public MipsFunction generateFunction() {
-        this.function = new MipsFunction(this.father, this.irFunction.getName(), this.table);
+        this.function = new MipsFunction(this.father, this.irFunction.getName().substring(1), this.table);
         this.moveFromAreg = new MipsBasicBlock(this.function);
         this.moveFromAreg.addInstructions(this.initsInstructions);
         this.function.addMipsBasicBlock(this.moveFromAreg);

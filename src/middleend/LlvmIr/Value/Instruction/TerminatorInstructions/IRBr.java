@@ -39,6 +39,6 @@ public class IRBr extends IRInstruction {
     }
 
     public IRValue getRight() {
-        return new IRValue("1", IRIntegerType.get1());
+        return new IRValue("0", IRIntegerType.get1());
     }
 }

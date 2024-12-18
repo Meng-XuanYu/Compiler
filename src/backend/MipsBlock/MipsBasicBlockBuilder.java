@@ -19,15 +19,23 @@ public class MipsBasicBlockBuilder {
     }
 
     public MipsBasicBlock generateBasicBlock() {
-        MipsBasicBlock basicBlock = new MipsBasicBlock(parent);
-        ArrayList<MipsInstruction> instructions = basicBlock.getInstructions();
+        MipsBasicBlock block = new MipsBasicBlock(parent);
+        ArrayList<IRInstruction> instructions = irBasicBlock.getInstructions();
         for (int i = 0; i < instructions.size(); i++) {
-            IRInstruction irInstruction = irBasicBlock.getInstructions().get(i);
+            IRInstruction irInstruction = instructions.get(i);
             // 处理多个字符打印合并为字符串打印
             if (irInstruction instanceof IRCall) {
                 IRCall call = (IRCall) irInstruction;
                 String functionName = call.getFunctionName();
-                if (functionName.equals("@putch")) {
+                IRValue value1 = irInstruction.getOperand(1);
+                boolean flag;
+                try {
+                    Integer.valueOf(value1.getName());
+                    flag = true;
+                } catch (Exception e) {
+                    flag = false;
+                }
+                if (functionName.equals("@putch") && flag) {
                     StringBuilder sb = new StringBuilder();
                     IRInstruction temp = irInstruction;
                     while (temp instanceof IRCall && ((IRCall) temp).getFunctionName().equals("@putch")) {
@@ -56,13 +64,13 @@ public class MipsBasicBlockBuilder {
                     ans.add(syscall);
                     move = new Move(4, 3);
                     ans.add(move);
-                    basicBlock.addInstruction(ans);
+                    block.addInstruction(ans);
                     continue;
                 }
             }
-            MipsInstructionBuilder builder = new MipsInstructionBuilder(irInstruction, basicBlock);
-            basicBlock.addInstruction(builder.generateMipsInstruction());
+            MipsInstructionBuilder builder = new MipsInstructionBuilder(irInstruction, block);
+            block.addInstruction(builder.generateMipsInstruction());
         }
-        return basicBlock;
+        return block;
     }
 }

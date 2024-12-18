@@ -31,10 +31,6 @@ public class MipsSymbolTable {
         this.offset += offset;
     }
 
-    public int getOffset() {
-        return this.offset;
-    }
-
     public MipsSymbol getSymbol(String name) {
         return this.table.get(name);
     }

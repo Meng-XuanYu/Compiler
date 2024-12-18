@@ -14,7 +14,25 @@ public class RegisterTable {
     private final int regNum = 32;
     private int regOld = 8;
     // 记录s0-s7的使用情况
-    private Stack<Integer> sRegStack;
+    private Stack<Integer> sRegStack = new Stack<>();
+
+    public RegisterTable() {
+        init();
+    }
+
+    private void init() {
+        this.ifUsed = new HashMap<>();
+        this.table = new HashMap<>();
+        for (int i = 0; i < this.regNum; i++) {
+            if (isSReg(i) || isTempReg(i) || isAreg(i) || isVreg(i) || isRareg(i)) {
+                // 可以被程序分配的寄存器 or 不知道有没有值的寄存器
+                this.ifUsed.put(i, false);
+            } else {
+                // 不可以被分配的寄存器
+                this.ifUsed.put(i, true);
+            }
+        }
+    }
 
     // 常量
     public int getReg(boolean temp, MipsSymbol symbol, MipsBasicBlock basicBlock) {
@@ -58,6 +76,7 @@ public class RegisterTable {
                 if (oldReg == this.regOld) {
                     this.regOld = (this.regOld + 1 + 32) % 32;
                 }
+                this.ifUsed.put(oldReg, true);
                 return oldReg;
             }
         } else {
@@ -90,7 +109,7 @@ public class RegisterTable {
     private int getFreeReg(boolean isTemp) {
         for (int i = 0; i < regNum; i++) {
             // 如果是临时寄存器，只能使用t0-t9
-            if (isTempReg(i) & isTemp) {
+            if (isTempReg(i) && isTemp) {
                 if (!ifUsed.get(i)) {
                     return i;
                 } else {
@@ -136,12 +155,13 @@ public class RegisterTable {
         ArrayList<MipsInstruction> instructions = new ArrayList<>();
         instructions.add(sw);
         basicBlock.addInstruction(instructions);
+        symbol.setInReg(false);
+        symbol.setHasRam(true);
     }
 
-    private void allocRam(MipsSymbol symbol) {
-        int offset = this.symbolTable.getOffset();
-        this.symbolTable.addOffset(4);
-        symbol.setOffset(offset);
+    public void allocRam(MipsSymbol symbol) {
+        int offset = this.symbolTable.getFpOffset();
+        symbol.setOffset(offset + 4);
         symbol.setHasRam(true);
         this.symbolTable.addOffset(8);
     }
@@ -173,63 +193,6 @@ public class RegisterTable {
     public void addSymbol(int i, MipsSymbol symbol) {
         this.table.put(i, symbol);
         this.ifUsed.put(i, true);
-    }
-
-    // 释放寄存器
-    public ArrayList<MipsInstruction> saveAll() {
-        ArrayList<MipsInstruction> instructions = new ArrayList<>();
-        for(int i = 0; i < regNum; i++) {
-            // t
-            if (this.isTempReg(i)) {
-                if (this.ifUsed.get(i)) {
-                    MipsSymbol symbol = this.table.get(i);
-                    if (!symbol.isTemp() || (symbol.isTemp() && !symbol.isUsed())) {
-                        if ((!symbol.hasRam())) {
-                            allocRam(symbol);
-                        }
-                        Sw sw = new Sw(i, symbol.getBase(), symbol.getOffset());
-                        instructions.add(sw);
-                        symbol.setInReg(false);
-                        symbol.setRegIndex(-1);
-                    }
-                    this.ifUsed.put(i, false);
-                }
-            } else if (this.isSReg(i)) {
-                if (this.ifUsed.get(i)) {
-                    MipsSymbol symbol = this.table.get(i);
-                    if (!symbol.isInReg()) {
-                        continue;
-                    }
-                    if (!symbol.hasRam()) {
-                        allocRam(symbol);
-                    }
-                    Sw sw = new Sw(i, symbol.getBase(), symbol.getOffset());
-                    instructions.add(sw);
-                    symbol.setInReg(false);
-                    symbol.setRegIndex(-1);
-                }
-                this.ifUsed.put(i, false);
-            } else if (isVreg(i) ||
-                    isRareg(i) ||
-                    isAreg(i)) {
-                if (this.ifUsed.get(i)) {
-                    MipsSymbol symbol = this.table.get(i);
-                    if (!symbol.hasRam()) {
-                        allocRam(symbol);
-                    }
-                    Sw sw = new Sw(i, symbol.getBase(), symbol.getOffset());
-                    instructions.add(sw);
-                    symbol.setInReg(false);
-                    symbol.setRegIndex(-1);
-                }
-                this.ifUsed.put(i, false);
-            }
-        }
-        while (!this.sRegStack.empty()) {
-            this.sRegStack.pop();
-        }
-        this.regOld = 8;
-        return instructions;
     }
 
     public boolean inReg(int i) {

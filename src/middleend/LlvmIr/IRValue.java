@@ -113,4 +113,5 @@ public class IRValue implements IRNode {
     public ArrayList<Integer> getInits1() {
         return inits1;
     }
+
 }

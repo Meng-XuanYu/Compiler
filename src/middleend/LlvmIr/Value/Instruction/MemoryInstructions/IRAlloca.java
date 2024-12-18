@@ -1,6 +1,7 @@
 package middleend.LlvmIr.Value.Instruction.MemoryInstructions;
 
 import middleend.LlvmIr.IRValue;
+import middleend.LlvmIr.Types.IRIntArrayType;
 import middleend.LlvmIr.Types.IRIntegerType;
 import middleend.LlvmIr.Types.IRPointerType;
 import middleend.LlvmIr.Types.IRValueType;
@@ -30,5 +31,16 @@ public class IRAlloca extends IRInstruction {
         sb.append("\n");
         ans.add(sb.toString());
         return ans;
+    }
+
+    @Override
+    public int getSize() {
+        IRPointerType pointerType = (IRPointerType) this.getType();
+        IRValueType pointType = pointerType.getContained();
+        if (pointType instanceof IRIntArrayType) {
+            return ((IRIntArrayType) pointType).getSize();
+        } else {
+            return super.getSize();
+        }
     }
 }

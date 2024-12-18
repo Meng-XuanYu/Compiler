@@ -6,6 +6,8 @@ import middleend.LlvmIr.Types.IRValueType;
 import middleend.LlvmIr.Types.IRVoidType;
 import middleend.LlvmIr.Value.BasicBlock.IRBasicBlock;
 import middleend.LlvmIr.Value.IRNode;
+import middleend.LlvmIr.Value.Instruction.IRInstruction;
+
 import java.util.ArrayList;
 
 public class IRFunction extends IRValue implements IRNode {
@@ -80,30 +82,31 @@ public class IRFunction extends IRValue implements IRNode {
 
         // 对列表中的字符串进行重新排序
         // 借鉴于学长
-        for (String string : init) {
-            if (string.contains("dso_local")) {
-                // 函数签名
-                ans.add(string);
-            }
-        }
-        for (String string : init) {
-            if (!string.contains("dso_local") && string.contains("alloca")) {
-                // 局部变量
-                ans.add(string);
-            }
-        }
-        for (String string : init) {
-            if (!string.contains("dso_local") && (string.contains("%param") && string.contains("store"))) {
-                // 基本块标签
-                ans.add(string);
-            }
-        }
-        for (String string : init) {
-            if (!string.contains("dso_local") && !string.contains("alloca") && !(string.contains("%param") && string.contains("store"))) {
-                // 基本块
-                ans.add(string);
-            }
-        }
+//        for (String string : init) {
+//            if (string.contains("dso_local")) {
+//                // 函数签名
+//                ans.add(string);
+//            }
+//        }
+//        for (String string : init) {
+//            if (!string.contains("dso_local") && string.contains("alloca")) {
+//                // 局部变量
+//                ans.add(string);
+//            }
+//        }
+//        for (String string : init) {
+//            if (!string.contains("dso_local") && (string.contains("%param") && string.contains("store"))) {
+//                // 基本块标签
+//                ans.add(string);
+//            }
+//        }
+//        for (String string : init) {
+//            if (!string.contains("dso_local") && !string.contains("alloca") && !(string.contains("%param") && string.contains("store"))) {
+//                // 基本块
+//                ans.add(string);
+//            }
+//        }
+        ans.addAll(init);
         return ans;
     }
 
@@ -112,6 +115,19 @@ public class IRFunction extends IRValue implements IRNode {
     }
 
     public void addBlocks(ArrayList<IRBasicBlock> blocks) {
+        if (blocks.isEmpty()) {
+            return;
+        }
+        IRBasicBlock entry = blocks.get(0);
+        ArrayList<IRInstruction> allocas = entry.extractAlloca();
+        ArrayList<IRInstruction> stores = entry.extractStore();
+        for (int i = 1; i < blocks.size(); i++) {
+            IRBasicBlock block = blocks.get(i);
+            allocas.addAll(block.extractAlloca());
+            stores.addAll(block.extractStore());
+        }
+        entry.addEntry(stores);
+        entry.addEntry(allocas);
         this.blocks.addAll(blocks);
     }
 

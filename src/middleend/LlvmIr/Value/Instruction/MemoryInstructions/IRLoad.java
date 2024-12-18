@@ -58,4 +58,8 @@ public class IRLoad extends IRInstruction {
         ans.add(sb.toString());
         return ans;
     }
+
+    public boolean rightIsGEP() {
+        return this.getOperand(0) instanceof IRGetElementPtr;
+    }
 }

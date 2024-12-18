@@ -79,7 +79,7 @@ public class IRGlobalVarBuilder {
                 }
             }
             IRIntArrayType irIntArrayType = new IRIntArrayType(IRIntegerType.get8(), size);
-            IRConstantIntArray constantIntArray = new IRConstantIntArray(constantInts, constantInts.size(), IRIntegerType.get8());
+            IRConstantIntArray constantIntArray = new IRConstantIntArray(constantInts, size, IRIntegerType.get8());
             globalVar = new IRGlobalVar(irIntArrayType, name, constantIntArray, true);
             symbolConst.setValue(globalVar);
         } else if (isChar) {
@@ -100,7 +100,7 @@ public class IRGlobalVarBuilder {
                 }
             }
             IRIntArrayType irIntArrayType = new IRIntArrayType(IRIntegerType.get32(), size);
-            IRConstantIntArray constantIntArray = new IRConstantIntArray(constantInts,constantInts.size() , IRIntegerType.get32());
+            IRConstantIntArray constantIntArray = new IRConstantIntArray(constantInts,size, IRIntegerType.get32());
             globalVar = new IRGlobalVar(irIntArrayType, name, constantIntArray, true);
             symbolConst.setValue(globalVar);
         } else {

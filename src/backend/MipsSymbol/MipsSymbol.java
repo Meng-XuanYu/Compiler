@@ -83,6 +83,7 @@ public class MipsSymbol {
         this.used = used;
         this.size = size;
         this.isParam = isParam;
+        this.offset = offset;
     }
 
     // 为$a寄存器中的传入参数
@@ -169,5 +170,9 @@ public class MipsSymbol {
 
     public boolean isParam() {
         return isParam;
+    }
+
+    public void setTemp(boolean b) {
+        this.isTemp = b;
     }
 }

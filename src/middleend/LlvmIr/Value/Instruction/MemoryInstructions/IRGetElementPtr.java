@@ -48,4 +48,25 @@ public class IRGetElementPtr extends IRInstruction {
         arr.add(stringBuilder.toString());
         return arr;
     }
+
+    public IRValue getBasePointer() {
+        return this.getOperand(0);
+    }
+
+    public String getOffsetName() {
+        IRValue offset = this.getOperand(1);
+        String offsetValue;
+        if (offset instanceof IRConstantInt) {
+            offsetValue = offset.printIR().get(0);
+        } else {
+            offsetValue = offset.getName();
+        }
+        return offsetValue;
+    }
+
+    public IRValue getOffset() {
+        return this.getOperand(1);
+    }
+
+
 }

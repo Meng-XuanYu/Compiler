@@ -40,17 +40,17 @@ public class MipsModule implements MipsNode {
     @Override
     public ArrayList<String> printMips() {
         ArrayList<String> ans = new ArrayList<>();
-        ans.add(".data");
+        ans.add(".data\n");
         for (Asciiz asciiz : asciizs) {
             ans.addAll(asciiz.printMips());
         }
-        ans.add(".text");
+        ans.add(".text\n");
         ans.addAll(li.printMips());
         for (MipsInstruction global : globals) {
             ans.addAll(global.printMips());
         }
         ans.addAll(jmain.printMips());
-        ans.add(nop.printMips().getFirst());
+        ans.add(nop.printMips().get(0));
         for (MipsFunction function : functions) {
             ans.add("\n");
             ans.addAll(function.printMips());

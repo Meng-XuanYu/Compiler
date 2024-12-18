@@ -2,26 +2,22 @@ declare i32 @getint()          ; 读取一个整数
 declare i32 @getchar()     ; 读取一个字符
 declare void @putint(i32)      ; 输出一个整数
 declare void @putch(i32)       ; 输出一个字符
+@GlobalConst_0 = dso_local global i32 1
+@GlobalVar_1 = dso_local global [2 x i32] [i32 1, i32 2]
 
 define dso_local i32 @main() {
-    %LocalVar0 = alloca [2 x i8]
-    %LocalVar7 = alloca i8
-    %LocalVar1 = getelementptr inbounds [2 x i8], [2 x i8]* %LocalVar0, i32 0, i32 0
-    %LocalVar2 = getelementptr inbounds i8, i8* %LocalVar1, i32 0
-    store i8 49, i8* %LocalVar2
-    %LocalVar3 = getelementptr inbounds i8, i8* %LocalVar1, i32 1
-    store i8 10, i8* %LocalVar3
-    %LocalVar4 = getelementptr inbounds i8, i8* %LocalVar1, i32 1
-    %LocalVar5 = load i8, i8* %LocalVar4
-    call void @putch(i32 49)
-    %LocalVar6 = zext i8 %LocalVar5 to i32
-    call void @putch(i32 %LocalVar6)
-    call void @putch(i32 49)
-    store i8 10, i8* %LocalVar7
-    %LocalVar8 = load i8, i8* %LocalVar7
-    call void @putch(i32 49)
-    %LocalVar9 = zext i8 %LocalVar8 to i32
-    call void @putch(i32 %LocalVar9)
-    call void @putch(i32 49)
+    %LocalVar0 = getelementptr inbounds [2 x i32], [2 x i32]* @GlobalVar_1, i32 0, i32 0
+    %LocalVar1 = load i32, i32* %LocalVar0
+    call void @putch(i32 97)
+    call void @putch(i32 114)
+    call void @putch(i32 114)
+    call void @putch(i32 91)
+    call void @putch(i32 48)
+    call void @putch(i32 93)
+    call void @putch(i32 32)
+    call void @putch(i32 61)
+    call void @putch(i32 32)
+    call void @putint(i32 %LocalVar1)
+    call void @putch(i32 10)
     ret i32 0
 }

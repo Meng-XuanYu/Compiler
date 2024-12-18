@@ -4,13 +4,13 @@ import backend.MipsSymbol.MipsSymbol;
 import backend.MipsSymbol.MipsSymbolTable;
 import backend.MipsSymbol.RegisterTable;
 import middleend.LlvmIr.IRValue;
+import middleend.LlvmIr.Types.IRIntegerType;
+import middleend.LlvmIr.Value.Constant.IRConstantInt;
 import middleend.LlvmIr.Value.Instruction.IRBinaryInstruction;
 import middleend.LlvmIr.Value.Instruction.IRInstruction;
 import middleend.LlvmIr.Value.Instruction.IRInstructionType;
 import middleend.LlvmIr.Value.Instruction.IRLabel;
-import middleend.LlvmIr.Value.Instruction.MemoryInstructions.IRAlloca;
-import middleend.LlvmIr.Value.Instruction.MemoryInstructions.IRLoad;
-import middleend.LlvmIr.Value.Instruction.MemoryInstructions.IRStore;
+import middleend.LlvmIr.Value.Instruction.MemoryInstructions.*;
 import middleend.LlvmIr.Value.Instruction.TerminatorInstructions.IRBr;
 import middleend.LlvmIr.Value.Instruction.TerminatorInstructions.IRCall;
 import middleend.LlvmIr.Value.Instruction.TerminatorInstructions.IRGoto;
@@ -52,14 +52,167 @@ public class MipsInstructionBuilder {
             return generateFromLabel();
         } else if (irInstruction instanceof IRBr) {
             return genMipsInstructionFromBr();
+        } else if (irInstruction instanceof IRZext) {
+            return genMipsInstructionFromZext();
+        } else if (irInstruction instanceof IRTrunc) {
+            return genMipsInstructionFromTrunc();
+        } else if (irInstruction instanceof IRGetElementPtr) {
+            return generateFromGetElementPtr();
         } else {
-            System.out.println("ERROR in MipsInstructionBuilder : should not reach here");
+            System.err.println("Unknown instruction: " + irInstruction.printIR().get(0));
         }
         return null;
     }
 
+    private void insertSymbolTable(String name , MipsSymbol symbol) {
+        this.table.addSymbol(name,symbol);
+    }
+
     private boolean isCon(String name) {
         return !(name.contains("@") || name.contains("%"));
+    }
+
+    private ArrayList<MipsInstruction> generateFromGetElementPtr() {
+        IRGetElementPtr getElementPtr = (IRGetElementPtr) irInstruction;
+        ArrayList<MipsInstruction> instructions = new ArrayList<>();
+
+        // 获取基指针
+        IRValue basePointer = getElementPtr.getBasePointer();
+        String basePointerName = basePointer.getName();
+        MipsSymbol basePointerSymbol;
+
+        basePointerSymbol = this.table.getSymbol(basePointerName);
+        basePointerSymbol.setTemp(false);
+        int basePointerReg;
+        int basePointerOffset;
+        if (basePointerSymbol.isInReg()) {
+            basePointerReg = basePointerSymbol.getRegIndex();
+            basePointerOffset = 0;
+        } else {
+            if (basePointerName.contains("param") ) {
+                int index = this.registerTable.getReg(false, basePointerSymbol, this.parent);
+                Lw lw = new Lw(index, basePointerSymbol.getBase(), basePointerSymbol.getOffset());
+                ArrayList<MipsInstruction> temp = new ArrayList<>();
+                temp.add(lw);
+                this.parent.addInstruction(temp);
+                basePointerReg = index;
+                basePointerOffset = 0;
+            } else if (basePointerName.contains("Global")) {
+                basePointerReg = 28;
+                basePointerOffset = basePointerSymbol.getOffset();
+            } else {
+                basePointerReg = 30;
+                basePointerOffset = basePointerSymbol.getOffset();
+            }
+        }
+
+        // 获取偏移量
+        IRValue offset = getElementPtr.getOffset();
+        String offsetName;
+        int offsetValue;
+        if (offset instanceof IRConstantInt) {
+            offsetName = offset.printIR().get(0);
+            offsetValue = Integer.parseInt(offsetName);
+        } else {
+            offsetName = offset.getName();
+            try {
+                offsetValue = Integer.parseInt(offsetName);
+            } catch (NumberFormatException e) {
+                // 如果偏移量不是常数，说明是一个变量
+                offsetValue = 0;
+                int offsetReg = this.table.getRegIndex(offsetName, true, this.parent);
+                int newOffsetReg = this.registerTable.getReg(true, new MipsSymbol("temp", 30, false, -1, false, -1, true, false), this.parent);
+                Sll sll = new Sll(newOffsetReg, offsetReg, 2);
+                instructions.add(sll);
+                Add add = new Add(newOffsetReg, basePointerReg, newOffsetReg);
+                instructions.add(add);
+                basePointerReg = newOffsetReg;
+            }
+        }
+
+        // 创建结果符号并设置偏移量
+        String resultName = getElementPtr.getName();
+        MipsSymbol resultSymbol = new MipsSymbol(resultName, basePointerReg , false, -1, false, -1, true, false);
+        int totalOffset = offsetValue * 4 + basePointerOffset;
+        resultSymbol.setOffset(totalOffset);
+        insertSymbolTable(resultName, resultSymbol);
+
+        return instructions;
+    }
+
+    private ArrayList<MipsInstruction> genMipsInstructionFromTrunc() {
+        IRTrunc trunc = (IRTrunc) irInstruction;
+        ArrayList<MipsInstruction> ret = new ArrayList<>();
+
+        IRValue operand = trunc.getOperand(0);
+        String operandName = operand.getName();
+        int operandReg;
+        MipsSymbol operandSymbol;
+
+        if (isCon(operandName)) {
+            operandSymbol = new MipsSymbol("temp", 30, false, -1, false, -1, true, false);
+            operandReg = this.registerTable.getReg(true, operandSymbol, this.parent);
+            Li li = new Li(operandReg, Integer.parseInt(operandName));
+            ret.add(li);
+        } else {
+            operandReg = this.table.getRegIndex(operandName, true, this.parent);
+            operandSymbol = this.table.getSymbol(operandName);
+        }
+
+        String resultName = trunc.getName();
+        MipsSymbol resultSymbol = new MipsSymbol(resultName, 30, false, -1, false, -1, true, false);
+        insertSymbolTable(resultName, resultSymbol);
+        int resultReg = this.registerTable.getReg(true, resultSymbol, this.parent);
+
+        if (trunc.getType() == IRIntegerType.get8()) {
+            // i32 to i8
+            Andi andi = new Andi(resultReg, operandReg, 0xFF);
+            ret.add(andi);
+        } else if (trunc.getType() == IRIntegerType.get1()) {
+            // i32 to i1
+            Andi andi = new Andi(resultReg, operandReg, 0x1);
+            ret.add(andi);
+        }
+        operandSymbol.setUsed(true);
+        return ret;
+    }
+
+    private ArrayList<MipsInstruction> genMipsInstructionFromZext() {
+        IRZext zext = (IRZext) irInstruction;
+        ArrayList<MipsInstruction> ret = new ArrayList<>();
+
+        // 获取操作数和目标寄存器
+        IRValue operand = zext.getOperand(0);
+        String operandName = operand.getName();
+        int operandReg;
+        MipsSymbol operandSymbol;
+
+        if (isCon(operandName)) {
+            operandSymbol = new MipsSymbol("temp", 30, false, -1, false, -1, true, false);
+            operandReg = this.registerTable.getReg(true, operandSymbol, this.parent);
+            Li li = new Li(operandReg, Integer.parseInt(operandName));
+            ret.add(li);
+        } else {
+            operandReg = this.table.getRegIndex(operandName, true, this.parent);
+            operandSymbol = this.table.getSymbol(operandName);
+        }
+
+        String resultName = zext.getName();
+        MipsSymbol resultSymbol = new MipsSymbol(resultName, 30, false, -1, false, -1, true, false);
+        insertSymbolTable(resultName, resultSymbol);
+        int resultReg = this.registerTable.getReg(true, resultSymbol, this.parent);
+
+        // 根据操作数类型生成相应的 MIPS 指令
+        Andi andi;
+        if (operand.getType() == IRIntegerType.get8()) {
+            andi = new Andi(resultReg, operandReg, 0xFF);
+        } else {
+            andi = new Andi(resultReg, operandReg, 0x1);
+        }
+        ret.add(andi);
+
+        operandSymbol.setUsed(true);
+        return ret;
     }
 
     private ArrayList<MipsInstruction> genMipsInstructionFromBr() {
@@ -88,20 +241,18 @@ public class MipsInstructionBuilder {
         rightReg = this.registerTable.getReg(true, rightSymbol, this.parent);
         Li li = new Li(rightReg, Integer.parseInt(rightName));
         ret.add(li);
-        IRLabel label = (IRLabel)inst.getLabel();
+        IRLabel elselabel = (IRLabel)inst.getElseLabel();
+        IRLabel iflabel = (IRLabel)inst.getLabel();
         leftSymbol.setUsed(true);
         rightSymbol.setUsed(true);
         ArrayList<MipsInstruction> sws = this.registerTable.writeBackAll();
         if (sws != null && !sws.isEmpty()) {
             ret.addAll(sws);
         }
-        if (inst.getInstructionType().equals(IRInstructionType.Beq)) {
-            Beq beq = new Beq(leftReg, rightReg, label.getName().substring(1));
-            ret.add(beq);
-        } else {
-            Bne bne = new Bne(leftReg, rightReg, label.getName().substring(1));
-            ret.add(bne);
-        }
+        Beq beq = new Beq(leftReg, rightReg, elselabel.getName());
+        Bne bne = new Bne(leftReg, rightReg, iflabel.getName());
+        ret.add(beq);
+        ret.add(bne);
         return ret;
     }
 
@@ -112,7 +263,7 @@ public class MipsInstructionBuilder {
             ans.addAll(sws);
         }
         IRLabel irLabel = (IRLabel)irInstruction;
-        Label mipsLabel = new Label(irLabel.getName().substring(1));
+        Label mipsLabel = new Label(irLabel.getName());
         ans.add(mipsLabel);
         return ans;
     }
@@ -120,7 +271,7 @@ public class MipsInstructionBuilder {
     private ArrayList<MipsInstruction> generateFromGoto() {
         IRGoto irGoto = (IRGoto)irInstruction;
         IRLabel irLabel = (IRLabel) irGoto.getOperand(0);
-        J j = new J(irLabel.getName().substring(1));
+        J j = new J(irLabel.getName());
         ArrayList<MipsInstruction> ret = new ArrayList<>();
 
         ArrayList<MipsInstruction> sws = this.registerTable.writeBackAll();
@@ -151,15 +302,15 @@ public class MipsInstructionBuilder {
             leftReg = this.table.getRegIndex(leftName, true, parent);
         }
         MipsSymbol rightSymbol = this.table.getSymbol(rightName);
-        int dimensionPointer = store.getDimensionPointer();
-        if (dimensionPointer == 0) {
+        boolean isGetElementPtr = store.isGetElementPtr();
+        if (!isGetElementPtr) {
             rightReg = this.table.getRegIndex(rightName, false, parent);
             Move move = new Move(rightReg,leftReg);
             this.registerTable.getSymbol(leftReg).setUsed(true);
             ans.add(move);
         }
         boolean handleIrValue = store.isIrValue();
-        if (dimensionPointer != 0) {
+        if (isGetElementPtr) {
             if (handleIrValue) {
                 IRValue dimension1PointerValue = store.getDimension1PointerValue();
                 String dimension1PointerValueName = dimension1PointerValue.getName();
@@ -240,23 +391,32 @@ public class MipsInstructionBuilder {
         String leftName = left.getName();
 
         MipsSymbol leftSymbol = new MipsSymbol(leftName, 30, false,
-                -1, false, -1, true, false);
-        this.table.addSymbol(leftName, leftSymbol);
+                -1, false, 0, true, false);
+        insertSymbolTable(leftName, leftSymbol);
 
         IRValue right = left.getOperand(0);
         String rightName = right.getName();
         MipsSymbol rightSymbol = this.table.getSymbol(rightName);
 
         int rightSize = right.getSize();
-        int rightReg = -1;
+        int rightReg;
         ArrayList<MipsInstruction> ans = new ArrayList<>();
-        if (rightSize ==0) {
-            int leftReg = this.registerTable.getReg(true, leftSymbol, parent);
-            leftSymbol.setUsed(true);
-            leftSymbol.setRegIndex(leftReg);
-            rightReg = this.table.getRegIndex(rightName, true, parent);
-            Move move = new Move(leftReg, rightReg);
-            ans.add(move);
+        boolean isGetElementPtr = left.rightIsGEP();
+        if (rightSize == 0) {
+            if (isGetElementPtr) {
+                int offset = rightSymbol.getOffset();
+                int baseReg = rightSymbol.getBase();
+                int leftReg = this.registerTable.getReg(true, leftSymbol, parent);
+                Lw lw = new Lw(leftReg, baseReg, offset);
+                ans.add(lw);
+            } else {
+                int leftReg = this.registerTable.getReg(true, leftSymbol, parent);
+                leftSymbol.setInReg(true);
+                leftSymbol.setRegIndex(leftReg);
+                rightReg = this.table.getRegIndex(rightName, true, parent);
+                Move move = new Move(leftReg, rightReg);
+                ans.add(move);
+            }
             this.parent.addInstruction(ans);
             ans = new ArrayList<>();
         } else {
@@ -322,20 +482,62 @@ public class MipsInstructionBuilder {
             }
             case "@getint" -> ans = generateFromGetIntFunc();
             case "@getchar" -> ans = generateFromGetCharFunc();
+            case "@putch" -> ans = generateFromPutCharFunc();
             default -> ans = generateFromNormalFunc();
         }
         return ans;
     }
 
+    private ArrayList<MipsInstruction> generateFromPutCharFunc() {
+        IRCall call = (IRCall) irInstruction;
+        ArrayList<MipsInstruction> ans = new ArrayList<>();
+
+        // Move $v0 to $v1 to protect it
+        Move move = new Move(3, 2);
+        ans.add(move);
+
+        // Load the syscall code for print character (11) into $v0
+        Li li = new Li(2, 11);
+        ans.add(li);
+
+        // Get the character to print from the operand and move it to $a0
+        String name = call.getOperand(1).getName();
+        MipsSymbol symbol = null;
+        if (this.table.hasSymbol(name)) {
+            symbol = this.table.getSymbol(name);
+            int reg = this.table.getRegIndex(name, true, parent);
+            Move move1 = new Move(4, reg);
+            ans.add(move1);
+        } else {
+            Li li1 = new Li(4, Integer.parseInt(name));
+            ans.add(li1);
+        }
+
+        // Perform the syscall
+        Syscall syscall = new Syscall();
+        ans.add(syscall);
+
+        // Restore $v0 from $v1
+        Move move1 = new Move(2, 3);
+        ans.add(move1);
+
+        if (symbol != null) {
+            symbol.setUsed(true);
+        }
+
+        return ans;
+    }
+
     private ArrayList<MipsInstruction> generateFromNormalFunc() {
         IRCall call = (IRCall) irInstruction;
-        ArrayList<MipsInstruction> saveAll = this.registerTable.saveAll();
-        ArrayList<MipsInstruction> ans = new ArrayList<>(saveAll);
-
-        if (!ans.isEmpty()) {
-            this.parent.addInstruction(ans);
-            ans = new ArrayList<>();
-        }
+        ArrayList<MipsInstruction> ans = new ArrayList<>();
+//        ArrayList<MipsInstruction> saveAll = this.registerTable.writeBackAll();
+//        ans.addAll(saveAll);
+//
+//        if (!ans.isEmpty()) {
+//            this.parent.addInstruction(ans);
+//            ans = new ArrayList<>();
+//        }
 
         // 保存现场
         int spOffset = 0;
@@ -372,8 +574,9 @@ public class MipsInstructionBuilder {
             IRValue parameter = parameters.get(i);
             String name = parameter.getName();
             if (newTable.hasSymbol(name)) {
+                boolean isGetElementPtr = parameter instanceof IRGetElementPtr;
                 int dimension = parameter.getSize();
-                if (dimension == 0) {
+                if (dimension == 0 && !isGetElementPtr) {
                     int reg = newTable.getRegIndex(name, true, parent);
                     if (i < 4) {
                         Move move = new Move(4 + i, reg);
@@ -499,8 +702,17 @@ public class MipsInstructionBuilder {
                     this.parent.addInstruction(ans);
                 }
             } else {
-                Li li = new Li(4 + i, Integer.parseInt(name));
-                ans.add(li);
+                if (i < 4) {
+                    Li li = new Li(4 + i, Integer.parseInt(name));
+                    ans.add(li);
+                } else {
+                    Li li = new Li(2, Integer.parseInt(name));
+                    ans.add(li);
+                    this.parent.addInstruction(ans);
+                    ans = new ArrayList<>();
+                    Sw sw = new Sw(2, 3, newOffset);
+                    ans.add(sw);
+                }
                 this.parent.addInstruction(ans);
             }
             ans = new ArrayList<>();
@@ -561,7 +773,7 @@ public class MipsInstructionBuilder {
         if (!call.getName().isEmpty()) {
             MipsSymbol leftSymbol = new MipsSymbol(call.getName(), 30, false, -1, false,
                     0, true, false);
-            this.table.addSymbol(call.getName(), leftSymbol);
+            insertSymbolTable(call.getName(), leftSymbol);
             int leftReg = this.table.getRegIndex(call.getName(), false, parent);
             Move move1 = new Move(leftReg, 2);
             ans.add(move1);
@@ -586,7 +798,7 @@ public class MipsInstructionBuilder {
 
         MipsSymbol symbol = new MipsSymbol(call.getName(), 30, false, -1,
                 false, -1, true, false);
-        this.table.addSymbol(call.getName(), symbol);
+        insertSymbolTable(call.getName(), symbol);
         int reg = this.table.getRegIndex(call.getName(), false, parent);
         Move move1 = new Move(reg, 2);
         ans.add(move1);
@@ -609,7 +821,7 @@ public class MipsInstructionBuilder {
 
         MipsSymbol symbol = new MipsSymbol(call.getName(), 30, false, -1,
                 false, -1, true, false);
-        this.table.addSymbol(call.getName(), symbol);
+        insertSymbolTable(call.getName(), symbol);
         int reg = this.table.getRegIndex(call.getName(), false, parent);
         Move move1 = new Move(reg, 2);
         ans.add(move1);
@@ -623,17 +835,17 @@ public class MipsInstructionBuilder {
         IRAlloca alloca = (IRAlloca) irInstruction;
         String name = alloca.getName();
         int size = alloca.getSize();
-        MipsSymbol symbol = null;
+        MipsSymbol symbol;
         symbol = new MipsSymbol(name, 30);
         if (size != 0) {
             symbol.setSize(size);
-            int offset = this.table.getOffset();
+            int offset = this.table.getFpOffset();
             symbol.setOffset(offset);
             symbol.setHasRam(true);
             offset += 4 * size;
             this.table.setOffset(offset);
         }
-        this.table.addSymbol(name, symbol);
+        insertSymbolTable(name, symbol);
         return null;
     }
 
@@ -671,7 +883,7 @@ public class MipsInstructionBuilder {
         }
         String ansName = binaryInstruction.getName();
         MipsSymbol ansSymbol = new MipsSymbol(ansName, 30, false, -1, false, -1, true, false);
-        this.table.addSymbol(ansName, ansSymbol);
+        insertSymbolTable(ansName, ansSymbol);
         int ansReg = this.registerTable.getReg(true, ansSymbol, parent);
         if (binaryInstruction.getInstructionType().equals(IRInstructionType.Add)) {
             Add add = new Add(ansReg, leftReg, rightReg);
@@ -716,8 +928,11 @@ public class MipsInstructionBuilder {
             Seq seq = new Seq(ansReg, leftReg, 3);
             ans.add(li);
             ans.add(seq);
+        } else if (binaryInstruction.getInstructionType().equals(IRInstructionType.Lt)) {
+            Slt slt = new Slt(ansReg, leftReg, rightReg);
+            ans.add(slt);
         } else {
-            System.out.println("ERROR in MipsInstructionBuilder : should not reach here");
+            System.out.println("Error: Unknown binary instruction type");
         }
 
         leftSymbol.setUsed(true);

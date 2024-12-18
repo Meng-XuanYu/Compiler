@@ -34,15 +34,6 @@ public class IRStore extends IRInstruction {
         this.isChar = isChar;
     }
 
-    public IRStore(IRValue value, IRValue pointer) {
-        super(IRInstructionType.Store, IRVoidType.getVoidType(), 2);
-        this.setOperand(value, 0);
-        this.setOperand(pointer, 1);
-        this.dimensionRight = 0;
-        this.dimensionPointer = 0;
-        this.isChar = false;
-    }
-
     // 处理涉及数组的赋值，维度变量是常量
     public IRStore(IRValue value, IRValue pointer, int dimensionRight, int dimensionPointer,
                     int dimension1Right, int dimension1Pointer) {
@@ -161,23 +152,15 @@ public class IRStore extends IRInstruction {
         return isIrValue;
     }
 
-    public int getDimension1Pointer() {
-        return dimension1Pointer;
-    }
-
-    public int getDimension1Right() {
-        return dimension1Right;
+    public boolean isGetElementPtr() {
+        return this.getOperand(1) instanceof IRGetElementPtr;
     }
 
     public IRValue getDimension1PointerValue() {
         return dimension1PointerValue;
     }
 
-    public IRValue getDimension1RightValue() {
-        return dimension1RightValue;
-    }
-
-    public int getDimensionPointer() {
-        return dimensionPointer;
+    public int getDimension1Pointer() {
+        return dimension1Pointer;
     }
 }
