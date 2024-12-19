@@ -105,6 +105,7 @@ public class MipsInstructionBuilder {
             }
         }
 
+        int ansBasePointerReg;
         // 获取偏移量
         IRValue offset = getElementPtr.getOffset();
         String offsetName;
@@ -112,35 +113,40 @@ public class MipsInstructionBuilder {
         if (offset instanceof IRConstantInt) {
             offsetName = offset.printIR().get(0);
             offsetValue = Integer.parseInt(offsetName);
+            ansBasePointerReg = basePointerReg;
         } else {
             offsetName = offset.getName();
             try {
                 offsetValue = Integer.parseInt(offsetName);
+                ansBasePointerReg = basePointerReg;
             } catch (NumberFormatException e) {
                 // 如果偏移量不是常数，说明是一个变量
                 offsetValue = 0;
                 int offsetReg = this.table.getRegIndex(offsetName, true, this.parent);
-                int newOffsetReg = this.registerTable.getReg(true, new MipsSymbol("temp", 30, false, -1, false, -1, true, false), this.parent);
+                MipsSymbol newOffsetSymbol = new MipsSymbol(getElementPtr.getName(), 30, false, -1, false, -1, false, false);
+                int newOffsetReg = this.registerTable.getReg(true, newOffsetSymbol , this.parent);
                 Sll sll = new Sll(newOffsetReg, offsetReg, 2);
                 instructions.add(sll);
-                if (basePointerReg == newOffsetReg) {
+                if (basePointerReg == newOffsetReg || basePointerReg == offsetReg) {
                     // 说明newOffsetReg get的时候把basePointerReg覆盖了，要把basePointerReg的值从内存中读出来再加上newOffsetReg
-                    int tempReg = this.registerTable.getReg(true, new MipsSymbol("temp", 30, false, -1, false, -1, true, false), this.parent);
+                    MipsSymbol tempSymbol = new MipsSymbol("temp", 30, false, -1, true, -1, true, false);
+                    int tempReg = this.registerTable.getReg(true, tempSymbol , this.parent);
                     Lw lw = new Lw(tempReg, basePointerSymbol.getBase(), basePointerSymbol.getOffset());
                     instructions.add(lw);
                     Add add = new Add(newOffsetReg, tempReg, newOffsetReg);
                     instructions.add(add);
+                    tempSymbol.setUsed(true);
                 } else {
                     Add add = new Add(newOffsetReg, basePointerReg, newOffsetReg);
                     instructions.add(add);
                 }
-                basePointerReg = newOffsetReg;
+                ansBasePointerReg = newOffsetReg;
             }
         }
 
         // 创建结果符号并设置偏移量
         String resultName = getElementPtr.getName();
-        MipsSymbol resultSymbol = new MipsSymbol(resultName, basePointerReg , false, -1, false, -1, true, false);
+        MipsSymbol resultSymbol = new MipsSymbol(resultName, ansBasePointerReg , false, -1, false, -1, false, false);
         int totalOffset = offsetValue * 4 + basePointerOffset;
         resultSymbol.setOffset(totalOffset);
         insertSymbolTable(resultName, resultSymbol);
@@ -572,7 +578,7 @@ public class MipsInstructionBuilder {
         newTable.setOffset(this.table.getFpOffset());
         newRegisterTable.setTable(newTable);
         newRegisterTable.setIfUsed(this.registerTable.cloneIfUsed());
-        newRegisterTable.setTable(this.registerTable.cloneTable());
+        newRegisterTable.setTable(this.registerTable.cloneTable(newTable));
         newRegisterTable.setSRegStack(this.registerTable.cloneSRegStack());
 
         ArrayList<IRValue> parameters = call.getArgs();

@@ -376,8 +376,8 @@ public class IRInstructionBuilder {
         String name = lVal.getFirstChild().getToken().value();
         boolean isChar = symbolTable.getSymbol(name).isChar();
 
-        IRValue left = generateIRInstructionFromLVal(lVal, true);
         IRValue right = generateIRInstructionFromExp(exp, false);
+        IRValue left = generateIRInstructionFromLVal(lVal, true);
         int leftSize = left.getSize();
         int rightSize = right.getSize();
 

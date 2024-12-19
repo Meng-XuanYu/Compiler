@@ -1,77 +1,11 @@
-
-
-void func(int a[], int b[], int c[], int d[], int e[], int f[], int g[], int h[], int ia[], int ja[])
-{
-    int i = 0;
-    a[i] = 1;
-    int j = 1;
-    a[j] = 2;
-    int k = 2;
-    a[k] = 3;
-    int l = 3;
-    a[l] = 4;
-    int m = 4;
-    a[m] = 5;
-    int n = 5;
-    a[n] = 6;
-    int o = 6;
-    a[o] = 7;
-    int p = 7;
-    a[p] = 8;
-    int q = 8;
-    a[q] = 9;
-    int r = 9;
-    a[r] = 10;
-    int s = 10;
-    b[i] = 1;
-    b[j] = 2;
-    b[k] = 3;
-    b[l] = 4;
-    b[m] = 5;
-    b[n] = 6;
-    b[o] = 7;
-    b[p] = 8;
-    b[q] = 9;
-    b[r] = 10;
-    c[i] = 1;
-    c[j] = 2;
-    c[k] = 3;
+int f(int x, int y) {
+ return x + y;
 }
-int main()
-{
-int a[10];
-int b[10];
-int c[10];
-int d[10];
-int e[10];
-int f[10];
-int g[10];
-int h[10];
-int ia[10];
-int ja[10];
 
-int i = 0;
-    a[i] = 1;
-    int j = 1;
-    a[j] = 2;
-    int k = 2;
-    a[k] = 3;
-    int l = 3;
-    a[l] = 4;
-    int m = 4;
-    a[m] = 5;
-    int n = 5;
-    a[n] = 6;
-    int o = 6;
-    a[o] = 7;
-    int p = 7;
-    a[p] = 8;
-    int q = 8;
-    a[q] = 9;
-    int r = 9;
-    a[r] = 10;
-    int s = 10;
-    a[i] = 1;
-    func(a, b, c, d, e, f, g, h, ia, ja);
-    return 0;
+int main() {
+ int a[4] = {1, 2, 3, 4};
+ int i = 0;
+ a[i] = f( f(a[i + 1], a[i + 2]) , a[i + 3]);
+ printf("%d\n", a[i]);
+ return 0;
 }

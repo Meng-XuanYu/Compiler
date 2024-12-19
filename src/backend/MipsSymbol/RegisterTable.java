@@ -215,15 +215,15 @@ public class RegisterTable {
         this.table = table;
     }
 
-    public HashMap<Integer, MipsSymbol> cloneTable() {
+    public HashMap<Integer, MipsSymbol> cloneTable(MipsSymbolTable newSymbolTable) {
         HashMap<Integer, MipsSymbol> newRegs = new HashMap<>();
         for (Integer index : this.table.keySet()) {
             String name = this.table.get(index).getName();
-            MipsSymbol symbol = this.symbolTable.getSymbol(name);
+            MipsSymbol symbol = newSymbolTable.getSymbol(name);
             if (symbol == null) {
                 newRegs.put(index, this.table.get(index).cloneMipsSymbol());
             } else {
-                newRegs.put(index, this.symbolTable.getSymbol(name));
+                newRegs.put(index, newSymbolTable.getSymbol(name));
             }
         }
         return newRegs;
