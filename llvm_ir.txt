@@ -3,7 +3,7 @@ declare i32 @getchar()     ; 读取一个字符
 declare void @putint(i32)      ; 输出一个整数
 declare void @putch(i32)       ; 输出一个字符
 
-define dso_local i32 @f(i32 %param0, i32 %param1) {
+define dso_local i32 @add(i32 %param0, i32 %param1) {
     %LocalVar2 = alloca i32
     %LocalVar4 = alloca i32
     store i32 %param0, i32* %LocalVar2
@@ -15,39 +15,38 @@ define dso_local i32 @f(i32 %param0, i32 %param1) {
 }
 
 define dso_local i32 @main() {
-    %LocalVar0 = alloca [4 x i32]
-    %LocalVar6 = alloca i32
-    %LocalVar1 = getelementptr inbounds [4 x i32], [4 x i32]* %LocalVar0, i32 0, i32 0
-    %LocalVar2 = getelementptr inbounds i32, i32* %LocalVar1, i32 0
-    store i32 1, i32* %LocalVar2
-    %LocalVar3 = getelementptr inbounds i32, i32* %LocalVar1, i32 1
-    store i32 2, i32* %LocalVar3
-    %LocalVar4 = getelementptr inbounds i32, i32* %LocalVar1, i32 2
-    store i32 3, i32* %LocalVar4
-    %LocalVar5 = getelementptr inbounds i32, i32* %LocalVar1, i32 3
-    store i32 4, i32* %LocalVar5
-    store i32 0, i32* %LocalVar6
-    %LocalVar7 = load i32, i32* %LocalVar6
-    %LocalVar8 = add i32 %LocalVar7, 1
-    %LocalVar9 = getelementptr inbounds i32, i32* %LocalVar1, i32 %LocalVar8
-    %LocalVar10 = load i32, i32* %LocalVar9
-    %LocalVar11 = load i32, i32* %LocalVar6
-    %LocalVar12 = add i32 %LocalVar11, 2
-    %LocalVar13 = getelementptr inbounds i32, i32* %LocalVar1, i32 %LocalVar12
-    %LocalVar14 = load i32, i32* %LocalVar13
-    %LocalVar15 = call i32 @f(i32 %LocalVar10, i32 %LocalVar14)
-    %LocalVar16 = load i32, i32* %LocalVar6
-    %LocalVar17 = add i32 %LocalVar16, 3
-    %LocalVar18 = getelementptr inbounds i32, i32* %LocalVar1, i32 %LocalVar17
-    %LocalVar19 = load i32, i32* %LocalVar18
-    %LocalVar20 = call i32 @f(i32 %LocalVar15, i32 %LocalVar19)
-    %LocalVar21 = load i32, i32* %LocalVar6
-    %LocalVar22 = getelementptr inbounds i32, i32* %LocalVar1, i32 %LocalVar21
-    store i32 %LocalVar20, i32* %LocalVar22
-    %LocalVar23 = load i32, i32* %LocalVar6
-    %LocalVar24 = getelementptr inbounds i32, i32* %LocalVar1, i32 %LocalVar23
-    %LocalVar25 = load i32, i32* %LocalVar24
-    call void @putint(i32 %LocalVar25)
+    %LocalVar0 = alloca i32
+    %LocalVar1 = alloca i32
+    %LocalVar3 = alloca i32
+    %LocalVar4 = alloca i32
+    %LocalVar8 = alloca i32
+    %LocalVar9 = alloca i32
+    %LocalVar13 = alloca i32
+    store i32 2147483646, i32* %LocalVar0
+    %LocalVar2 = mul i32 -1, 2147483647
+    store i32 %LocalVar2, i32* %LocalVar1
+    store i32 65536, i32* %LocalVar3
+    %LocalVar5 = load i32, i32* %LocalVar3
+    %LocalVar6 = load i32, i32* %LocalVar3
+    %LocalVar7 = mul i32 %LocalVar5, %LocalVar6
+    store i32 %LocalVar7, i32* %LocalVar4
+    store i32 2, i32* %LocalVar8
+    %LocalVar10 = load i32, i32* %LocalVar0
+    %LocalVar11 = load i32, i32* %LocalVar8
+    %LocalVar12 = add i32 %LocalVar10, %LocalVar11
+    store i32 %LocalVar12, i32* %LocalVar9
+    %LocalVar14 = load i32, i32* %LocalVar1
+    %LocalVar15 = load i32, i32* %LocalVar8
+    %LocalVar16 = sub i32 %LocalVar14, %LocalVar15
+    store i32 %LocalVar16, i32* %LocalVar13
+    %LocalVar17 = load i32, i32* %LocalVar9
+    call void @putint(i32 %LocalVar17)
+    call void @putch(i32 10)
+    %LocalVar18 = load i32, i32* %LocalVar13
+    call void @putint(i32 %LocalVar18)
+    call void @putch(i32 10)
+    %LocalVar19 = load i32, i32* %LocalVar4
+    call void @putint(i32 %LocalVar19)
     call void @putch(i32 10)
     ret i32 0
 }

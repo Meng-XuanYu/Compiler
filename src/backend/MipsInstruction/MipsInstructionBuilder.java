@@ -178,15 +178,8 @@ public class MipsInstructionBuilder {
         insertSymbolTable(resultName, resultSymbol);
         int resultReg = this.registerTable.getReg(true, resultSymbol, this.parent);
 
-        if (trunc.getType() == IRIntegerType.get8()) {
-            // i32 to i8
-            Andi andi = new Andi(resultReg, operandReg, 0xFF);
-            ret.add(andi);
-        } else if (trunc.getType() == IRIntegerType.get1()) {
-            // i32 to i1
-            Andi andi = new Andi(resultReg, operandReg, 0x1);
-            ret.add(andi);
-        }
+        Andi andi = new Andi(resultReg, operandReg, 0xFFFFFFFF);
+        ret.add(andi);
         operandSymbol.setUsed(true);
         return ret;
     }
@@ -219,9 +212,9 @@ public class MipsInstructionBuilder {
         // 根据操作数类型生成相应的 MIPS 指令
         Andi andi;
         if (operand.getType() == IRIntegerType.get8()) {
-            andi = new Andi(resultReg, operandReg, 0xFF);
+            andi = new Andi(resultReg, operandReg, 0xFFFFFFFF);
         } else {
-            andi = new Andi(resultReg, operandReg, 0x1);
+            andi = new Andi(resultReg, operandReg, 0xFFFFFFFF);
         }
         ret.add(andi);
 

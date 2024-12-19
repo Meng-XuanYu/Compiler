@@ -1,11 +1,17 @@
-int f(int x, int y) {
- return x + y;
+int add(int a, int b) {
+    return a + b;
 }
 
 int main() {
- int a[4] = {1, 2, 3, 4};
- int i = 0;
- a[i] = f( f(a[i + 1], a[i + 2]) , a[i + 3]);
- printf("%d\n", a[i]);
- return 0;
+    int a = 2147483646;
+    int b = -2147483647;
+    int t1 = 65536;
+    int ans3 = t1 * t1;sh
+    int i = 2;
+    int ans1 = a + i;
+    int ans2 = b - i;
+    printf("%d\n", ans1);
+    printf("%d\n", ans2);
+    printf("%d\n", ans3);
+    return 0;
 }

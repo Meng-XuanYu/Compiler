@@ -10,7 +10,7 @@ public class Mul extends MipsInstruction {
     private final int right;
 
     public Mul(int target, int left, int right) {
-        super("mulu");
+        super("mul");
         this.target = target;
         this.left = left;
         this.right = right;
