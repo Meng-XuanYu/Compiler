@@ -82,7 +82,6 @@ public class MipsInstructionBuilder {
         MipsSymbol basePointerSymbol;
 
         basePointerSymbol = this.table.getSymbol(basePointerName);
-        basePointerSymbol.setTemp(false);
         int basePointerReg;
         int basePointerOffset;
         if (basePointerSymbol.isInReg()) {
@@ -124,8 +123,17 @@ public class MipsInstructionBuilder {
                 int newOffsetReg = this.registerTable.getReg(true, new MipsSymbol("temp", 30, false, -1, false, -1, true, false), this.parent);
                 Sll sll = new Sll(newOffsetReg, offsetReg, 2);
                 instructions.add(sll);
-                Add add = new Add(newOffsetReg, basePointerReg, newOffsetReg);
-                instructions.add(add);
+                if (basePointerReg == newOffsetReg) {
+                    // 说明newOffsetReg get的时候把basePointerReg覆盖了，要把basePointerReg的值从内存中读出来再加上newOffsetReg
+                    int tempReg = this.registerTable.getReg(true, new MipsSymbol("temp", 30, false, -1, false, -1, true, false), this.parent);
+                    Lw lw = new Lw(tempReg, basePointerSymbol.getBase(), basePointerSymbol.getOffset());
+                    instructions.add(lw);
+                    Add add = new Add(newOffsetReg, tempReg, newOffsetReg);
+                    instructions.add(add);
+                } else {
+                    Add add = new Add(newOffsetReg, basePointerReg, newOffsetReg);
+                    instructions.add(add);
+                }
                 basePointerReg = newOffsetReg;
             }
         }
