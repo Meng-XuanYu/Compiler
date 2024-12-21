@@ -1,17 +1,106 @@
-int add(int a, int b) {
-    return a + b;
+int globalIndex = 0;
+char globalChars[8] = {'H', 'E', 'L', 'L', 'O', 'W', 'O', 'R'};
+int datasetA[40] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19,
+                   21, 23, 25, 27, 29, 31, 33, 35, 37, 39,
+                   41, 43, 45, 47, 49, 51, 53, 55, 57, 59,
+                   61, 63, 65, 67, 69, 71, 73, 75, 77, 79};
+int datasetB[40] = {2, 4, 6, 8, 10, 12, 14, 16, 18, 20,
+                   22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+                   42, 44, 46, 48, 50, 52, 54, 56, 58, 60,
+                   62, 64, 66, 68, 70, 72, 74, 76, 78, 80};
+
+int sumFive(int a, int b, int c, int d, int e) {
+    return a + b + c + d + e;
+}
+
+int differenceFive(int a, int b, int c, int d, int e) {
+    return a - b - c - d - e;
+}
+
+int productFive(int a, int b, int c, int d, int e) {
+    return a * b * c * d * e;
+}
+
+int quotientFive(int a, int b, int c, int d, int e) {
+    int q;
+    if(b != 0 && d != 0 || a > e) {
+        q = (a / (b + 1)) + (c / (d + 1));
+    }
+    else {
+        q = 1;
+    }
+    return q;
+}
+
+int complexOperation(int a, int b, int c, int d, int e) {
+    int s = sumFive(a, b, c, d, e);
+    int diff = differenceFive(a, b, c, d, e);
+    int prod = productFive(a, b, c, d, e);
+    int quot = quotientFive(a, b, c, d, e);
+    return s + diff + prod + quot;
+}
+
+char modifyChar(char ch, int offset, int condition, int limit) {
+    char result;
+    if(ch == 'H' || ch == 'E' && condition || ch == 'L') {
+        result = ch + offset - limit;
+    }
+    else {
+        result = 'Z';
+    }
+    return result;
+}
+
+int processArrays(int arr1[], int arr2[], int size, int threshold, int modifier) {
+    int total = 0;
+    int i;
+    for(i = 0; i < size && arr1[i] < (threshold + modifier) || arr2[i] > (threshold - modifier); i = i + 1) {
+        if(arr1[i] % 3 == 0 && arr2[i] % 4 == 0 || arr1[i] == arr2[i]) {
+            total = total + complexOperation(arr1[i], arr2[i], i, threshold, modifier);
+        }
+        else {
+            total = total - quotientFive(arr1[i], arr2[i], i, threshold, modifier);
+        }
+    }
+    return total;
+}
+
+int aggregateResultsAdvanced(int a, int b, int c, int d, int e) {
+    if(a > b && c < d || e != 0) {
+        return sumFive(a, b, c, d, e);
+    }
+    else {
+        return differenceFive(a, b, c, d, e);
+    }
+    return 0;
+}
+
+int finalAggregator(int arr1[], int arr2[], int size, int threshold, int modifier) {
+    int eval = processArrays(arr1, arr2, size, threshold, modifier);
+    int agg = aggregateResultsAdvanced(eval, threshold, modifier, arr1[0], arr2[0]);
+    return agg;
 }
 
 int main() {
-    int a = 2147483646;
-    int b = -2147483647;
-    int t1 = 65536;
-    int ans3 = t1 * t1;sh
-    int i = 2;
-    int ans1 = a + i;
-    int ans2 = b - i;
-    printf("%d\n", ans1);
-    printf("%d\n", ans2);
-    printf("%d\n", ans3);
+    int arrayA[40] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19,
+                      21, 23, 25, 27, 29, 31, 33, 35, 37, 39,
+                      41, 43, 45, 47, 49, 51, 53, 55, 57, 59,
+                      61, 63, 65, 67, 69, 71, 73, 75, 77, 79};
+    int arrayB[40] = {2, 4, 6, 8, 10, 12, 14, 16, 18, 20,
+                      22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+                      42, 44, 46, 48, 50, 52, 54, 56, 58, 60,
+                      62, 64, 66, 68, 70, 72, 74, 76, 78, 80};
+    int size = 40;
+    int threshold = 60;
+    int modifier = 10;
+    char symbol = 'L';
+    char modified;
+    int result;
+
+    modified = modifyChar(symbol, 4, 1, 2);
+    result = finalAggregator(arrayA, arrayB, size, threshold, modifier);
+
+    printf("Modified Symbol: %c\n", modified);
+    printf("Final Aggregator Result: %d\n", result);
     return 0;
 }

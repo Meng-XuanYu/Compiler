@@ -2,51 +2,671 @@ declare i32 @getint()          ; 读取一个整数
 declare i32 @getchar()     ; 读取一个字符
 declare void @putint(i32)      ; 输出一个整数
 declare void @putch(i32)       ; 输出一个字符
+@GlobalVar_0 = dso_local global i32 0
+@GlobalVar_1 = dso_local global [8 x i8] [i8 72, i8 69, i8 76, i8 76, i8 79, i8 87, i8 79, i8 82]
+@GlobalVar_2 = dso_local global [40 x i32] [i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15, i32 17, i32 19, i32 21, i32 23, i32 25, i32 27, i32 29, i32 31, i32 33, i32 35, i32 37, i32 39, i32 41, i32 43, i32 45, i32 47, i32 49, i32 51, i32 53, i32 55, i32 57, i32 59, i32 61, i32 63, i32 65, i32 67, i32 69, i32 71, i32 73, i32 75, i32 77, i32 79]
+@GlobalVar_3 = dso_local global [40 x i32] [i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14, i32 16, i32 18, i32 20, i32 22, i32 24, i32 26, i32 28, i32 30, i32 32, i32 34, i32 36, i32 38, i32 40, i32 42, i32 44, i32 46, i32 48, i32 50, i32 52, i32 54, i32 56, i32 58, i32 60, i32 62, i32 64, i32 66, i32 68, i32 70, i32 72, i32 74, i32 76, i32 78, i32 80]
 
-define dso_local i32 @add(i32 %param0, i32 %param1) {
-    %LocalVar2 = alloca i32
-    %LocalVar4 = alloca i32
-    store i32 %param0, i32* %LocalVar2
-    store i32 %param1, i32* %LocalVar4
-    %LocalVar3 = load i32, i32* %LocalVar2
-    %LocalVar5 = load i32, i32* %LocalVar4
-    %LocalVar6 = add i32 %LocalVar3, %LocalVar5
-    ret i32 %LocalVar6
+define dso_local i32 @sumFive(i32 %param0, i32 %param1, i32 %param2, i32 %param3, i32 %param4) {
+    %LocalVar5 = alloca i32
+    %LocalVar7 = alloca i32
+    %LocalVar10 = alloca i32
+    %LocalVar13 = alloca i32
+    %LocalVar16 = alloca i32
+    store i32 %param0, i32* %LocalVar5
+    store i32 %param1, i32* %LocalVar7
+    store i32 %param2, i32* %LocalVar10
+    store i32 %param3, i32* %LocalVar13
+    store i32 %param4, i32* %LocalVar16
+    %LocalVar6 = load i32, i32* %LocalVar5
+    %LocalVar8 = load i32, i32* %LocalVar7
+    %LocalVar9 = add i32 %LocalVar6, %LocalVar8
+    %LocalVar11 = load i32, i32* %LocalVar10
+    %LocalVar12 = add i32 %LocalVar9, %LocalVar11
+    %LocalVar14 = load i32, i32* %LocalVar13
+    %LocalVar15 = add i32 %LocalVar12, %LocalVar14
+    %LocalVar17 = load i32, i32* %LocalVar16
+    %LocalVar18 = add i32 %LocalVar15, %LocalVar17
+    ret i32 %LocalVar18
+}
+
+define dso_local i32 @differenceFive(i32 %param0, i32 %param1, i32 %param2, i32 %param3, i32 %param4) {
+    %LocalVar5 = alloca i32
+    %LocalVar7 = alloca i32
+    %LocalVar10 = alloca i32
+    %LocalVar13 = alloca i32
+    %LocalVar16 = alloca i32
+    store i32 %param0, i32* %LocalVar5
+    store i32 %param1, i32* %LocalVar7
+    store i32 %param2, i32* %LocalVar10
+    store i32 %param3, i32* %LocalVar13
+    store i32 %param4, i32* %LocalVar16
+    %LocalVar6 = load i32, i32* %LocalVar5
+    %LocalVar8 = load i32, i32* %LocalVar7
+    %LocalVar9 = sub i32 %LocalVar6, %LocalVar8
+    %LocalVar11 = load i32, i32* %LocalVar10
+    %LocalVar12 = sub i32 %LocalVar9, %LocalVar11
+    %LocalVar14 = load i32, i32* %LocalVar13
+    %LocalVar15 = sub i32 %LocalVar12, %LocalVar14
+    %LocalVar17 = load i32, i32* %LocalVar16
+    %LocalVar18 = sub i32 %LocalVar15, %LocalVar17
+    ret i32 %LocalVar18
+}
+
+define dso_local i32 @productFive(i32 %param0, i32 %param1, i32 %param2, i32 %param3, i32 %param4) {
+    %LocalVar5 = alloca i32
+    %LocalVar7 = alloca i32
+    %LocalVar10 = alloca i32
+    %LocalVar13 = alloca i32
+    %LocalVar16 = alloca i32
+    store i32 %param0, i32* %LocalVar5
+    store i32 %param1, i32* %LocalVar7
+    store i32 %param2, i32* %LocalVar10
+    store i32 %param3, i32* %LocalVar13
+    store i32 %param4, i32* %LocalVar16
+    %LocalVar6 = load i32, i32* %LocalVar5
+    %LocalVar8 = load i32, i32* %LocalVar7
+    %LocalVar9 = mul i32 %LocalVar6, %LocalVar8
+    %LocalVar11 = load i32, i32* %LocalVar10
+    %LocalVar12 = mul i32 %LocalVar9, %LocalVar11
+    %LocalVar14 = load i32, i32* %LocalVar13
+    %LocalVar15 = mul i32 %LocalVar12, %LocalVar14
+    %LocalVar17 = load i32, i32* %LocalVar16
+    %LocalVar18 = mul i32 %LocalVar15, %LocalVar17
+    ret i32 %LocalVar18
+}
+
+define dso_local i32 @quotientFive(i32 %param0, i32 %param1, i32 %param2, i32 %param3, i32 %param4) {
+    %LocalVar5 = alloca i32
+    %LocalVar6 = alloca i32
+    %LocalVar11 = alloca i32
+    %LocalVar16 = alloca i32
+    %LocalVar18 = alloca i32
+    %LocalVar27 = alloca i32
+    store i32 %param1, i32* %LocalVar6
+    store i32 %param3, i32* %LocalVar11
+    store i32 %param0, i32* %LocalVar16
+    store i32 %param4, i32* %LocalVar18
+    store i32 %param2, i32* %LocalVar27
+    store i32 0, i32* %LocalVar5
+    %LocalVar7 = load i32, i32* %LocalVar6
+    %LocalVar8 = icmp ne i32 %LocalVar7, 0
+    %LocalVar9 = zext i1 %LocalVar8 to i32
+    %LocalVar10 = icmp ne i32 %LocalVar9, 0
+    br i1 %LocalVar10, label %Label_5, label %Label_4
+Label_5: 
+    %LocalVar12 = load i32, i32* %LocalVar11
+    %LocalVar13 = icmp ne i32 %LocalVar12, 0
+    %LocalVar14 = zext i1 %LocalVar13 to i32
+    %LocalVar15 = icmp ne i32 %LocalVar14, 0
+    br i1 %LocalVar15, label %Label_1, label %Label_4
+Label_4: 
+    %LocalVar17 = load i32, i32* %LocalVar16
+    %LocalVar19 = load i32, i32* %LocalVar18
+    %LocalVar20 = icmp sgt i32 %LocalVar17, %LocalVar19
+    %LocalVar21 = zext i1 %LocalVar20 to i32
+    %LocalVar22 = icmp ne i32 %LocalVar21, 0
+    br i1 %LocalVar22, label %Label_1, label %Label_2
+Label_1: 
+    %LocalVar23 = load i32, i32* %LocalVar16
+    %LocalVar24 = load i32, i32* %LocalVar6
+    %LocalVar25 = add i32 %LocalVar24, 1
+    %LocalVar26 = sdiv i32 %LocalVar23, %LocalVar25
+    %LocalVar28 = load i32, i32* %LocalVar27
+    %LocalVar29 = load i32, i32* %LocalVar11
+    %LocalVar30 = add i32 %LocalVar29, 1
+    %LocalVar31 = sdiv i32 %LocalVar28, %LocalVar30
+    %LocalVar32 = add i32 %LocalVar26, %LocalVar31
+    store i32 %LocalVar32, i32* %LocalVar5
+    br label %Label_3
+Label_2: 
+    store i32 1, i32* %LocalVar5
+    br label %Label_3
+Label_3: 
+    %LocalVar33 = load i32, i32* %LocalVar5
+    ret i32 %LocalVar33
+}
+
+define dso_local i32 @complexOperation(i32 %param0, i32 %param1, i32 %param2, i32 %param3, i32 %param4) {
+    %LocalVar5 = alloca i32
+    %LocalVar6 = alloca i32
+    %LocalVar8 = alloca i32
+    %LocalVar10 = alloca i32
+    %LocalVar12 = alloca i32
+    %LocalVar14 = alloca i32
+    %LocalVar17 = alloca i32
+    %LocalVar24 = alloca i32
+    %LocalVar31 = alloca i32
+    store i32 %param0, i32* %LocalVar6
+    store i32 %param1, i32* %LocalVar8
+    store i32 %param2, i32* %LocalVar10
+    store i32 %param3, i32* %LocalVar12
+    store i32 %param4, i32* %LocalVar14
+    %LocalVar7 = load i32, i32* %LocalVar6
+    %LocalVar9 = load i32, i32* %LocalVar8
+    %LocalVar11 = load i32, i32* %LocalVar10
+    %LocalVar13 = load i32, i32* %LocalVar12
+    %LocalVar15 = load i32, i32* %LocalVar14
+    %LocalVar16 = call i32 @sumFive(i32 %LocalVar7, i32 %LocalVar9, i32 %LocalVar11, i32 %LocalVar13, i32 %LocalVar15)
+    store i32 %LocalVar16, i32* %LocalVar5
+    %LocalVar18 = load i32, i32* %LocalVar6
+    %LocalVar19 = load i32, i32* %LocalVar8
+    %LocalVar20 = load i32, i32* %LocalVar10
+    %LocalVar21 = load i32, i32* %LocalVar12
+    %LocalVar22 = load i32, i32* %LocalVar14
+    %LocalVar23 = call i32 @differenceFive(i32 %LocalVar18, i32 %LocalVar19, i32 %LocalVar20, i32 %LocalVar21, i32 %LocalVar22)
+    store i32 %LocalVar23, i32* %LocalVar17
+    %LocalVar25 = load i32, i32* %LocalVar6
+    %LocalVar26 = load i32, i32* %LocalVar8
+    %LocalVar27 = load i32, i32* %LocalVar10
+    %LocalVar28 = load i32, i32* %LocalVar12
+    %LocalVar29 = load i32, i32* %LocalVar14
+    %LocalVar30 = call i32 @productFive(i32 %LocalVar25, i32 %LocalVar26, i32 %LocalVar27, i32 %LocalVar28, i32 %LocalVar29)
+    store i32 %LocalVar30, i32* %LocalVar24
+    %LocalVar32 = load i32, i32* %LocalVar6
+    %LocalVar33 = load i32, i32* %LocalVar8
+    %LocalVar34 = load i32, i32* %LocalVar10
+    %LocalVar35 = load i32, i32* %LocalVar12
+    %LocalVar36 = load i32, i32* %LocalVar14
+    %LocalVar37 = call i32 @quotientFive(i32 %LocalVar32, i32 %LocalVar33, i32 %LocalVar34, i32 %LocalVar35, i32 %LocalVar36)
+    store i32 %LocalVar37, i32* %LocalVar31
+    %LocalVar38 = load i32, i32* %LocalVar5
+    %LocalVar39 = load i32, i32* %LocalVar17
+    %LocalVar40 = add i32 %LocalVar38, %LocalVar39
+    %LocalVar41 = load i32, i32* %LocalVar24
+    %LocalVar42 = add i32 %LocalVar40, %LocalVar41
+    %LocalVar43 = load i32, i32* %LocalVar31
+    %LocalVar44 = add i32 %LocalVar42, %LocalVar43
+    ret i32 %LocalVar44
+}
+
+define dso_local i8 @modifyChar(i8 %param0, i32 %param1, i32 %param2, i32 %param3) {
+    %LocalVar4 = alloca i8
+    %LocalVar5 = alloca i8
+    %LocalVar18 = alloca i32
+    %LocalVar28 = alloca i32
+    %LocalVar32 = alloca i32
+    store i8 %param0, i8* %LocalVar5
+    store i32 %param2, i32* %LocalVar18
+    store i32 %param1, i32* %LocalVar28
+    store i32 %param3, i32* %LocalVar32
+    store i8 0, i8* %LocalVar4
+    %LocalVar6 = load i8, i8* %LocalVar5
+    %LocalVar7 = zext i8 %LocalVar6 to i32
+    %LocalVar8 = zext i8 72 to i32
+    %LocalVar9 = icmp eq i32 %LocalVar7, %LocalVar8
+    %LocalVar10 = zext i1 %LocalVar9 to i32
+    %LocalVar11 = icmp ne i32 %LocalVar10, 0
+    br i1 %LocalVar11, label %Label_6, label %Label_9
+Label_9: 
+    %LocalVar12 = load i8, i8* %LocalVar5
+    %LocalVar13 = zext i8 %LocalVar12 to i32
+    %LocalVar14 = zext i8 69 to i32
+    %LocalVar15 = icmp eq i32 %LocalVar13, %LocalVar14
+    %LocalVar16 = zext i1 %LocalVar15 to i32
+    %LocalVar17 = icmp ne i32 %LocalVar16, 0
+    br i1 %LocalVar17, label %Label_11, label %Label_10
+Label_11: 
+    %LocalVar19 = load i32, i32* %LocalVar18
+    %LocalVar20 = icmp ne i32 %LocalVar19, 0
+    br i1 %LocalVar20, label %Label_6, label %Label_10
+Label_10: 
+    %LocalVar21 = load i8, i8* %LocalVar5
+    %LocalVar22 = zext i8 %LocalVar21 to i32
+    %LocalVar23 = zext i8 76 to i32
+    %LocalVar24 = icmp eq i32 %LocalVar22, %LocalVar23
+    %LocalVar25 = zext i1 %LocalVar24 to i32
+    %LocalVar26 = icmp ne i32 %LocalVar25, 0
+    br i1 %LocalVar26, label %Label_6, label %Label_7
+Label_6: 
+    %LocalVar27 = load i8, i8* %LocalVar5
+    %LocalVar29 = load i32, i32* %LocalVar28
+    %LocalVar30 = zext i8 %LocalVar27 to i32
+    %LocalVar31 = add i32 %LocalVar30, %LocalVar29
+    %LocalVar33 = load i32, i32* %LocalVar32
+    %LocalVar34 = sub i32 %LocalVar31, %LocalVar33
+    %LocalVar35 = trunc i32 %LocalVar34 to i8
+    store i8 %LocalVar35, i8* %LocalVar4
+    br label %Label_8
+Label_7: 
+    store i8 90, i8* %LocalVar4
+    br label %Label_8
+Label_8: 
+    %LocalVar36 = load i8, i8* %LocalVar4
+    ret i8 %LocalVar36
+}
+
+define dso_local i32 @processArrays(i32* %param0, i32* %param1, i32 %param2, i32 %param3, i32 %param4) {
+    %LocalVar5 = alloca i32
+    %LocalVar6 = alloca i32
+    %LocalVar8 = alloca i32
+    %LocalVar16 = alloca i32
+    %LocalVar18 = alloca i32
+    store i32 %param2, i32* %LocalVar8
+    store i32 %param3, i32* %LocalVar16
+    store i32 %param4, i32* %LocalVar18
+    store i32 0, i32* %LocalVar5
+    store i32 0, i32* %LocalVar6
+    br label %Label_12
+Label_12: 
+    store i32 0, i32* %LocalVar6
+    br label %Label_14
+Label_14: 
+    %LocalVar7 = load i32, i32* %LocalVar6
+    %LocalVar9 = load i32, i32* %LocalVar8
+    %LocalVar10 = icmp slt i32 %LocalVar7, %LocalVar9
+    %LocalVar11 = zext i1 %LocalVar10 to i32
+    %LocalVar12 = icmp ne i32 %LocalVar11, 0
+    br i1 %LocalVar12, label %Label_17, label %Label_16
+Label_17: 
+    %LocalVar13 = load i32, i32* %LocalVar6
+    %LocalVar14 = getelementptr inbounds i32, i32* %param0, i32 %LocalVar13
+    %LocalVar15 = load i32, i32* %LocalVar14
+    %LocalVar17 = load i32, i32* %LocalVar16
+    %LocalVar19 = load i32, i32* %LocalVar18
+    %LocalVar20 = add i32 %LocalVar17, %LocalVar19
+    %LocalVar21 = icmp slt i32 %LocalVar15, %LocalVar20
+    %LocalVar22 = zext i1 %LocalVar21 to i32
+    %LocalVar23 = icmp ne i32 %LocalVar22, 0
+    br i1 %LocalVar23, label %Label_15, label %Label_16
+Label_16: 
+    %LocalVar24 = load i32, i32* %LocalVar6
+    %LocalVar25 = getelementptr inbounds i32, i32* %param1, i32 %LocalVar24
+    %LocalVar26 = load i32, i32* %LocalVar25
+    %LocalVar27 = load i32, i32* %LocalVar16
+    %LocalVar28 = load i32, i32* %LocalVar18
+    %LocalVar29 = sub i32 %LocalVar27, %LocalVar28
+    %LocalVar30 = icmp sgt i32 %LocalVar26, %LocalVar29
+    %LocalVar31 = zext i1 %LocalVar30 to i32
+    %LocalVar32 = icmp ne i32 %LocalVar31, 0
+    br i1 %LocalVar32, label %Label_15, label %Label_13
+Label_15: 
+    %LocalVar33 = load i32, i32* %LocalVar6
+    %LocalVar34 = getelementptr inbounds i32, i32* %param0, i32 %LocalVar33
+    %LocalVar35 = load i32, i32* %LocalVar34
+    %LocalVar36 = srem i32 %LocalVar35, 3
+    %LocalVar37 = icmp eq i32 %LocalVar36, 0
+    %LocalVar38 = zext i1 %LocalVar37 to i32
+    %LocalVar39 = icmp ne i32 %LocalVar38, 0
+    br i1 %LocalVar39, label %Label_23, label %Label_22
+Label_23: 
+    %LocalVar40 = load i32, i32* %LocalVar6
+    %LocalVar41 = getelementptr inbounds i32, i32* %param1, i32 %LocalVar40
+    %LocalVar42 = load i32, i32* %LocalVar41
+    %LocalVar43 = srem i32 %LocalVar42, 4
+    %LocalVar44 = icmp eq i32 %LocalVar43, 0
+    %LocalVar45 = zext i1 %LocalVar44 to i32
+    %LocalVar46 = icmp ne i32 %LocalVar45, 0
+    br i1 %LocalVar46, label %Label_19, label %Label_22
+Label_22: 
+    %LocalVar47 = load i32, i32* %LocalVar6
+    %LocalVar48 = getelementptr inbounds i32, i32* %param0, i32 %LocalVar47
+    %LocalVar49 = load i32, i32* %LocalVar48
+    %LocalVar50 = load i32, i32* %LocalVar6
+    %LocalVar51 = getelementptr inbounds i32, i32* %param1, i32 %LocalVar50
+    %LocalVar52 = load i32, i32* %LocalVar51
+    %LocalVar53 = icmp eq i32 %LocalVar49, %LocalVar52
+    %LocalVar54 = zext i1 %LocalVar53 to i32
+    %LocalVar55 = icmp ne i32 %LocalVar54, 0
+    br i1 %LocalVar55, label %Label_19, label %Label_20
+Label_19: 
+    %LocalVar56 = load i32, i32* %LocalVar5
+    %LocalVar57 = load i32, i32* %LocalVar6
+    %LocalVar58 = getelementptr inbounds i32, i32* %param0, i32 %LocalVar57
+    %LocalVar59 = load i32, i32* %LocalVar58
+    %LocalVar60 = load i32, i32* %LocalVar6
+    %LocalVar61 = getelementptr inbounds i32, i32* %param1, i32 %LocalVar60
+    %LocalVar62 = load i32, i32* %LocalVar61
+    %LocalVar63 = load i32, i32* %LocalVar6
+    %LocalVar64 = load i32, i32* %LocalVar16
+    %LocalVar65 = load i32, i32* %LocalVar18
+    %LocalVar66 = call i32 @complexOperation(i32 %LocalVar59, i32 %LocalVar62, i32 %LocalVar63, i32 %LocalVar64, i32 %LocalVar65)
+    %LocalVar67 = add i32 %LocalVar56, %LocalVar66
+    store i32 %LocalVar67, i32* %LocalVar5
+    br label %Label_21
+Label_20: 
+    %LocalVar68 = load i32, i32* %LocalVar5
+    %LocalVar69 = load i32, i32* %LocalVar6
+    %LocalVar70 = getelementptr inbounds i32, i32* %param0, i32 %LocalVar69
+    %LocalVar71 = load i32, i32* %LocalVar70
+    %LocalVar72 = load i32, i32* %LocalVar6
+    %LocalVar73 = getelementptr inbounds i32, i32* %param1, i32 %LocalVar72
+    %LocalVar74 = load i32, i32* %LocalVar73
+    %LocalVar75 = load i32, i32* %LocalVar6
+    %LocalVar76 = load i32, i32* %LocalVar16
+    %LocalVar77 = load i32, i32* %LocalVar18
+    %LocalVar78 = call i32 @quotientFive(i32 %LocalVar71, i32 %LocalVar74, i32 %LocalVar75, i32 %LocalVar76, i32 %LocalVar77)
+    %LocalVar79 = sub i32 %LocalVar68, %LocalVar78
+    store i32 %LocalVar79, i32* %LocalVar5
+    br label %Label_21
+Label_21: 
+    br label %Label_18
+Label_18: 
+    %LocalVar80 = load i32, i32* %LocalVar6
+    %LocalVar81 = add i32 %LocalVar80, 1
+    store i32 %LocalVar81, i32* %LocalVar6
+    br label %Label_14
+Label_13: 
+    %LocalVar82 = load i32, i32* %LocalVar5
+    ret i32 %LocalVar82
+}
+
+define dso_local i32 @aggregateResultsAdvanced(i32 %param0, i32 %param1, i32 %param2, i32 %param3, i32 %param4) {
+    %LocalVar5 = alloca i32
+    %LocalVar7 = alloca i32
+    %LocalVar12 = alloca i32
+    %LocalVar14 = alloca i32
+    %LocalVar19 = alloca i32
+    store i32 %param0, i32* %LocalVar5
+    store i32 %param1, i32* %LocalVar7
+    store i32 %param2, i32* %LocalVar12
+    store i32 %param3, i32* %LocalVar14
+    store i32 %param4, i32* %LocalVar19
+    %LocalVar6 = load i32, i32* %LocalVar5
+    %LocalVar8 = load i32, i32* %LocalVar7
+    %LocalVar9 = icmp sgt i32 %LocalVar6, %LocalVar8
+    %LocalVar10 = zext i1 %LocalVar9 to i32
+    %LocalVar11 = icmp ne i32 %LocalVar10, 0
+    br i1 %LocalVar11, label %Label_28, label %Label_27
+Label_28: 
+    %LocalVar13 = load i32, i32* %LocalVar12
+    %LocalVar15 = load i32, i32* %LocalVar14
+    %LocalVar16 = icmp slt i32 %LocalVar13, %LocalVar15
+    %LocalVar17 = zext i1 %LocalVar16 to i32
+    %LocalVar18 = icmp ne i32 %LocalVar17, 0
+    br i1 %LocalVar18, label %Label_24, label %Label_27
+Label_27: 
+    %LocalVar20 = load i32, i32* %LocalVar19
+    %LocalVar21 = icmp ne i32 %LocalVar20, 0
+    %LocalVar22 = zext i1 %LocalVar21 to i32
+    %LocalVar23 = icmp ne i32 %LocalVar22, 0
+    br i1 %LocalVar23, label %Label_24, label %Label_25
+Label_24: 
+    %LocalVar24 = load i32, i32* %LocalVar5
+    %LocalVar25 = load i32, i32* %LocalVar7
+    %LocalVar26 = load i32, i32* %LocalVar12
+    %LocalVar27 = load i32, i32* %LocalVar14
+    %LocalVar28 = load i32, i32* %LocalVar19
+    %LocalVar29 = call i32 @sumFive(i32 %LocalVar24, i32 %LocalVar25, i32 %LocalVar26, i32 %LocalVar27, i32 %LocalVar28)
+    ret i32 %LocalVar29
+    br label %Label_26
+Label_25: 
+    %LocalVar30 = load i32, i32* %LocalVar5
+    %LocalVar31 = load i32, i32* %LocalVar7
+    %LocalVar32 = load i32, i32* %LocalVar12
+    %LocalVar33 = load i32, i32* %LocalVar14
+    %LocalVar34 = load i32, i32* %LocalVar19
+    %LocalVar35 = call i32 @differenceFive(i32 %LocalVar30, i32 %LocalVar31, i32 %LocalVar32, i32 %LocalVar33, i32 %LocalVar34)
+    ret i32 %LocalVar35
+    br label %Label_26
+Label_26: 
+    ret i32 0
+}
+
+define dso_local i32 @finalAggregator(i32* %param0, i32* %param1, i32 %param2, i32 %param3, i32 %param4) {
+    %LocalVar5 = alloca i32
+    %LocalVar8 = alloca i32
+    %LocalVar10 = alloca i32
+    %LocalVar12 = alloca i32
+    %LocalVar15 = alloca i32
+    store i32 %param2, i32* %LocalVar8
+    store i32 %param3, i32* %LocalVar10
+    store i32 %param4, i32* %LocalVar12
+    %LocalVar6 = getelementptr inbounds i32, i32* %param0, i32 0
+    %LocalVar7 = getelementptr inbounds i32, i32* %param1, i32 0
+    %LocalVar9 = load i32, i32* %LocalVar8
+    %LocalVar11 = load i32, i32* %LocalVar10
+    %LocalVar13 = load i32, i32* %LocalVar12
+    %LocalVar14 = call i32 @processArrays(i32* %LocalVar6, i32* %LocalVar7, i32 %LocalVar9, i32 %LocalVar11, i32 %LocalVar13)
+    store i32 %LocalVar14, i32* %LocalVar5
+    %LocalVar16 = load i32, i32* %LocalVar5
+    %LocalVar17 = load i32, i32* %LocalVar10
+    %LocalVar18 = load i32, i32* %LocalVar12
+    %LocalVar19 = getelementptr inbounds i32, i32* %param0, i32 0
+    %LocalVar20 = load i32, i32* %LocalVar19
+    %LocalVar21 = getelementptr inbounds i32, i32* %param1, i32 0
+    %LocalVar22 = load i32, i32* %LocalVar21
+    %LocalVar23 = call i32 @aggregateResultsAdvanced(i32 %LocalVar16, i32 %LocalVar17, i32 %LocalVar18, i32 %LocalVar20, i32 %LocalVar22)
+    store i32 %LocalVar23, i32* %LocalVar15
+    %LocalVar24 = load i32, i32* %LocalVar15
+    ret i32 %LocalVar24
 }
 
 define dso_local i32 @main() {
-    %LocalVar0 = alloca i32
-    %LocalVar1 = alloca i32
-    %LocalVar3 = alloca i32
-    %LocalVar4 = alloca i32
-    %LocalVar8 = alloca i32
-    %LocalVar9 = alloca i32
-    %LocalVar13 = alloca i32
-    store i32 2147483646, i32* %LocalVar0
-    %LocalVar2 = mul i32 -1, 2147483647
-    store i32 %LocalVar2, i32* %LocalVar1
-    store i32 65536, i32* %LocalVar3
-    %LocalVar5 = load i32, i32* %LocalVar3
-    %LocalVar6 = load i32, i32* %LocalVar3
-    %LocalVar7 = mul i32 %LocalVar5, %LocalVar6
-    store i32 %LocalVar7, i32* %LocalVar4
-    store i32 2, i32* %LocalVar8
-    %LocalVar10 = load i32, i32* %LocalVar0
-    %LocalVar11 = load i32, i32* %LocalVar8
-    %LocalVar12 = add i32 %LocalVar10, %LocalVar11
-    store i32 %LocalVar12, i32* %LocalVar9
-    %LocalVar14 = load i32, i32* %LocalVar1
-    %LocalVar15 = load i32, i32* %LocalVar8
-    %LocalVar16 = sub i32 %LocalVar14, %LocalVar15
-    store i32 %LocalVar16, i32* %LocalVar13
-    %LocalVar17 = load i32, i32* %LocalVar9
-    call void @putint(i32 %LocalVar17)
+    %LocalVar0 = alloca [40 x i32]
+    %LocalVar42 = alloca [40 x i32]
+    %LocalVar84 = alloca i32
+    %LocalVar85 = alloca i32
+    %LocalVar86 = alloca i32
+    %LocalVar87 = alloca i8
+    %LocalVar88 = alloca i8
+    %LocalVar89 = alloca i32
+    %LocalVar1 = getelementptr inbounds [40 x i32], [40 x i32]* %LocalVar0, i32 0, i32 0
+    %LocalVar2 = getelementptr inbounds i32, i32* %LocalVar1, i32 0
+    store i32 1, i32* %LocalVar2
+    %LocalVar3 = getelementptr inbounds i32, i32* %LocalVar1, i32 1
+    store i32 3, i32* %LocalVar3
+    %LocalVar4 = getelementptr inbounds i32, i32* %LocalVar1, i32 2
+    store i32 5, i32* %LocalVar4
+    %LocalVar5 = getelementptr inbounds i32, i32* %LocalVar1, i32 3
+    store i32 7, i32* %LocalVar5
+    %LocalVar6 = getelementptr inbounds i32, i32* %LocalVar1, i32 4
+    store i32 9, i32* %LocalVar6
+    %LocalVar7 = getelementptr inbounds i32, i32* %LocalVar1, i32 5
+    store i32 11, i32* %LocalVar7
+    %LocalVar8 = getelementptr inbounds i32, i32* %LocalVar1, i32 6
+    store i32 13, i32* %LocalVar8
+    %LocalVar9 = getelementptr inbounds i32, i32* %LocalVar1, i32 7
+    store i32 15, i32* %LocalVar9
+    %LocalVar10 = getelementptr inbounds i32, i32* %LocalVar1, i32 8
+    store i32 17, i32* %LocalVar10
+    %LocalVar11 = getelementptr inbounds i32, i32* %LocalVar1, i32 9
+    store i32 19, i32* %LocalVar11
+    %LocalVar12 = getelementptr inbounds i32, i32* %LocalVar1, i32 10
+    store i32 21, i32* %LocalVar12
+    %LocalVar13 = getelementptr inbounds i32, i32* %LocalVar1, i32 11
+    store i32 23, i32* %LocalVar13
+    %LocalVar14 = getelementptr inbounds i32, i32* %LocalVar1, i32 12
+    store i32 25, i32* %LocalVar14
+    %LocalVar15 = getelementptr inbounds i32, i32* %LocalVar1, i32 13
+    store i32 27, i32* %LocalVar15
+    %LocalVar16 = getelementptr inbounds i32, i32* %LocalVar1, i32 14
+    store i32 29, i32* %LocalVar16
+    %LocalVar17 = getelementptr inbounds i32, i32* %LocalVar1, i32 15
+    store i32 31, i32* %LocalVar17
+    %LocalVar18 = getelementptr inbounds i32, i32* %LocalVar1, i32 16
+    store i32 33, i32* %LocalVar18
+    %LocalVar19 = getelementptr inbounds i32, i32* %LocalVar1, i32 17
+    store i32 35, i32* %LocalVar19
+    %LocalVar20 = getelementptr inbounds i32, i32* %LocalVar1, i32 18
+    store i32 37, i32* %LocalVar20
+    %LocalVar21 = getelementptr inbounds i32, i32* %LocalVar1, i32 19
+    store i32 39, i32* %LocalVar21
+    %LocalVar22 = getelementptr inbounds i32, i32* %LocalVar1, i32 20
+    store i32 41, i32* %LocalVar22
+    %LocalVar23 = getelementptr inbounds i32, i32* %LocalVar1, i32 21
+    store i32 43, i32* %LocalVar23
+    %LocalVar24 = getelementptr inbounds i32, i32* %LocalVar1, i32 22
+    store i32 45, i32* %LocalVar24
+    %LocalVar25 = getelementptr inbounds i32, i32* %LocalVar1, i32 23
+    store i32 47, i32* %LocalVar25
+    %LocalVar26 = getelementptr inbounds i32, i32* %LocalVar1, i32 24
+    store i32 49, i32* %LocalVar26
+    %LocalVar27 = getelementptr inbounds i32, i32* %LocalVar1, i32 25
+    store i32 51, i32* %LocalVar27
+    %LocalVar28 = getelementptr inbounds i32, i32* %LocalVar1, i32 26
+    store i32 53, i32* %LocalVar28
+    %LocalVar29 = getelementptr inbounds i32, i32* %LocalVar1, i32 27
+    store i32 55, i32* %LocalVar29
+    %LocalVar30 = getelementptr inbounds i32, i32* %LocalVar1, i32 28
+    store i32 57, i32* %LocalVar30
+    %LocalVar31 = getelementptr inbounds i32, i32* %LocalVar1, i32 29
+    store i32 59, i32* %LocalVar31
+    %LocalVar32 = getelementptr inbounds i32, i32* %LocalVar1, i32 30
+    store i32 61, i32* %LocalVar32
+    %LocalVar33 = getelementptr inbounds i32, i32* %LocalVar1, i32 31
+    store i32 63, i32* %LocalVar33
+    %LocalVar34 = getelementptr inbounds i32, i32* %LocalVar1, i32 32
+    store i32 65, i32* %LocalVar34
+    %LocalVar35 = getelementptr inbounds i32, i32* %LocalVar1, i32 33
+    store i32 67, i32* %LocalVar35
+    %LocalVar36 = getelementptr inbounds i32, i32* %LocalVar1, i32 34
+    store i32 69, i32* %LocalVar36
+    %LocalVar37 = getelementptr inbounds i32, i32* %LocalVar1, i32 35
+    store i32 71, i32* %LocalVar37
+    %LocalVar38 = getelementptr inbounds i32, i32* %LocalVar1, i32 36
+    store i32 73, i32* %LocalVar38
+    %LocalVar39 = getelementptr inbounds i32, i32* %LocalVar1, i32 37
+    store i32 75, i32* %LocalVar39
+    %LocalVar40 = getelementptr inbounds i32, i32* %LocalVar1, i32 38
+    store i32 77, i32* %LocalVar40
+    %LocalVar41 = getelementptr inbounds i32, i32* %LocalVar1, i32 39
+    store i32 79, i32* %LocalVar41
+    %LocalVar43 = getelementptr inbounds [40 x i32], [40 x i32]* %LocalVar42, i32 0, i32 0
+    %LocalVar44 = getelementptr inbounds i32, i32* %LocalVar43, i32 0
+    store i32 2, i32* %LocalVar44
+    %LocalVar45 = getelementptr inbounds i32, i32* %LocalVar43, i32 1
+    store i32 4, i32* %LocalVar45
+    %LocalVar46 = getelementptr inbounds i32, i32* %LocalVar43, i32 2
+    store i32 6, i32* %LocalVar46
+    %LocalVar47 = getelementptr inbounds i32, i32* %LocalVar43, i32 3
+    store i32 8, i32* %LocalVar47
+    %LocalVar48 = getelementptr inbounds i32, i32* %LocalVar43, i32 4
+    store i32 10, i32* %LocalVar48
+    %LocalVar49 = getelementptr inbounds i32, i32* %LocalVar43, i32 5
+    store i32 12, i32* %LocalVar49
+    %LocalVar50 = getelementptr inbounds i32, i32* %LocalVar43, i32 6
+    store i32 14, i32* %LocalVar50
+    %LocalVar51 = getelementptr inbounds i32, i32* %LocalVar43, i32 7
+    store i32 16, i32* %LocalVar51
+    %LocalVar52 = getelementptr inbounds i32, i32* %LocalVar43, i32 8
+    store i32 18, i32* %LocalVar52
+    %LocalVar53 = getelementptr inbounds i32, i32* %LocalVar43, i32 9
+    store i32 20, i32* %LocalVar53
+    %LocalVar54 = getelementptr inbounds i32, i32* %LocalVar43, i32 10
+    store i32 22, i32* %LocalVar54
+    %LocalVar55 = getelementptr inbounds i32, i32* %LocalVar43, i32 11
+    store i32 24, i32* %LocalVar55
+    %LocalVar56 = getelementptr inbounds i32, i32* %LocalVar43, i32 12
+    store i32 26, i32* %LocalVar56
+    %LocalVar57 = getelementptr inbounds i32, i32* %LocalVar43, i32 13
+    store i32 28, i32* %LocalVar57
+    %LocalVar58 = getelementptr inbounds i32, i32* %LocalVar43, i32 14
+    store i32 30, i32* %LocalVar58
+    %LocalVar59 = getelementptr inbounds i32, i32* %LocalVar43, i32 15
+    store i32 32, i32* %LocalVar59
+    %LocalVar60 = getelementptr inbounds i32, i32* %LocalVar43, i32 16
+    store i32 34, i32* %LocalVar60
+    %LocalVar61 = getelementptr inbounds i32, i32* %LocalVar43, i32 17
+    store i32 36, i32* %LocalVar61
+    %LocalVar62 = getelementptr inbounds i32, i32* %LocalVar43, i32 18
+    store i32 38, i32* %LocalVar62
+    %LocalVar63 = getelementptr inbounds i32, i32* %LocalVar43, i32 19
+    store i32 40, i32* %LocalVar63
+    %LocalVar64 = getelementptr inbounds i32, i32* %LocalVar43, i32 20
+    store i32 42, i32* %LocalVar64
+    %LocalVar65 = getelementptr inbounds i32, i32* %LocalVar43, i32 21
+    store i32 44, i32* %LocalVar65
+    %LocalVar66 = getelementptr inbounds i32, i32* %LocalVar43, i32 22
+    store i32 46, i32* %LocalVar66
+    %LocalVar67 = getelementptr inbounds i32, i32* %LocalVar43, i32 23
+    store i32 48, i32* %LocalVar67
+    %LocalVar68 = getelementptr inbounds i32, i32* %LocalVar43, i32 24
+    store i32 50, i32* %LocalVar68
+    %LocalVar69 = getelementptr inbounds i32, i32* %LocalVar43, i32 25
+    store i32 52, i32* %LocalVar69
+    %LocalVar70 = getelementptr inbounds i32, i32* %LocalVar43, i32 26
+    store i32 54, i32* %LocalVar70
+    %LocalVar71 = getelementptr inbounds i32, i32* %LocalVar43, i32 27
+    store i32 56, i32* %LocalVar71
+    %LocalVar72 = getelementptr inbounds i32, i32* %LocalVar43, i32 28
+    store i32 58, i32* %LocalVar72
+    %LocalVar73 = getelementptr inbounds i32, i32* %LocalVar43, i32 29
+    store i32 60, i32* %LocalVar73
+    %LocalVar74 = getelementptr inbounds i32, i32* %LocalVar43, i32 30
+    store i32 62, i32* %LocalVar74
+    %LocalVar75 = getelementptr inbounds i32, i32* %LocalVar43, i32 31
+    store i32 64, i32* %LocalVar75
+    %LocalVar76 = getelementptr inbounds i32, i32* %LocalVar43, i32 32
+    store i32 66, i32* %LocalVar76
+    %LocalVar77 = getelementptr inbounds i32, i32* %LocalVar43, i32 33
+    store i32 68, i32* %LocalVar77
+    %LocalVar78 = getelementptr inbounds i32, i32* %LocalVar43, i32 34
+    store i32 70, i32* %LocalVar78
+    %LocalVar79 = getelementptr inbounds i32, i32* %LocalVar43, i32 35
+    store i32 72, i32* %LocalVar79
+    %LocalVar80 = getelementptr inbounds i32, i32* %LocalVar43, i32 36
+    store i32 74, i32* %LocalVar80
+    %LocalVar81 = getelementptr inbounds i32, i32* %LocalVar43, i32 37
+    store i32 76, i32* %LocalVar81
+    %LocalVar82 = getelementptr inbounds i32, i32* %LocalVar43, i32 38
+    store i32 78, i32* %LocalVar82
+    %LocalVar83 = getelementptr inbounds i32, i32* %LocalVar43, i32 39
+    store i32 80, i32* %LocalVar83
+    store i32 40, i32* %LocalVar84
+    store i32 60, i32* %LocalVar85
+    store i32 10, i32* %LocalVar86
+    store i8 76, i8* %LocalVar87
+    store i8 0, i8* %LocalVar88
+    store i32 0, i32* %LocalVar89
+    %LocalVar90 = load i8, i8* %LocalVar87
+    %LocalVar91 = call i8 @modifyChar(i8 %LocalVar90, i32 4, i32 1, i32 2)
+    store i8 %LocalVar91, i8* %LocalVar88
+    %LocalVar92 = getelementptr inbounds i32, i32* %LocalVar1, i32 0
+    %LocalVar93 = getelementptr inbounds i32, i32* %LocalVar43, i32 0
+    %LocalVar94 = load i32, i32* %LocalVar84
+    %LocalVar95 = load i32, i32* %LocalVar85
+    %LocalVar96 = load i32, i32* %LocalVar86
+    %LocalVar97 = call i32 @finalAggregator(i32* %LocalVar92, i32* %LocalVar93, i32 %LocalVar94, i32 %LocalVar95, i32 %LocalVar96)
+    store i32 %LocalVar97, i32* %LocalVar89
+    %LocalVar98 = load i8, i8* %LocalVar88
+    call void @putch(i32 77)
+    call void @putch(i32 111)
+    call void @putch(i32 100)
+    call void @putch(i32 105)
+    call void @putch(i32 102)
+    call void @putch(i32 105)
+    call void @putch(i32 101)
+    call void @putch(i32 100)
+    call void @putch(i32 32)
+    call void @putch(i32 83)
+    call void @putch(i32 121)
+    call void @putch(i32 109)
+    call void @putch(i32 98)
+    call void @putch(i32 111)
+    call void @putch(i32 108)
+    call void @putch(i32 58)
+    call void @putch(i32 32)
+    %LocalVar99 = zext i8 %LocalVar98 to i32
+    call void @putch(i32 %LocalVar99)
     call void @putch(i32 10)
-    %LocalVar18 = load i32, i32* %LocalVar13
-    call void @putint(i32 %LocalVar18)
-    call void @putch(i32 10)
-    %LocalVar19 = load i32, i32* %LocalVar4
-    call void @putint(i32 %LocalVar19)
+    %LocalVar100 = load i32, i32* %LocalVar89
+    call void @putch(i32 70)
+    call void @putch(i32 105)
+    call void @putch(i32 110)
+    call void @putch(i32 97)
+    call void @putch(i32 108)
+    call void @putch(i32 32)
+    call void @putch(i32 65)
+    call void @putch(i32 103)
+    call void @putch(i32 103)
+    call void @putch(i32 114)
+    call void @putch(i32 101)
+    call void @putch(i32 103)
+    call void @putch(i32 97)
+    call void @putch(i32 116)
+    call void @putch(i32 111)
+    call void @putch(i32 114)
+    call void @putch(i32 32)
+    call void @putch(i32 82)
+    call void @putch(i32 101)
+    call void @putch(i32 115)
+    call void @putch(i32 117)
+    call void @putch(i32 108)
+    call void @putch(i32 116)
+    call void @putch(i32 58)
+    call void @putch(i32 32)
+    call void @putint(i32 %LocalVar100)
     call void @putch(i32 10)
     ret i32 0
 }

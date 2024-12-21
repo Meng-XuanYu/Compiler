@@ -316,39 +316,16 @@ public class MipsInstructionBuilder {
             this.registerTable.getSymbol(leftReg).setUsed(true);
             ans.add(move);
         }
-        boolean handleIrValue = store.isIrValue();
         if (isGetElementPtr) {
-            if (handleIrValue) {
-                IRValue dimension1PointerValue = store.getDimension1PointerValue();
-                String dimension1PointerValueName = dimension1PointerValue.getName();
-                if (isCon(dimension1PointerValueName)) {
-                    ArrayList<MipsInstruction> temp = this.registerTable.writeBackPublic(
-                            leftReg, rightSymbol,
-                            Integer.parseInt(dimension1PointerValueName) * 4, this.parent);
-                    rightSymbol.setUsed(true);
-                    if (temp != null && !temp.isEmpty()) {
-                        ans.addAll(temp);
-                    }
-                } else {
-                    int dimension1PointerReg = this.table.getRegIndex(dimension1PointerValueName, true, this.parent);
-                    ArrayList<MipsInstruction> temp = this.registerTable.writeBackPublic(
-                            leftReg, rightSymbol, dimension1PointerReg, 1, this.parent);
-                    if (temp != null && !temp.isEmpty()) {
-                        ans.addAll(temp);
-                    }
-                }
-            } else {
-                ArrayList<MipsInstruction> temp = this.registerTable.writeBackPublic(leftReg,
-                        rightSymbol, store.getDimension1Pointer() * 4, this.parent);
-                rightSymbol.setUsed(true);
-                if (temp != null && !temp.isEmpty()) {
-                    ans.addAll(temp);
-                }
+            ArrayList<MipsInstruction> temp = this.registerTable.writeBackPublic(leftReg,
+                    rightSymbol, store.getDimension1Pointer() * 4, this.parent);
+            rightSymbol.setUsed(true);
+            if (temp != null && !temp.isEmpty()) {
+                ans.addAll(temp);
             }
         } else if (rightName.contains("Global")) {
             MipsInstruction temp = this.registerTable.writeBackPublic(rightSymbol);
             rightSymbol.setUsed(true);
-            rightSymbol.setInReg(false);
             ans.add(temp);
         }
         if (tempSymbol != null) {
@@ -582,8 +559,7 @@ public class MipsInstructionBuilder {
             String name = parameter.getName();
             if (newTable.hasSymbol(name)) {
                 boolean isGetElementPtr = parameter instanceof IRGetElementPtr;
-                int dimension = parameter.getSize();
-                if (dimension == 0 && !isGetElementPtr) {
+                if (!isGetElementPtr) {
                     int reg = newTable.getRegIndex(name, true, parent);
                     if (i < 4) {
                         Move move = new Move(4 + i, reg);
@@ -595,115 +571,60 @@ public class MipsInstructionBuilder {
                     }
                     this.parent.addInstructions(ans);
                 } else {
-                    boolean isParam = parameter.isParam();
                     int dimensionValue = parameter.getDimensionValue();
-                    if (isParam) {
-                        if (dimensionValue == 0) {
-                            IRValue dimension1 = parameter.getDimension1Value();
-                            String name1 = dimension1.getName();
-                            if (isCon(name1)) {
-                                Li li = new Li(2, Integer.parseInt(name1));
-                                ans.add(li);
-                                parent.addInstructions(ans);
-                                ans = new ArrayList<>();
-
-                                Sll sll = new Sll(2, 2, 2);
-                                ans.add(sll);
-                            } else {
-                                int reg = newTable.getRegIndex(name1, true, parent);
-                                Move move = new Move(2, reg);
-                                ans.add(move);
-                                parent.addInstructions(ans);
-                                ans = new ArrayList<>();
-
-                                Sll sll = new Sll(2, 2, 2);
-                                ans.add(sll);
-                            }
-                            parent.addInstructions(ans);
+                    MipsSymbol symbol = this.table.getSymbol(name);
+                    int offset = symbol.getOffset();
+                    int base = symbol.getBase();
+                    if (dimensionValue == 0) {
+                        IRValue dimension1 = parameter.getDimension1Value();
+                        String dimension1Name = dimension1.getName();
+                        if (isCon(dimension1Name)) {
+                            Li li = new Li(2, Integer.parseInt(dimension1Name));
+                            ans.add(li);
+                            this.parent.addInstruction(ans);
                             ans = new ArrayList<>();
-
-                            int reg = newTable.getRegIndex(name, true, parent);
-                            Add add = new Add(2, 2, reg);
-                            ans.add(add);
-                            parent.addInstructions(ans);
-                            ans = new ArrayList<>();
-                            Lw lw;
-                            if (i < 4) {
-                                lw = new Lw(4 + i, 2, 0);
-                                ans.add(lw);
-                            } else {
-                                lw = new Lw(2, 2, 0);
-                                ans.add(lw);
-                                this.parent.addInstruction(ans);
-                                ans = new ArrayList<>();
-                                Sw sw = new Sw(2, 3, newOffset);
-                                ans.add(sw);
-                            }
+                            Sll sll = new Sll(2, 2, 2);
+                            ans.add(sll);
                         } else {
-                            int reg = newTable.getRegIndex(name, true, parent);
-                            if (i < 4) {
-                                Move move = new Move(4 + i, reg);
-                                ans.add(move);
-                            } else {
-                                Sw sw = new Sw(reg, 3, newOffset);
-                                ans.add(sw);
-                            }
+                            int dimension1Reg = newTable.getRegIndex(dimension1Name, true, this.parent);
+                            Sll sll = new Sll(2, dimension1Reg, 2);
+                            ans.add(sll);
+                        }
+                        this.parent.addInstruction(ans);
+                        ans = new ArrayList<>();
+
+                        Addi addi1 = new Addi(2, 2, offset);
+                        ans.add(addi1);
+                        this.parent.addInstruction(ans);
+                        ans = new ArrayList<>();
+                        // 计算绝对地址
+                        Add add = new Add(2, 2, base);
+                        ans.add(add);
+                        this.parent.addInstruction(ans);
+                        ans = new ArrayList<>();
+                        Lw lw;
+                        if (i < 4) {
+                            lw = new Lw(4 + i, 2, 0);
+                            ans.add(lw);
+                        } else {
+                            lw = new Lw(2, 2, 0);
+                            ans.add(lw);
+                            this.parent.addInstruction(ans);
+                            ans = new ArrayList<>();
+                            Sw sw = new Sw(2, 3, newOffset);
+                            ans.add(sw);
                         }
                     } else {
-                        MipsSymbol symbol = this.table.getSymbol(name);
-                        int offset = symbol.getOffset();
-                        int base = symbol.getBase();
-                        if (dimensionValue == 0) {
-                            IRValue dimension1 = parameter.getDimension1Value();
-                            String dimension1Name = dimension1.getName();
-                            if (isCon(dimension1Name)) {
-                                Li li = new Li(2, Integer.parseInt(dimension1Name));
-                                ans.add(li);
-                                this.parent.addInstruction(ans);
-                                ans = new ArrayList<>();
-                                Sll sll = new Sll(2, 2, 2);
-                                ans.add(sll);
-                            } else {
-                                int dimension1Reg = newTable.getRegIndex(dimension1Name, true, this.parent);
-                                Sll sll = new Sll(2, dimension1Reg, 2);
-                                ans.add(sll);
-                            }
-                            this.parent.addInstruction(ans);
-                            ans = new ArrayList<>();
-
-                            Addi addi1 = new Addi(2, 2, offset);
-                            ans.add(addi1);
-                            this.parent.addInstruction(ans);
-                            ans = new ArrayList<>();
-                            // 计算绝对地址
-                            Add add = new Add(2, 2, base);
-                            ans.add(add);
-                            this.parent.addInstruction(ans);
-                            ans = new ArrayList<>();
-                            Lw lw;
-                            if (i < 4) {
-                                lw = new Lw(4 + i, 2, 0);
-                                ans.add(lw);
-                            } else {
-                                lw = new Lw(2, 2, 0);
-                                ans.add(lw);
-                                this.parent.addInstruction(ans);
-                                ans = new ArrayList<>();
-                                Sw sw = new Sw(2, 3, newOffset);
-                                ans.add(sw);
-                            }
+                        if (i < 4) {
+                            addi = new Addi(4 + i, base, offset);
+                            ans.add(addi);
                         } else {
-                            if (i < 4) {
-                                addi = new Addi(4 + i, base, offset);
-                                ans.add(addi);
-                            } else {
-                                addi = new Addi(2, base, offset);
-                                ans.add(addi);
-                                this.parent.addInstruction(ans);
-                                ans = new ArrayList<>();
-                                Sw sw = new Sw(2, 3, newOffset);
-                                ans.add(sw);
-                            }
+                            addi = new Addi(2, base, offset);
+                            ans.add(addi);
+                            this.parent.addInstruction(ans);
+                            ans = new ArrayList<>();
+                            Sw sw = new Sw(2, 3, newOffset);
+                            ans.add(sw);
                         }
                     }
                     this.parent.addInstruction(ans);
@@ -783,6 +704,7 @@ public class MipsInstructionBuilder {
             insertSymbolTable(call.getName(), leftSymbol);
             int leftReg = this.table.getRegIndex(call.getName(), false, parent);
             Move move1 = new Move(leftReg, 2);
+            leftSymbol.setInReg(true);
             ans.add(move1);
             this.parent.addInstruction(ans);
             ans = new ArrayList<>();
@@ -869,7 +791,7 @@ public class MipsInstructionBuilder {
             Li li = new Li(leftReg, Integer.parseInt(leftName));
             ans.add(li);
         } else {
-            leftReg = this.table.getRegIndex(leftName, false, parent);
+            leftReg = this.table.getRegIndex(leftName, true, parent);
             leftSymbol = this.table.getSymbol(leftName);
         }
 
@@ -884,12 +806,12 @@ public class MipsInstructionBuilder {
                 Li li = new Li(rightReg, Integer.parseInt(rightName));
                 ans.add(li);
             } else {
-                rightReg = this.table.getRegIndex(rightName, false, parent);
+                rightReg = this.table.getRegIndex(rightName, true, parent);
                 rightSymbol = this.table.getSymbol(rightName);
             }
         }
         String ansName = binaryInstruction.getName();
-        MipsSymbol ansSymbol = new MipsSymbol(ansName, 30, false, -1, false, -1, true, false);
+        MipsSymbol ansSymbol = new MipsSymbol(ansName, 30, true, -1, false, -1, true, false);
         insertSymbolTable(ansName, ansSymbol);
         int ansReg = this.registerTable.getReg(true, ansSymbol, parent);
         if (binaryInstruction.getInstructionType().equals(IRInstructionType.Add)) {

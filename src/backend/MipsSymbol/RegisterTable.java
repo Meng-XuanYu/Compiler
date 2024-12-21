@@ -163,7 +163,7 @@ public class RegisterTable {
         int offset = this.symbolTable.getFpOffset();
         symbol.setOffset(offset + 4);
         symbol.setHasRam(true);
-        this.symbolTable.addOffset(8);
+        this.symbolTable.addOffset(4);
     }
 
     private boolean isTempReg(int index) {
@@ -361,37 +361,5 @@ public class RegisterTable {
         }
         this.regOld = 8;
         return instructions;
-    }
-
-    // dimension表示数组的维度，是为了防止方法重名
-    public ArrayList<MipsInstruction> writeBackPublic(int leftReg,
-                                                      MipsSymbol symbol,
-                                                      int reg1,
-                                                      int dimension,
-                                                      MipsBasicBlock basicBlock) {
-        ArrayList<MipsInstruction> ret = new ArrayList<>();
-        boolean isParam = symbol.isParam();
-        if (isParam) {
-            String name = symbol.getName();
-            Sll sll = new Sll(3, reg1, 2);
-            ret.add(sll);
-            int reg = this.symbolTable.getRegIndex(name, true, basicBlock);
-            Add add = new Add(3, 3, reg);
-            ret.add(add);
-            Sw sw = new Sw(leftReg, 3, 0);
-            ret.add(sw);
-        } else {
-            int base = symbol.getBase();
-            int fpOffset = symbol.getOffset();
-            Sll sll = new Sll(3, reg1, 2);
-            ret.add(sll);
-            Addi addi = new Addi(3, 3, fpOffset);
-            ret.add(addi);
-            Add add = new Add(3, 3, base);
-            ret.add(add);
-            Sw sw = new Sw(leftReg, 3, 0);
-            ret.add(sw);
-        }
-        return ret;
     }
 }
